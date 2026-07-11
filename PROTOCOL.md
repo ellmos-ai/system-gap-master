@@ -103,6 +103,23 @@ register the daily gate. Keep it current — its value is exactly the day you
 need it. Rule of thumb: whenever the yard's structure changes, ask "would
 BOOTSTRAP still bring up a fresh machine?"
 
+### R9 — Structured payloads (databases, hot binaries)
+
+The yard carries documents, not live data stores. **Never place a live SQLite
+database (or its `-wal`/`-shm` files) or any file with open handles into the
+yard** — file-sync providers corrupt hot files and create conflict copies.
+For syncing application state (databases) between machines, use a
+snapshot-based transit tool: it publishes closed, checksum-verified snapshots
+into a transit directory and each node pulls and merges into its own local
+database. Companion module from the same family: **sqlite-transit-sync**
+(verified snapshots, SHA-256 manifests, per-node pull state, pluggable merge
+policies).
+
+Convention: give such tools their own **tool-owned zone** `db-transit/<namespace>/`
+at the yard root. Tool-owned zones are exempt from R1 and R3 — the tool
+manages ownership and lifecycle itself; agents do not hand-edit or archive
+anything inside them during the daily ritual.
+
 ## Artifact naming conventions
 
 | Artifact | Pattern | Notes |
@@ -113,6 +130,7 @@ BOOTSTRAP still bring up a fresh machine?"
 | Setup/config summary | `hosts/<HOST>/<TOOL>_CONFIG_<YYYY-MM-DD>.md` | summaries, not raw config dumps (paths/trust state are not portable) |
 | Topic document | `<TOPIC>_<YYYY-MM-DD>.md` at root | living status source; archive when obsolete |
 | Handoff/runbook | `<SYSTEM>_HANDOFF.md` at root | how to operate something from another machine |
+| Database transit zone | `db-transit/<namespace>/` at root | tool-owned (R9): managed by a snapshot tool like sqlite-transit-sync, not by hand |
 
 Extend the table in your local `SYNC_PROTOCOL.md` as your yard grows — the
 convention that a convention EXISTS is the load-bearing part.

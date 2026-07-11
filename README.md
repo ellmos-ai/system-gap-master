@@ -80,6 +80,17 @@ python scripts/sync_daily_check.py mark
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
+## Companion tools
+
+The yard carries documents; it deliberately does NOT carry live databases
+(rule 9: hot SQLite/WAL files + file-sync providers = corruption). To sync
+application state between machines, pair the yard with a snapshot-based
+transit tool in a tool-owned `db-transit/<namespace>/` zone — from the same
+module family: **sqlite-transit-sync** (local-first SQLite sync through
+verified snapshots, SHA-256 manifests and pluggable merge policies;
+publication pending, link will follow). The yard is the transport; the
+transit tool owns integrity and merging.
+
 ## Security & privacy notes
 
 - The yard travels through your sync provider: treat it as **semi-trusted**.
