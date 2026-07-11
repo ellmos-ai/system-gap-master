@@ -1,0 +1,11 @@
+# Internal working notes (never released)
+_intern/
+LOCK*.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# OS/editor
+Thumbs.db
+.DS_Store
