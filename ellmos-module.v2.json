@@ -1,0 +1,42 @@
+{
+  "schema": "ellmos.module.v2",
+  "id": "sync-master",
+  "display_name": "sync-master",
+  "category": "sync",
+  "kind": "workflow",
+  "status": "active",
+  "visibility": "public",
+  "provides": [
+    "sync.files",
+    "sync.yard",
+    "sync.messages"
+  ],
+  "requires": [],
+  "optional": [
+    "sync.database"
+  ],
+  "conflicts": [],
+  "surfaces": [
+    "cli",
+    "workflow"
+  ],
+  "state": {
+    "ownership": "external",
+    "location": "project"
+  },
+  "boundaries": {
+    "network": "transport-defined",
+    "data": "sensitive",
+    "platforms": [
+      "windows",
+      "macos",
+      "linux"
+    ]
+  },
+  "source_of_truth": {
+    "type": "git-repository",
+    "path": ".",
+    "repository": "https://github.com/dev-bricks/sync-master"
+  },
+  "adapters": []
+}

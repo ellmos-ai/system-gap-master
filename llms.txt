@@ -1,0 +1,45 @@
+# sync-master
+
+## Last-checked: 2026-07-14
+
+## Canonical repository
+
+https://github.com/dev-bricks/sync-master
+
+## Summary
+
+sync-master is a serverless cross-machine sync protocol for users who run
+several machines and several AI agents. It uses one human-readable transfer
+yard, host-owned slots, delete-after-read message channels, agent-rule
+snapshots and a once-per-day gate script to keep machines from drifting into
+separate state silos.
+
+## Primary files
+
+- `README.md` — overview, quick start and security notes.
+- `PROTOCOL.md` — full protocol and design rationale.
+- `SKILL.md` — daily sync ritual for agents.
+- `scripts/sync_daily_check.py` — zero-dependency daily gate script.
+- `template/` — copy-ready yard skeleton.
+- `docs/adapting-your-agents.md` — integration notes for agent rule files and
+  session-start hooks.
+
+## Safety model
+
+- No credentials, tokens, private case data or live databases belong in the
+  sync yard.
+- Each machine writes only its own host slot plus shared drop zones.
+- Integrated transfer items are archived, not silently deleted.
+- Hot SQLite files and other open data stores must use snapshot-based transit
+  tooling instead of direct file-sync.
+
+## Search phrases
+
+```text
+serverless multi machine sync protocol
+AI agent sync yard
+cross machine agent state transfer
+daily sync gate script
+plain file agent handoff protocol
+host slot sync protocol
+```

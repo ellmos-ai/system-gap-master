@@ -38,6 +38,9 @@ with anything.
 ```
 PROTOCOL.md          the full protocol (8 rules) + design notes
 SKILL.md             the daily ritual as an agent-neutral skill
+CHANGELOG.md         notable public maintenance changes
+llms.txt             machine-readable summary for agents and search tools
+ellmos-module.v2.json  ecosystem module metadata
 template/            copy-ready yard skeleton:
   SYNC_PROTOCOL.md     yard-local protocol summary + slot table
   BOOTSTRAP.md         new-device / disaster-recovery runbook
