@@ -4,6 +4,7 @@ All notable changes to sync-master are documented here.
 
 ## Unreleased
 
+- Added release-gate hygiene docs: `TODO.md` now records the current gate status, and `.gitignore` covers the .MODULES minimum local-secret, database, virtualenv and editor patterns.
 - Added public module metadata for the dev-bricks ecosystem.
 - Added `llms.txt` so agents and search tools can identify the protocol,
   safety boundaries and canonical repository quickly.

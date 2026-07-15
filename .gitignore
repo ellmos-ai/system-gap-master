@@ -5,7 +5,18 @@ LOCK*.txt
 # Python
 __pycache__/
 *.pyc
+.venv/
+
+# Local configuration and private data
+.env
+.env.*
+*.db
+*.sqlite
+*.sqlite3
+data/
 
 # OS/editor
 Thumbs.db
 .DS_Store
+.idea/
+.vscode/
