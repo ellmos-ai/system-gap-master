@@ -1,7 +1,7 @@
 # Pre-Release TODO: sync-master
 
-**Audit Date:** 2026-07-15
-**Auditor:** Codex ai-modules-care
+**Audit Date:** 2026-07-21
+**Auditor:** Antigravity / Gemini githubbot-one-repo-cleaner
 **Target Repo:** `dev-bricks/sync-master`
 
 ---
@@ -22,7 +22,7 @@
 
 ## HIGH PRIORITY
 
-- [ ] Add a small regression test for `scripts/sync_daily_check.py` using a temporary yard.
+- [x] Add a small regression test for `scripts/sync_daily_check.py` using a temporary yard.
 - [ ] Document one concrete setup example per agent family once the public repo wiring is stable.
 - [ ] Decide whether the daily gate should optionally write JSON output for hook integrations.
 
@@ -32,7 +32,7 @@
 
 - [ ] Add `SECURITY.md` before wider public promotion.
 - [ ] Add `CONTRIBUTING.md` if external contributions become expected.
-- [ ] Add a GitHub Actions smoke workflow for the zero-dependency gate script.
+- [x] Add a GitHub Actions smoke workflow for the zero-dependency gate script.
 
 ---
 
