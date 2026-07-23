@@ -94,6 +94,18 @@ verified snapshots, SHA-256 manifests and pluggable merge policies;
 publication pending, link will follow). The yard is the transport; the
 transit tool owns integrity and merging.
 
+## Part of the ellmos stack family
+
+sync-master is deliberately both: a standalone dev tool you can drop into any
+project, and a core module of the ellmos stack family.
+
+Core module of [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack)
+(role `file-sync`); family/catalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks);
+org overview: [ellmos-ai](https://github.com/ellmos-ai). Companion module for live
+SQLite state (role `sync.database`): **sqlite-transit-sync** — see
+[Companion tools](#companion-tools) above; publication under
+`dev-bricks/sqlite-transit-sync` is still pending.
+
 ## Security & privacy notes
 
 - The yard travels through your sync provider: treat it as **semi-trusted**.
