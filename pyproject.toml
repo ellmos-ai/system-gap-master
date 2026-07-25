@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sync-master"
+version = "1.1.0"
+description = "Serverless cross-machine sync protocol and transfer yard for multi-machine AI agent operations"
+readme = "README.md"
+authors = [
+    { name = "Lukas Geiger", email = "lukas@open-bricks.org" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = [
+    "multi-agent",
+    "serverless-sync",
+    "cross-machine",
+    "agent-state",
+    "sync-protocol",
+    "llm-agents",
+    "slot-protocol"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Networking",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/dev-bricks/sync-master"
+Documentation = "https://github.com/dev-bricks/sync-master/blob/main/PROTOCOL.md"
+Repository = "https://github.com/dev-bricks/sync-master"
+"Bug Tracker" = "https://github.com/dev-bricks/sync-master/issues"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]

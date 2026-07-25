@@ -4,6 +4,12 @@ All notable changes to sync-master are documented here.
 
 ## Unreleased
 
+## 2026-07-25
+
+- Added PEP 621 compliant `pyproject.toml` package metadata and Pytest configuration.
+- Enhanced `README.md` with Shields.io badges (Python, MIT License, Protocol, Indexing, Tests), AI/LLM callout note, and Mermaid architecture flowchart.
+- Updated `llms.txt` `Last-checked` timestamp to 2026-07-25 and expanded search phrase anchors.
+
 ## 2026-07-21
 
 - Added unit test suite `tests/test_sync_daily_check.py` covering `sync_daily_check.py` gate script and CLI.

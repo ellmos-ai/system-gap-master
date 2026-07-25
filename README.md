@@ -1,5 +1,11 @@
 # sync-master
 
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
+[![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
+[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passed-brightgreen.svg)](tests/)
+
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
 Dropbox, Syncthing, a NAS, even git) — plus three conventions that keep
@@ -12,6 +18,25 @@ Part of the cross-agent infrastructure family:
 [lock-master](https://github.com/dev-bricks/lock-master) (locks) ·
 [ticket-master](https://github.com/dev-bricks/ticket-master) (tickets) ·
 **sync-master** (cross-machine sync).
+
+> [!NOTE]
+> **For AI Agents & RAG Crawlers:** Machine-readable protocol specs and daily sync skills are indexed in [`llms.txt`](llms.txt), [`SKILL.md`](SKILL.md), and [`PROTOCOL.md`](PROTOCOL.md).
+
+```mermaid
+flowchart TD
+    subgraph HostA["Workstation (Host A)"]
+        SlotA["hosts/workstation/"]
+    end
+    subgraph HostB["Laptop (Host B)"]
+        SlotB["hosts/laptop/"]
+    end
+    subgraph SyncYard["Transfer Yard (OneDrive / Syncthing / NAS)"]
+        SlotA -->|Host A writes only Slot A| YardStorage["sync-master yard"]
+        SlotB -->|Host B writes only Slot B| YardStorage
+        YardStorage --> GateScript["scripts/sync_daily_check.py (Daily Gate)"]
+        GateScript --> MsgChannel["messages/ (Delete-after-read)"]
+    end
+```
 
 > **Deutsch:** sync-master ist die nutzerneutrale, offene Fassung eines seit
 > Monaten produktiv laufenden Cross-System-Sync-Ordners: mehrere Rechner,

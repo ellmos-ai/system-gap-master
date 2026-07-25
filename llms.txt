@@ -1,6 +1,6 @@
 # sync-master
 
-## Last-checked: 2026-07-21
+## Last-checked: 2026-07-25
 
 ## Canonical repository
 
@@ -42,4 +42,6 @@ cross machine agent state transfer
 daily sync gate script
 plain file agent handoff protocol
 host slot sync protocol
+multi agent state persistence
+cross host slot isolation
 ```
