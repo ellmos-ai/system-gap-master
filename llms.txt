@@ -17,6 +17,7 @@ separate state silos.
 ## Primary files
 
 - `README.md` — overview, quick start and security notes.
+- `README_de.md` — vollständige deutsche Dokumentation & Schnellstart.
 - `PROTOCOL.md` — full protocol and design rationale.
 - `SKILL.md` — daily sync ritual for agents.
 - `scripts/sync_daily_check.py` — zero-dependency daily gate script.

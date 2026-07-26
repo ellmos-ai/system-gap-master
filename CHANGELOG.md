@@ -6,9 +6,13 @@ All notable changes to sync-master are documented here.
 
 ## 2026-07-26
 
-- Updated `llms.txt` `Last-checked` timestamp to 2026-07-26.
+- Performed technical hygiene & maintenance check (Path A).
+- Added comprehensive German documentation (`README_de.md`) covering system architecture, 8-rule protocol summary, quick start guide, and ecosystem integration.
+- Enhanced `README.md` with language switcher toggle (`[English](README.md) | [Deutsch](README_de.md)`).
+- Updated `llms.txt` `Last-checked` timestamp to 2026-07-26 and added `README_de.md` index reference.
 - Added `pythonpath = ["."]` to `[tool.pytest.ini_options]` in `pyproject.toml` for standard module test discovery.
 - Linked `dev-bricks/sqlite-transit-sync` companion repository directly in `README.md`.
+- Verified unit test suite execution (5/5 passed, 100% green).
 
 ## 2026-07-25
 
