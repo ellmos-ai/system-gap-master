@@ -45,3 +45,4 @@ Repository = "https://github.com/dev-bricks/sync-master"
 minversion = "7.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+pythonpath = ["."]

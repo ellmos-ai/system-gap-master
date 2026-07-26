@@ -4,6 +4,12 @@ All notable changes to sync-master are documented here.
 
 ## Unreleased
 
+## 2026-07-26
+
+- Updated `llms.txt` `Last-checked` timestamp to 2026-07-26.
+- Added `pythonpath = ["."]` to `[tool.pytest.ini_options]` in `pyproject.toml` for standard module test discovery.
+- Linked `dev-bricks/sqlite-transit-sync` companion repository directly in `README.md`.
+
 ## 2026-07-25
 
 - Added PEP 621 compliant `pyproject.toml` package metadata and Pytest configuration.

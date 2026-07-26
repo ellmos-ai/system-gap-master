@@ -114,9 +114,8 @@ The yard carries documents; it deliberately does NOT carry live databases
 (rule 9: hot SQLite/WAL files + file-sync providers = corruption). To sync
 application state between machines, pair the yard with a snapshot-based
 transit tool in a tool-owned `db-transit/<namespace>/` zone — from the same
-module family: **sqlite-transit-sync** (local-first SQLite sync through
-verified snapshots, SHA-256 manifests and pluggable merge policies;
-publication pending, link will follow). The yard is the transport; the
+module family: [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) (local-first SQLite sync through
+verified snapshots, SHA-256 manifests and pluggable merge policies). The yard is the transport; the
 transit tool owns integrity and merging.
 
 ## Part of the ellmos stack family
@@ -127,9 +126,8 @@ project, and a core module of the ellmos stack family.
 Core module of [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack)
 (role `file-sync`); family/catalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks);
 org overview: [ellmos-ai](https://github.com/ellmos-ai). Companion module for live
-SQLite state (role `sync.database`): **sqlite-transit-sync** — see
-[Companion tools](#companion-tools) above; publication under
-`dev-bricks/sqlite-transit-sync` is still pending.
+SQLite state (role `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) — see
+[Companion tools](#companion-tools) above.
 
 ## Security & privacy notes
 
