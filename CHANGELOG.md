@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to sync-master are documented here.
+## 1.2.0 - 2026-07-27
+
+- Renamed the public project from `sync-master` to `system-gap-master`.
+- Renamed the daily gate to `scripts/system_gap_daily_check.py`.
+- Added temporary compatibility for `scripts/sync_daily_check.py` and
+  `SYNC_MASTER_DIR`.
+
+All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 

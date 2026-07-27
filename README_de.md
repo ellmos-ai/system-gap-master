@@ -1,4 +1,4 @@
-# sync-master
+# system-gap-master
 
 [English](README.md) | [Deutsch](README_de.md)
 
@@ -13,7 +13,7 @@
 Teil der geräteübergreifenden Infrastruktur-Familie:
 [lock-master](https://github.com/dev-bricks/lock-master) (Sperren & Locks) ·
 [ticket-master](https://github.com/dev-bricks/ticket-master) (Aufgaben & Tickets) ·
-**sync-master** (Geräteübergreifende Synchronisation).
+**system-gap-master** (Geräteübergreifende Synchronisation).
 
 > [!NOTE]
 > **Für KI-Agenten & RAG-Crawler:** Maschinenlesbare Protokollspezifikationen und tägliche Sync-Skills sind in [`llms.txt`](llms.txt), [`SKILL.md`](SKILL.md) und [`PROTOCOL.md`](PROTOCOL.md) hinterlegt.
@@ -27,14 +27,14 @@ flowchart TD
         SlotB["hosts/laptop/"]
     end
     subgraph SyncYard["Transfer Yard (OneDrive / Syncthing / NAS)"]
-        SlotA -->|Host A schreibt nur in Slot A| YardStorage["sync-master yard"]
+        SlotA -->|Host A schreibt nur in Slot A| YardStorage["system-gap-master yard"]
         SlotB -->|Host B schreibt nur in Slot B| YardStorage
-        YardStorage --> GateScript["scripts/sync_daily_check.py (Tages-Gate)"]
+        YardStorage --> GateScript["scripts/system_gap_daily_check.py (Tages-Gate)"]
         GateScript --> MsgChannel["messages/ (Lesen-und-Löschen)"]
     end
 ```
 
-## Warum sync-master?
+## Warum system-gap-master?
 
 | Bestehende Tools | Was sie lösen | Was fehlt |
 |---|---|---|
@@ -43,7 +43,7 @@ flowchart TD
 | Dotfiles-Repositories | System-Konfigurationsdateien | Agenten-Wissen, Nachrichten, Runbooks und Rituale |
 | Cloud-Memory MCPs | Speicher eines einzelnen KI-Providers | Anbieterneutral, dateibasiert, transparent und auditiermbar |
 
-Die Nische von **sync-master**: **Multi-Machine + Multi-Agent + Serverless + Plain Files.** Alle Daten liegen als lesbares Markdown vor, das jederzeit inspiziert, durchsucht und mit jedem gewählten Tool synchronisiert werden kann.
+Die Nische von **system-gap-master**: **Multi-Machine + Multi-Agent + Serverless + Plain Files.** Alle Daten liegen als lesbares Markdown vor, das jederzeit inspiziert, durchsucht und mit jedem gewählten Tool synchronisiert werden kann.
 
 ## Inhalt des Repositories
 
@@ -59,7 +59,7 @@ template/            Kopierfähiges Yard-Skelett:
   DAILY_SYNC_LOG.md    Einmal-pro-Tag-per-Host Gate
   CONFLICT_REVIEW_LOG.md  Tägliche Prüfung von Konfliktkopien
   agents/  messages/  hosts/  _archive/   (jeweils mit README-Regeln)
-scripts/sync_daily_check.py   Das Tages-Gate (check|mark), zero dependencies
+scripts/system_gap_daily_check.py   Das Tages-Gate (check|mark), zero dependencies
 docs/adapting-your-agents.md  Anbindung an CLAUDE.md/AGENTS.md/GEMINI.md
 ```
 
@@ -73,21 +73,21 @@ cp -r template/ /pfad/zu/deinem/sync/speicher/SYNC/
 mkdir /pfad/zu/.../SYNC/hosts/<DEIN-HOST-NAME>
 
 # 3) Umgebungsvariable setzen (siehe docs/adapting-your-agents.md)
-setx SYNC_MASTER_DIR "C:\pfad\zu\SYNC"     # Windows
-export SYNC_MASTER_DIR=/pfad/zu/SYNC       # macOS/Linux
+setx SYSTEM_GAP_MASTER_DIR "C:\pfad\zu\SYNC"     # Windows
+export SYSTEM_GAP_MASTER_DIR=/pfad/zu/SYNC       # macOS/Linux
 
 # 4) Täglich pro Rechner ausführen (wird vom KI-Agenten via SKILL.md ausgeführt):
-python scripts/sync_daily_check.py check   # Gate-Prüfung: Heute fällig?
+python scripts/system_gap_daily_check.py check   # Gate-Prüfung: Heute fällig?
 # ... Ritual ausführen (Posteingang lesen, Status schreiben) ...
-python scripts/sync_daily_check.py mark    # Ausführung stempeln
+python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
 ```
 
 ## Die acht Kernregeln (Kurzübersicht)
 
 1. **Slot-Regel** — Jeder Rechner schreibt nur in seinen eigenen Host-Slot (`hosts/<hostname>/`); fremde Slots werden niemals editiert.
-2. **Standard-Pfade** — Übergabeordner wird über die Umgebungsvariable `SYNC_MASTER_DIR` adressiert.
+2. **Standard-Pfade** — Übergabeordner wird über die Umgebungsvariable `SYSTEM_GAP_MASTER_DIR` adressiert.
 3. **Nachrichtenkanäle** — Inter-Agenten-Nachrichten werden nach dem Verarbeiten archiviert oder gelöscht.
-4. **Tägliches Ritual (Daily Gate)** — Max. 1x pro Tag pro Host ausführen (`scripts/sync_daily_check.py`).
+4. **Tägliches Ritual (Daily Gate)** — Max. 1x pro Tag pro Host ausführen (`scripts/system_gap_daily_check.py`).
 5. **Keine Secrets** — Keine Passwörter, API-Keys oder sensible Daten im Sync Yard speichern.
 6. **Snapshot-Transite** — Datenbanken (z. B. SQLite) werden via Snapshot-Tools übertragen, nicht im Hot-Sync.
 7. **Konflikt-Bereinigung** — Automatisch erzeugte Konfliktkopien werden beim täglichen Ritual konsolidiert.

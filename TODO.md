@@ -1,8 +1,8 @@
-# Pre-Release TODO: sync-master
+# Pre-Release TODO: system-gap-master
 
 **Audit Date:** 2026-07-21
 **Auditor:** Antigravity / Gemini githubbot-one-repo-cleaner
-**Target Repo:** `dev-bricks/sync-master`
+**Target Repo:** `dev-bricks/system-gap-master`
 
 ---
 
@@ -22,9 +22,26 @@
 
 ## HIGH PRIORITY
 
-- [x] Add a small regression test for `scripts/sync_daily_check.py` using a temporary yard.
+- [x] Add a small regression test for `scripts/system_gap_daily_check.py` using a temporary yard.
 - [ ] Document one concrete setup example per agent family once the public repo wiring is stable.
 - [ ] Decide whether the daily gate should optionally write JSON output for hook integrations.
+- [x] **Finish the rename to `system-gap-master`.** User decision received
+  2026-07-27. Repository metadata, documentation, the daily gate script and
+  GitHub remote now use the new name. The old script name and
+  `SYNC_MASTER_DIR` remain temporary compatibility aliases.
+- [ ] **Port the config-state pattern from the private instance** (bidirectional-improvement rule,
+  `~/CLAUDE.md` → "Verbesserungen beidseitig rückangleichen"). The private yard gained a
+  **configuration showroom** on 2026-07-26: every machine drops an allowlist-filtered snapshot of
+  how its AI agents are actually configured (Claude Code, Claude Desktop, Codex, Antigravity) into
+  `_config-state/snapshots/<slot>.json`; a generated `CONFIG-STATE.md` diffs the machines and flags
+  differences that lack a written rationale in the hand-maintained `DEVIATIONS.md`. It answers the
+  question a sync yard otherwise leaves open: *machines drift in configuration, not just in files.*
+  Reference implementation: `.SYNC/scripts/config_snapshot.py` (~330 LOC, zero dependencies,
+  stdlib only — fits this repo's zero-dependency rule). For the public version, generalise the
+  provider list (do not hardcode Anthropic/OpenAI/Google paths — make them a config table) and keep
+  the two hard-won safety properties: **allowlist instead of blocklist**, and **`<HOME>` path
+  normalisation** so Windows and macOS snapshots stay comparable.
+  *Noted 2026-07-26 [C].*
 
 ---
 

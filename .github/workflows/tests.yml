@@ -1,4 +1,4 @@
-name: sync-master tests
+name: system-gap-master tests
 
 on:
   push:

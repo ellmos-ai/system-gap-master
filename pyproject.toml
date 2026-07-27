@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sync-master"
-version = "1.1.0"
+name = "system-gap-master"
+version = "1.2.0"
 description = "Serverless cross-machine sync protocol and transfer yard for multi-machine AI agent operations"
 readme = "README.md"
 authors = [
@@ -36,10 +36,10 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/dev-bricks/sync-master"
-Documentation = "https://github.com/dev-bricks/sync-master/blob/main/PROTOCOL.md"
-Repository = "https://github.com/dev-bricks/sync-master"
-"Bug Tracker" = "https://github.com/dev-bricks/sync-master/issues"
+Homepage = "https://github.com/dev-bricks/system-gap-master"
+Documentation = "https://github.com/dev-bricks/system-gap-master/blob/main/PROTOCOL.md"
+Repository = "https://github.com/dev-bricks/system-gap-master"
+"Bug Tracker" = "https://github.com/dev-bricks/system-gap-master/issues"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

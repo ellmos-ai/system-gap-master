@@ -25,18 +25,18 @@
 - [ ] MERGE the relevant parts into this machine's local rule files
       (CLAUDE.md / AGENTS.md / GEMINI.md …) — adapt absolute paths; the local
       file is authoritative, the snapshot is reference.
-- [ ] Add the sync-yard section to the local rule file (see sync-master
+- [ ] Add the sync-yard section to the local rule file (see system-gap-master
       `docs/adapting-your-agents.md`): yard path, slot name, daily ritual.
 
 ## 4. Register the daily gate
 
-- [ ] Set `SYNC_MASTER_DIR` (user environment variable) to this folder.
-- [ ] Optional: wire `scripts/sync_daily_check.py check` into the agent's
+- [ ] Set `SYSTEM_GAP_MASTER_DIR` (user environment variable) to this folder.
+- [ ] Optional: wire `scripts/system_gap_daily_check.py check` into the agent's
       session-start hook for the once-a-day reminder.
 
 ## 5. First sync
 
-- [ ] Run the sync-master ritual (SKILL.md): read all slots and root topic
+- [ ] Run the system-gap-master ritual (SKILL.md): read all slots and root topic
       documents, integrate what applies to this machine, announce the new
       machine via `messages/to-<other-hosts>.md`, mark the gate.
 

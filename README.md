@@ -1,4 +1,4 @@
-# sync-master
+# system-gap-master
 
 [English](README.md) | [Deutsch](README_de.md)
 
@@ -19,7 +19,7 @@ runbook** that can bring up a fresh machine from the yard alone.
 Part of the cross-agent infrastructure family:
 [lock-master](https://github.com/dev-bricks/lock-master) (locks) ·
 [ticket-master](https://github.com/dev-bricks/ticket-master) (tickets) ·
-**sync-master** (cross-machine sync).
+**system-gap-master** (cross-machine sync).
 
 > [!NOTE]
 > **For AI Agents & RAG Crawlers:** Machine-readable protocol specs and daily sync skills are indexed in [`llms.txt`](llms.txt), [`SKILL.md`](SKILL.md), and [`PROTOCOL.md`](PROTOCOL.md).
@@ -33,14 +33,14 @@ flowchart TD
         SlotB["hosts/laptop/"]
     end
     subgraph SyncYard["Transfer Yard (OneDrive / Syncthing / NAS)"]
-        SlotA -->|Host A writes only Slot A| YardStorage["sync-master yard"]
+        SlotA -->|Host A writes only Slot A| YardStorage["system-gap-master yard"]
         SlotB -->|Host B writes only Slot B| YardStorage
-        YardStorage --> GateScript["scripts/sync_daily_check.py (Daily Gate)"]
+        YardStorage --> GateScript["scripts/system_gap_daily_check.py (Daily Gate)"]
         GateScript --> MsgChannel["messages/ (Delete-after-read)"]
     end
 ```
 
-> **Deutsch:** sync-master ist die nutzerneutrale, offene Fassung eines seit
+> **Deutsch:** system-gap-master ist die nutzerneutrale, offene Fassung eines seit
 > Monaten produktiv laufenden Cross-System-Sync-Ordners: mehrere Rechner,
 > mehrere KI-Agenten (Claude/Codex/Gemini), EIN gemeinsamer Übergaberaum —
 > ohne Server, über einen beliebigen Datei-Sync. Slot-Regel gegen Konflikte,
@@ -56,7 +56,7 @@ flowchart TD
 | dotfiles repos | config files | agent-centric knowledge, messages, runbooks, rituals |
 | memory MCPs / cloud memory | one agent's memory | multi-agent, multi-machine, provider-neutral, inspectable files |
 
-sync-master's niche: **multi-machine + multi-agent + serverless + plain
+system-gap-master's niche: **multi-machine + multi-agent + serverless + plain
 files.** Everything is human-readable Markdown you can audit, grep and sync
 with anything.
 
@@ -74,7 +74,7 @@ template/            copy-ready yard skeleton:
   DAILY_SYNC_LOG.md    once-per-day-per-host gate
   CONFLICT_REVIEW_LOG.md  daily conflict-copy sweep gate
   agents/  messages/  hosts/  _archive/   (each with its rules README)
-scripts/sync_daily_check.py   the gate (check|mark), zero dependencies
+scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
 ```
 
@@ -88,13 +88,13 @@ cp -r template/ /path/to/your/synced/storage/SYNC/
 mkdir /path/to/.../SYNC/hosts/<YOUR-HOST>
 
 # 3) Point your agents at it (see docs/adapting-your-agents.md)
-setx SYNC_MASTER_DIR "C:\path\to\SYNC"     # Windows
-export SYNC_MASTER_DIR=/path/to/SYNC       # macOS/Linux
+setx SYSTEM_GAP_MASTER_DIR "C:\path\to\SYNC"     # Windows
+export SYSTEM_GAP_MASTER_DIR=/path/to/SYNC       # macOS/Linux
 
 # 4) Daily, per machine (your agent does this via SKILL.md):
-python scripts/sync_daily_check.py check   # gate: due today?
+python scripts/system_gap_daily_check.py check   # gate: due today?
 # ... run the ritual (read inbound, write outbound) ...
-python scripts/sync_daily_check.py mark
+python scripts/system_gap_daily_check.py mark
 ```
 
 ## The eight rules (short)
@@ -122,7 +122,7 @@ transit tool owns integrity and merging.
 
 ## Part of the ellmos stack family
 
-sync-master is deliberately both: a standalone dev tool you can drop into any
+system-gap-master is deliberately both: a standalone dev tool you can drop into any
 project, and a core module of the ellmos stack family.
 
 Core module of [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack)

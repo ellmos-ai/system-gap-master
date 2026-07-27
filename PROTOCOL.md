@@ -1,4 +1,4 @@
-# The sync-master Protocol
+# The system-gap-master Protocol
 
 The full specification of the protocol. The copy-ready starter files live in
 `template/`; this document explains the rules and the reasoning behind them.
@@ -59,7 +59,7 @@ there needs correction, leave a message (R4).
 ### R2 — Daily ritual, gated
 Once per day per host, run the routine in `SKILL.md`. The gate is
 `DAILY_SYNC_LOG.md`: if today's row for this host exists, skip; when done,
-mark it. `scripts/sync_daily_check.py check|mark` automates the gate and can
+mark it. `scripts/system_gap_daily_check.py check|mark` automates the gate and can
 be wired into an agent's session-start hook (see `docs/adapting-your-agents.md`).
 
 ### R3 — Transfer yard, not storage

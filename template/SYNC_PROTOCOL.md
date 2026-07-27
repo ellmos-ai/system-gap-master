@@ -1,6 +1,6 @@
 # Cross-machine sync yard — local protocol summary
 
-> Instantiated from sync-master (https://github.com/dev-bricks/sync-master).
+> Instantiated from system-gap-master (https://github.com/dev-bricks/system-gap-master).
 > Full rules and reasoning: PROTOCOL.md in the repo. This file is the
 > yard-local summary — extend the artifact table below as your yard grows.
 
@@ -22,7 +22,7 @@ items arrive, get integrated by their target system, then move to `_archive/`.
 1. **Slot rule:** write only your own slot + shared drop zones; never edit a
    foreign slot — leave a message instead.
 2. **Daily ritual:** once per day per host (gate: `DAILY_SYNC_LOG.md`,
-   tooling: `scripts/sync_daily_check.py`); routine: SKILL.md of sync-master.
+   tooling: `scripts/system_gap_daily_check.py`); routine: SKILL.md of system-gap-master.
 3. **Transfer yard:** integrated items go to `_archive/`, never raw-delete.
 4. **Messages:** `messages/to-<recipient>.md`, `[<from> YYYY-MM-DD] …`;
    recipient deletes after reading.

@@ -1,14 +1,14 @@
-# sync-master
+# system-gap-master
 
 ## Last-checked: 2026-07-26
 
 ## Canonical repository
 
-https://github.com/dev-bricks/sync-master
+https://github.com/dev-bricks/system-gap-master
 
 ## Summary
 
-sync-master is a serverless cross-machine sync protocol for users who run
+system-gap-master is a serverless cross-machine sync protocol for users who run
 several machines and several AI agents. It uses one human-readable transfer
 yard, host-owned slots, delete-after-read message channels, agent-rule
 snapshots and a once-per-day gate script to keep machines from drifting into
@@ -20,7 +20,7 @@ separate state silos.
 - `README_de.md` — vollständige deutsche Dokumentation & Schnellstart.
 - `PROTOCOL.md` — full protocol and design rationale.
 - `SKILL.md` — daily sync ritual for agents.
-- `scripts/sync_daily_check.py` — zero-dependency daily gate script.
+- `scripts/system_gap_daily_check.py` — zero-dependency daily gate script.
 - `template/` — copy-ready yard skeleton.
 - `docs/adapting-your-agents.md` — integration notes for agent rule files and
   session-start hooks.

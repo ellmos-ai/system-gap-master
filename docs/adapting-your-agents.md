@@ -1,6 +1,6 @@
 # Adapting your agents to the yard
 
-sync-master is convention + a tiny gate script; the actual work is done by
+system-gap-master is convention + a tiny gate script; the actual work is done by
 whatever agents you run. Wire it in three places.
 
 ## 1. Rule-file section (all agents)
@@ -9,14 +9,14 @@ Add a section like this to each machine's agent rule file (CLAUDE.md,
 AGENTS.md, GEMINI.md, .codex/GPT.md, …) — adapt paths and host name:
 
 ```markdown
-## Cross-machine sync (sync-master)
+## Cross-machine sync (system-gap-master)
 
 - Yard: <path to your synced folder>   ·   This machine's slot: hosts/<HOST>/
 - Rules: SYNC_PROTOCOL.md in the yard. Slot rule: write only our own slot +
   agents/ + messages/; never edit foreign slots. No secrets in the yard.
-- Once per day run the sync ritual (sync-master SKILL.md): gate via
-  `python <repo>/scripts/sync_daily_check.py check|mark`
-  (or SYNC_MASTER_DIR env var). Read messages/to-<HOST>.md and
+- Once per day run the sync ritual (system-gap-master SKILL.md): gate via
+  `python <repo>/scripts/system_gap_daily_check.py check|mark`
+  (or SYSTEM_GAP_MASTER_DIR env var). Read messages/to-<HOST>.md and
   messages/to-<agent>.md, delete entries after reading.
 ```
 
@@ -33,7 +33,7 @@ most once per day. Example for Claude Code (`~/.claude/settings.json`):
         "hooks": [
           {
             "type": "command",
-            "command": "python <path-to-repo>/scripts/sync_daily_check.py check --dir <path-to-yard>"
+            "command": "python <path-to-repo>/scripts/system_gap_daily_check.py check --dir <path-to-yard>"
           }
         ]
       }
@@ -49,7 +49,7 @@ way; a shell profile line is a valid low-tech fallback.
 
 ## 3. Register the ritual as a skill/command (optional)
 
-- **Claude Code:** copy `SKILL.md` to `~/.claude/skills/sync-master/SKILL.md`
+- **Claude Code:** copy `SKILL.md` to `~/.claude/skills/system-gap-master/SKILL.md`
   (or expose it as a `/sync` command wrapper).
 - **Codex / Gemini / others:** paste the SKILL.md steps into the tool's
   prompt/automation format — the routine is plain natural-language steps on
