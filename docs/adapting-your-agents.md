@@ -47,13 +47,90 @@ gate file doesn't exist), and prints a gentle reminder when the sync is due.
 Other agents: any "run a command at session start" mechanism works the same
 way; a shell profile line is a valid low-tech fallback.
 
-## 3. Register the ritual as a skill/command (optional)
+## 3. Concrete Setup Examples per Agent Family
 
-- **Claude Code:** copy `SKILL.md` to `~/.claude/skills/system-gap-master/SKILL.md`
-  (or expose it as a `/sync` command wrapper).
-- **Codex / Gemini / others:** paste the SKILL.md steps into the tool's
-  prompt/automation format — the routine is plain natural-language steps on
-  purpose, with the gate script as the only tooling dependency.
+### A. Claude Code (Anthropic Family)
+
+1. **Global/Local Rule File (`CLAUDE.md`):**
+   ```markdown
+   ## System Gap Master (Cross-machine Sync)
+   - Yard path: `C:\Users\username\OneDrive\.TOPICS\_control-center\_YARD\`
+   - Host slot: `hosts/WORKSTATION-LG/`
+   - Daily Gate: Run `python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check` at session start.
+   ```
+
+2. **SessionStart Hook (`~/.claude/settings.json`):**
+   ```json
+   {
+     "hooks": {
+       "SessionStart": [
+         {
+           "hooks": [
+             {
+               "type": "command",
+               "command": "python C:/_Local_DEV/repos/system-gap-master/scripts/system_gap_daily_check.py check"
+             }
+           ]
+         }
+       ]
+     }
+   }
+   ```
+
+3. **Skill Installation:**
+   Copy `SKILL.md` to `~/.claude/skills/system-gap-master/SKILL.md` to trigger via `/system-gap-master`.
+
+---
+
+### B. Codex CLI & Codex Desktop (OpenAI Family)
+
+1. **Global Instruction File (`C:\Users\username\CLAUDE.md` or `.codex/GPT.md`):**
+   ```markdown
+   ## System Gap Sync Protocol
+   - Check daily sync status: `python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check`
+   - Read inbox: `messages/to-codex.md` and `messages/to-WORKSTATION-LG.md`.
+   - Update state snapshot in `hosts/WORKSTATION-LG/STATE.md`.
+   ```
+
+2. **Automation Startup Gate:**
+   Configure `safe-start-for-codex` or `.codex/config.toml` to execute `system_gap_daily_check.py check` before starting scheduled tasks.
+
+---
+
+### C. Gemini / Antigravity (Google / AGY Family)
+
+1. **System Prompt / User Rules (`GEMINI.md` / `user_rules`):**
+   ```markdown
+   ## Cross-Machine Sync Rule
+   - Sync Yard: `OneDrive\.TOPICS\_control-center\_YARD\`
+   - Check daily gate status via `system_gap_daily_check.py check`.
+   - If sync is due, read inbox messages in `messages/to-gemini.md` and update `hosts/<HOST>/STATE.md`.
+   ```
+
+2. **Launcher / Startup Script (`START-AGY.bat`):**
+   ```cmd
+   @echo off
+   python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check
+   agy chat
+   ```
+
+---
+
+### D. Custom Python Scripts & Subagent Frameworks
+
+1. **Python API Integration:**
+   ```python
+   from pathlib import Path
+   from system_gap_daily_check import check_sync_due, mark_sync_done
+
+   yard_dir = Path(r"C:\Users\username\OneDrive\.TOPICS\_control-center\_YARD")
+   if check_sync_due(yard_dir):
+       print("Daily sync is due. Processing inbox...")
+       # Perform sync tasks
+       mark_sync_done(yard_dir)
+   ```
+
+---
 
 ## Multi-agent note
 
