@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -291,6 +292,63 @@ class TestFailClosedGates(ReconcilerFixture):
 
 
 class TestSafetyLifecycle(ReconcilerFixture):
+    def test_windows_short_path_alias_is_not_treated_as_reparse(self):
+        if os.name != "nt":
+            self.skipTest("Windows 8.3 path test")
+        buffer = __import__("ctypes").create_unicode_buffer(32768)
+        length = __import__("ctypes").windll.kernel32.GetShortPathNameW(
+            str(self.base), buffer, len(buffer)
+        )
+        if not length or length >= len(buffer):
+            self.skipTest("Windows short-path alias unavailable")
+        short_base = Path(buffer.value)
+        if os.path.normcase(str(short_base)) == os.path.normcase(str(self.base)):
+            self.skipTest("Windows short-path alias is identical")
+
+        self.write("notes.md", "same\n")
+        self.write("notes (conflict).md", "same\n")
+        config = self.config("notes (conflict).md", "notes.md")
+        config["state_dir"] = str(short_base / "state")
+        config["roots"][0]["path"] = str(short_base / "yard")
+
+        plan = ConflictCopyReconciler(config).plan()
+        self.assertEqual(plan["items"][0]["merge_class"], "exact")
+
+    def test_windows_root_junction_is_rejected_before_canonicalization(self):
+        if os.name != "nt":
+            self.skipTest("Windows junction test")
+        target = self.base / "outside-root"
+        target.mkdir()
+        junction = self.base / "root-junction"
+        created = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(junction), str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if created.returncode != 0:
+            self.skipTest(f"junction creation unavailable: {created.stderr}")
+        config = self.config("notes (conflict).md", "notes.md")
+        config["roots"][0]["path"] = str(junction)
+        with self.assertRaisesRegex(ReconcilerError, "symlink-or-reparse"):
+            ConflictCopyReconciler(config)
+
+    def test_windows_state_junction_is_rejected_before_canonicalization(self):
+        if os.name != "nt":
+            self.skipTest("Windows junction test")
+        target = self.base / "outside-state"
+        target.mkdir()
+        created = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(self.state), str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if created.returncode != 0:
+            self.skipTest(f"junction creation unavailable: {created.stderr}")
+        with self.assertRaisesRegex(ReconcilerError, "symlink-or-reparse"):
+            self.reconciler("notes (conflict).md", "notes.md")
+
     def test_observer_mode_cannot_mutate(self):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")

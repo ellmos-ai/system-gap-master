@@ -2,7 +2,12 @@
 
 from typing import Any
 
-__all__ = ["ConflictCopyReconciler", "ReconcilerError"]
+__all__ = [
+    "ConflictCopyReconciler",
+    "ReconcilerError",
+    "TrustedPeerPathError",
+    "TrustedPeerPathRegistry",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -11,9 +16,15 @@ def __getattr__(name: str) -> Any:
             ConflictCopyReconciler,
             ReconcilerError,
         )
+        from .trusted_peer_paths import (
+            TrustedPeerPathError,
+            TrustedPeerPathRegistry,
+        )
 
         return {
             "ConflictCopyReconciler": ConflictCopyReconciler,
             "ReconcilerError": ReconcilerError,
+            "TrustedPeerPathError": TrustedPeerPathError,
+            "TrustedPeerPathRegistry": TrustedPeerPathRegistry,
         }[name]
     raise AttributeError(name)

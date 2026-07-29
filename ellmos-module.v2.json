@@ -10,7 +10,9 @@
     "sync.files",
     "sync.yard",
     "sync.messages",
-    "sync.conflict-copy-reconciliation"
+    "sync.conflict-copy-reconciliation",
+    "sync.trusted-peer-path-registry",
+    "sync.trusted-peer-pull-plan"
   ],
   "requires": [],
   "optional": [
@@ -40,5 +42,21 @@
     "path": ".",
     "repository": "https://github.com/dev-bricks/system-gap-master"
   },
-  "adapters": []
+  "adapters": [
+    {
+      "id": "sftp",
+      "role": "trusted-peer-file-pull",
+      "networks": [
+        "tailscale",
+        "lan"
+      ]
+    },
+    {
+      "id": "sqlite-transit-sync",
+      "role": "database-snapshot-transit",
+      "required_for": [
+        "database/sqlite"
+      ]
+    }
+  ]
 }

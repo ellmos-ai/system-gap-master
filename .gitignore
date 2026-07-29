@@ -1,11 +1,16 @@
 # Internal working notes (never released)
 _intern/
 LOCK*.txt
+trusted-peer-paths.local.json
+trusted-peer-paths.entries.local.json
 
 # Python
 __pycache__/
 *.pyc
 .venv/
+build/
+dist/
+*.egg-info/
 
 # Local configuration and private data
 .env

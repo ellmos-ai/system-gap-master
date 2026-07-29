@@ -11,6 +11,22 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+## 1.4.0 - 2026-07-29
+
+- Added the user- and host-neutral `trusted-peer-paths` API/CLI with atomic
+  own-slot publish, HMAC-authenticated validation, peer-filtered list/resolve,
+  replay pins and machine-readable schemas/examples.
+- Added shell-free SFTP pull plans and explicit `pull --apply` for ordinary
+  files with strict known-host checking, destination allowlists, local
+  staging and no-overwrite installation.
+- Added the R9 database boundary: SQLite/`-wal`/`-shm` paths may be published
+  only as discovery metadata with `direct_pull=false` and
+  `adapter=sqlite-transit-sync`; direct pull remains blocked.
+- Hardened Windows 8.3/reparse handling and physical overlap comparisons,
+  canonical IDs, strict JSON/revision state, OpenSSH option paths, immutable
+  pull plans, bounded null-output SFTP staging, owner-only modes and atomic
+  no-overwrite result/file installation.
+
 ## 1.3.2 - 2026-07-29
 
 - Renew leases through a unique no-overwrite temporary file followed by

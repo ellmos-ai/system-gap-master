@@ -1,0 +1,39 @@
+{
+  "schema": "system-gap.trusted-peer-paths.local-config.v1",
+  "yard_root": "/absolute/path/to/synced/SYNC",
+  "local_host_id": "HOST-A",
+  "local_peer_id": "PEER-A",
+  "state_dir": "/absolute/host-local/state/system-gap-master",
+  "publisher": {
+    "key_id": "host-a-v1",
+    "signing_key_ref": "/absolute/host-local/keys/host-a.hmac",
+    "endpoints": [
+      {
+        "endpoint_id": "tailscale-sftp",
+        "transport": "sftp",
+        "network": "tailscale",
+        "host": "host-a.example",
+        "port": 22,
+        "username": "registry-reader",
+        "description": "Read-only SFTP account reachable by trusted peers."
+      }
+    ]
+  },
+  "trusted_hosts": [
+    {
+      "host_id": "HOST-B",
+      "key_id": "host-b-v1",
+      "verification_key_ref": "/absolute/host-local/keys/host-b.hmac",
+      "min_revision": 1
+    }
+  ],
+  "pull_destination_roots": [
+    "/absolute/host-local/imports"
+  ],
+  "ssh": {
+    "known_hosts_ref": "/absolute/host-local/ssh/known_hosts",
+    "sftp_executable_ref": "/usr/bin/sftp",
+    "connect_timeout_seconds": 15,
+    "max_download_bytes": 67108864
+  }
+}

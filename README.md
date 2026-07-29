@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-49%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-97%20passed%20%2B%203%20platform%20skips-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -63,7 +63,7 @@ with anything.
 ## What's in the box
 
 ```
-PROTOCOL.md          the full protocol (8 rules) + design notes
+PROTOCOL.md          the full protocol (10 rules) + design notes
 SKILL.md             the daily ritual as an agent-neutral skill
 CHANGELOG.md         notable public maintenance changes
 llms.txt             machine-readable summary for agents and search tools
@@ -77,7 +77,10 @@ template/            copy-ready yard skeleton:
 scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
 system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
+system_gap_master/trusted_peer_paths.py
+                      signed publish/validate/list/resolve/pull-plan/pull CLI
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
+docs/trusted-peer-path-registry.md  direct trusted-peer pull contract
 ```
 
 ## Quick start
@@ -99,7 +102,7 @@ python scripts/system_gap_daily_check.py check   # gate: due today?
 python scripts/system_gap_daily_check.py mark
 ```
 
-## The eight rules (short)
+## The ten rules (short)
 
 1. **Slot rule** — write your own slot only; never edit foreign slots.
 2. **Daily ritual, gated** — once per day per host, 2–5 minutes.
@@ -109,6 +112,9 @@ python scripts/system_gap_daily_check.py mark
 6. **No secrets in the yard** — reference local locations instead.
 7. **Conflict-copy sweep** — daily, provider-agnostic.
 8. **BOOTSTRAP.md stays current** — it must always bring up a fresh machine.
+9. **Structured payloads use adapters** — never sync live SQLite/WAL files.
+10. **Trusted peer paths are signed** — hosts publish only their own registry;
+    authorized peers verify it before direct SFTP pulls.
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
@@ -150,6 +156,25 @@ See [the reconciler contract](docs/conflict-copy-reconciler.md), the
 [configuration example](examples/conflict-reconciler.config.example.json),
 and the provider-neutral desktop/macOS templates under `template/runners/`.
 
+## Direct trusted-peer pulls
+
+The optional `trusted-peer-paths` CLI lets each host atomically publish a
+signed registry in its own `hosts/<HOST>/trusted-peer-paths/` slot. A
+registry contains exact local/SFTP paths, endpoint metadata and allowed peer
+IDs, but never file content, credential values or signing keys. Authorized
+peers can validate, list, resolve and pull ordinary files directly over SFTP
+on Tailscale/LAN without per-request coordination.
+
+Pull execution is explicit (`pull --apply`), shell-free, strict-known-host,
+destination-allowlisted and no-overwrite. Live SQLite paths remain
+discoverable only as `kind=database/sqlite`, `direct_pull=false`,
+`adapter=sqlite-transit-sync`; R9 keeps their bytes in the verified
+`db-transit/<namespace>` snapshot flow.
+
+See the [trusted peer registry contract](docs/trusted-peer-path-registry.md),
+the [JSON schemas](schemas/) and the
+[host-local examples](examples/trusted-peer-paths.local-config.example.json).
+
 ## Companion tools
 
 The yard carries documents; it deliberately does NOT carry live databases
@@ -176,6 +201,9 @@ SQLite state (role `sync.database`): [sqlite-transit-sync](https://github.com/de
 - The yard travels through your sync provider: treat it as **semi-trusted**.
   Never put credentials, tokens or personal/case data in it (rule 6) — the
   templates and the skill repeat this at every write point.
+- Exact credential *paths* may appear only in a signed trusted-peer registry;
+  referenced values, HMAC keys, SSH private keys and validation state stay
+  host-local. SFTP server ACLs remain authoritative.
 - Everything is plain files: your existing backup, encryption and access
   control apply unchanged.
 

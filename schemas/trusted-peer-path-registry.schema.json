@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-path-registry.schema.json",
+  "title": "system-gap-master trusted peer path registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "host_id",
+    "revision",
+    "published_at",
+    "endpoints",
+    "paths",
+    "signature"
+  ],
+  "properties": {
+    "schema": {
+      "const": "system-gap.trusted-peer-paths.registry.v1"
+    },
+    "host_id": {
+      "$ref": "#/$defs/hostId"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/endpoint"
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "hmac-sha256"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9_.-]{0,62}[a-z0-9_-])?$",
+      "not": {
+        "pattern": "^(?:aux|con|nul|prn|com[1-9]|lpt[1-9])(?:\\..*)?$"
+      }
+    },
+    "hostId": {
+      "type": "string",
+      "pattern": "^[A-Z0-9](?:[A-Z0-9_.-]{0,62}[A-Z0-9_-])?$",
+      "not": {
+        "pattern": "^(?:AUX|CON|NUL|PRN|COM[1-9]|LPT[1-9])(?:\\..*)?$"
+      }
+    },
+    "peerId": {
+      "$ref": "#/$defs/hostId"
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint_id",
+        "transport",
+        "network",
+        "host",
+        "port",
+        "username"
+      ],
+      "properties": {
+        "endpoint_id": {
+          "$ref": "#/$defs/id"
+        },
+        "transport": {
+          "const": "sftp"
+        },
+        "network": {
+          "enum": [
+            "tailscale",
+            "lan"
+          ]
+        },
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 253
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "username": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id",
+        "kind",
+        "local_path",
+        "remote_path",
+        "endpoint_id",
+        "allowed_peer_ids",
+        "direct_pull"
+      ],
+      "properties": {
+        "path_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "file",
+            "directory",
+            "database/sqlite"
+          ]
+        },
+        "local_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "remote_path": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._/@+,=:() -]{1,4095}$"
+        },
+        "endpoint_id": {
+          "$ref": "#/$defs/id"
+        },
+        "allowed_peer_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/peerId"
+          }
+        },
+        "direct_pull": {
+          "type": "boolean"
+        },
+        "adapter": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "database/sqlite"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "adapter"
+            ],
+            "properties": {
+              "direct_pull": {
+                "const": false
+              },
+              "adapter": {
+                "const": "sqlite-transit-sync"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
