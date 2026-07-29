@@ -196,6 +196,23 @@ org overview: [ellmos-ai](https://github.com/ellmos-ai). Companion module for li
 SQLite state (role `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) — see
 [Companion tools](#companion-tools) above.
 
+## Bundles and partners
+
+`system-gap-master` remains a standalone, serverless sync tool. In the V4
+composition it is the required federation and receipt coordinator of the
+`ellmos-sync-federation-bundle`. Its direct partners are the recommended
+`sqlite-transit-sync` snapshot adapter and read-only system-map export and
+receipt-validation components.
+
+Federation is optional for a local system: if this module is absent or not
+healthy, the local core may still produce its local manifest and gap output;
+foreign-map import, fleet analysis and direct trusted-peer transfer are then
+unavailable rather than silently simulated.
+
+The authoritative bundle manifest defines membership, versions, profiles and
+private composition recipes. This public section describes only safe,
+standalone discovery relationships.
+
 ## Security & privacy notes
 
 - The yard travels through your sync provider: treat it as **semi-trusted**.

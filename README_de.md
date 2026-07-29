@@ -144,6 +144,24 @@ Details:
 [`schemas/`](schemas/) und
 [`examples/trusted-peer-paths.local-config.example.json`](examples/trusted-peer-paths.local-config.example.json).
 
+## Bundles und Partner
+
+`system-gap-master` bleibt ein eigenständig nutzbares, serverloses
+Sync-Werkzeug. In der V4-Komposition ist es der erforderliche Föderations- und
+Receipt-Koordinator des `ellmos-sync-federation-bundle`. Direkte Partner sind
+der empfohlene Snapshot-Adapter `sqlite-transit-sync` sowie schreibgeschützte
+Systemkarten-Export- und Receipt-Validierungskomponenten.
+
+Föderation ist für ein lokales System optional: Fehlt dieses Modul oder ist es
+nicht gesund, kann der lokale Kern weiterhin sein lokales Manifest und seine
+Gap-Ausgabe erzeugen. Import fremder Karten, Fleet-Analyse und direkter
+Trusted-Peer-Transfer sind dann nicht verfügbar und werden nicht still
+simuliert.
+
+Das verbindliche Bundle-Manifest definiert Mitgliedschaft, Versionen, Profile
+und private Zusammensetzungsrezepte. Dieser öffentliche Abschnitt beschreibt
+nur sichere, eigenständig nutzbare Discovery-Beziehungen.
+
 ## Lizenz
 
 MIT License — Copyright (c) dev-bricks / Lukas Geiger
