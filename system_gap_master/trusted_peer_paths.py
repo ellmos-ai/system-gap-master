@@ -320,7 +320,7 @@ def _assert_plain_existing(path: Path, *, directory: bool | None = None) -> None
 
 
 def _mkdir_plain(root: Path, target: Path) -> None:
-    if not _is_relative_to(target, root):
+    if not _path_is_within(target, root):
         raise TrustedPeerPathError("directory creation escaped its trusted root")
     _assert_plain_existing(root, directory=True)
     current = root
@@ -411,9 +411,23 @@ def _write_no_overwrite(path: Path, payload: bytes) -> None:
 
 
 def _comparison_path(path: Path) -> Path:
-    existing = path if path.exists() else path.parent
+    lexical = Path(os.path.abspath(path))
+    _assert_no_reparse_components(lexical, allow_missing=True)
+    existing = lexical
+    missing_parts: list[str] = []
+    while not os.path.lexists(existing):
+        parent = existing.parent
+        if parent == existing:
+            raise TrustedPeerPathError(
+                f"path has no existing comparison anchor: {lexical}"
+            )
+        missing_parts.append(existing.name)
+        existing = parent
     _assert_plain_existing(existing)
-    return path.resolve(strict=False)
+    physical = existing.resolve(strict=True)
+    for part in reversed(missing_parts):
+        physical /= part
+    return Path(os.path.abspath(physical))
 
 
 def _same_path(left: Path, right: Path) -> bool:
@@ -422,8 +436,20 @@ def _same_path(left: Path, right: Path) -> bool:
     )
 
 
+def _path_is_within(path: Path, root: Path) -> bool:
+    return _is_relative_to(_comparison_path(path), _comparison_path(root))
+
+
+def _paths_overlap(left: Path, right: Path) -> bool:
+    canonical_left = _comparison_path(left)
+    canonical_right = _comparison_path(right)
+    return _is_relative_to(canonical_left, canonical_right) or _is_relative_to(
+        canonical_right, canonical_left
+    )
+
+
 def _read_key(path: Path, yard_root: Path) -> bytes:
-    if _is_relative_to(path, yard_root) or _is_relative_to(yard_root, path):
+    if _paths_overlap(path, yard_root):
         raise TrustedPeerPathError("key references must not overlap the synced yard")
     _assert_plain_existing(path, directory=False)
     size = path.stat().st_size
@@ -764,9 +790,7 @@ class TrustedPeerPathRegistry:
             self.config["local_peer_id"], "local_peer_id"
         )
         self.state_dir = _lexical_absolute(self.config["state_dir"], "state_dir")
-        if _is_relative_to(self.state_dir, self.yard_root) or _is_relative_to(
-            self.yard_root, self.state_dir
-        ):
+        if _paths_overlap(self.state_dir, self.yard_root):
             raise TrustedPeerPathError("state_dir must not overlap the synced yard")
         if self.state_dir.exists():
             _assert_plain_existing(self.state_dir, directory=True)
@@ -785,9 +809,7 @@ class TrustedPeerPathRegistry:
         )
         for root in self.pull_destination_roots:
             _assert_plain_existing(root, directory=True)
-            if _is_relative_to(root, self.yard_root) or _is_relative_to(
-                self.yard_root, root
-            ):
+            if _paths_overlap(root, self.yard_root):
                 raise TrustedPeerPathError(
                     "pull destination roots must not overlap the synced yard"
                 )
@@ -874,7 +896,7 @@ class TrustedPeerPathRegistry:
         known_hosts_ref = _lexical_absolute(
             ssh["known_hosts_ref"], "known_hosts_ref"
         )
-        if _is_relative_to(known_hosts_ref, self.yard_root):
+        if _path_is_within(known_hosts_ref, self.yard_root):
             raise TrustedPeerPathError("known_hosts_ref must be host-local")
         known_hosts_option = known_hosts_ref.as_posix()
         if not SSH_CONFIG_PATH_RE.fullmatch(known_hosts_option):
@@ -886,7 +908,7 @@ class TrustedPeerPathRegistry:
         sftp_executable_ref = _lexical_absolute(
             ssh["sftp_executable_ref"], "sftp_executable_ref"
         )
-        if _is_relative_to(sftp_executable_ref, self.yard_root):
+        if _path_is_within(sftp_executable_ref, self.yard_root):
             raise TrustedPeerPathError("sftp_executable_ref must be host-local")
         _assert_plain_existing(sftp_executable_ref, directory=False)
         timeout = ssh["connect_timeout_seconds"]
@@ -1206,7 +1228,8 @@ class TrustedPeerPathRegistry:
         if not self.pull_destination_roots:
             raise TrustedPeerPathError("no pull_destination_roots are configured")
         if not any(
-            _is_relative_to(destination, root) for root in self.pull_destination_roots
+            _path_is_within(destination, root)
+            for root in self.pull_destination_roots
         ):
             raise TrustedPeerPathError("destination is outside configured pull roots")
         _assert_plain_existing(destination.parent, directory=True)
@@ -1430,10 +1453,8 @@ def _preflight_output(
         )
         for key in ("yard_root", "state_dir")
     ]
-    canonical_output = _comparison_path(output_path)
     for root in protected_roots:
-        canonical_root = _comparison_path(root)
-        if _is_relative_to(canonical_output, canonical_root):
+        if _path_is_within(output_path, root):
             raise TrustedPeerPathError(
                 "output must not be inside the synced yard or host-local state"
             )

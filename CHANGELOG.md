@@ -22,9 +22,10 @@ All notable changes to system-gap-master are documented here.
 - Added the R9 database boundary: SQLite/`-wal`/`-shm` paths may be published
   only as discovery metadata with `direct_pull=false` and
   `adapter=sqlite-transit-sync`; direct pull remains blocked.
-- Hardened Windows 8.3/reparse handling, canonical IDs, strict JSON/revision
-  state, OpenSSH option paths, immutable pull plans, bounded null-output SFTP
-  staging, owner-only modes and atomic no-overwrite result/file installation.
+- Hardened Windows 8.3/reparse handling and physical overlap comparisons,
+  canonical IDs, strict JSON/revision state, OpenSSH option paths, immutable
+  pull plans, bounded null-output SFTP staging, owner-only modes and atomic
+  no-overwrite result/file installation.
 
 ## 1.3.2 - 2026-07-29
 

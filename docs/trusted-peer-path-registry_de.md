@@ -100,6 +100,9 @@ Großschreibung, alle übrigen Registry-IDs kanonische Kleinschreibung.
 Windows-Gerätenamen, Alternate Data Streams und abschließende Punkte/Spaces
 werden abgelehnt. Bei vorhandenen Windows-`local_path`-Werten wird auch der
 finale Langpfad klassifiziert, sodass ein 8.3-Alias SQLite nicht tarnen kann.
+Boundary-Vergleiche lehnen zuerst lexikalische Reparse-Komponenten ab und
+vergleichen danach den physischen Pfad. So kann eine legitime 8.3-Schreibweise
+keine Überschneidung mit dem Yard oder einem anderen geschützten Pfad tarnen.
 
 Die Peer-Allowlist schützt die Resolve-/Pull-Grenze dieser CLI. Unabhängig
 davon muss der SSH-Server Authentisierung, schreibgeschützte Dateirechte und

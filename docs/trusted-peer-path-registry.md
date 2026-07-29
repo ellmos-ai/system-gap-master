@@ -93,7 +93,9 @@ Filesystem-facing host and peer IDs use canonical uppercase form; other
 registry IDs use canonical lowercase form. Windows device aliases, alternate
 data streams and trailing dot/space aliases are rejected. For an existing
 Windows `local_path`, the final long path is also classified so an 8.3 alias
-cannot disguise SQLite state.
+cannot disguise SQLite state. Security-boundary comparisons first reject
+lexical reparse components, then compare the physical path so a legitimate
+8.3 spelling cannot hide overlap with the yard or another protected path.
 
 The peer allowlist controls this CLI's resolve/pull boundary; the SSH server
 must separately enforce authentication, read-only filesystem permissions and

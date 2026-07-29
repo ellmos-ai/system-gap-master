@@ -58,7 +58,9 @@ Security reports concerning path validation, file access boundaries, or unexpect
   distributed only to the publisher's trusted peers.
 - JSON duplicate keys/non-finite values, non-canonical IDs, malformed local
   revision state and Windows ADS/device/trailing-dot aliases fail closed.
-  Publishers check strict highest-seen state before changing the yard.
+  After lexical reparse checks, Windows 8.3 aliases are expanded for every
+  yard/state/key/pull/output containment comparison. Publishers check strict
+  highest-seen state before changing the yard.
 - Peer allowlists protect resolve/pull in this CLI. They do not replace SSH
   authentication or server-side read-only ACLs.
 - Executed pulls use OpenSSH SFTP with `shell=False`, batch mode, strict

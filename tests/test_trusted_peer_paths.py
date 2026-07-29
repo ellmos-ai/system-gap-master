@@ -574,6 +574,58 @@ class TestPullBoundary(TrustedPeerPathFixture):
         )
         self.assertTrue(plan.executable)
 
+    def test_windows_short_alias_cannot_overlap_yard_boundaries(self):
+        short_yard = self.windows_short_path(self.yard)
+        yard_security = self.yard / "security"
+        yard_security.mkdir()
+        yard_known_hosts = yard_security / "known_hosts"
+        yard_known_hosts.write_text(
+            "peer-a.example ssh-ed25519 AAAATESTONLY\n", encoding="utf-8"
+        )
+        yard_sftp = yard_security / "sftp"
+        yard_sftp.write_text("test executable placeholder\n", encoding="utf-8")
+
+        cases = {
+            "state_dir": lambda config: config.__setitem__(
+                "state_dir", str(short_yard)
+            ),
+            "pull_destination_root": lambda config: config.__setitem__(
+                "pull_destination_roots", [str(short_yard)]
+            ),
+            "known_hosts_ref": lambda config: config["ssh"].__setitem__(
+                "known_hosts_ref", str(short_yard / "security" / "known_hosts")
+            ),
+            "sftp_executable_ref": lambda config: config["ssh"].__setitem__(
+                "sftp_executable_ref", str(short_yard / "security" / "sftp")
+            ),
+        }
+        for label, configure in cases.items():
+            with self.subTest(label=label):
+                config = json.loads(json.dumps(self.publisher_config))
+                configure(config)
+                with self.assertRaisesRegex(
+                    TrustedPeerPathError, "overlap|host-local"
+                ):
+                    TrustedPeerPathRegistry(config)
+
+        yard_key = yard_security / "host-a.hmac"
+        yard_key.write_bytes(b"a" * 64)
+        config = json.loads(json.dumps(self.publisher_config))
+        config["publisher"]["signing_key_ref"] = str(
+            short_yard / "security" / "host-a.hmac"
+        )
+        with self.assertRaisesRegex(TrustedPeerPathError, "overlap"):
+            TrustedPeerPathRegistry(config).publish(self.entries(2))
+
+    def test_windows_short_destination_alias_matches_long_pull_root(self):
+        short_pull_root = self.windows_short_path(self.pull_root)
+        plan = TrustedPeerPathRegistry(self.peer_config).pull_plan(
+            "HOST-A",
+            "service-credential-file",
+            short_pull_root / "short-destination.json",
+        )
+        self.assertTrue(plan.executable)
+
     def test_windows_yard_junction_is_rejected(self):
         if os.name != "nt":
             self.skipTest("Windows junction test")
@@ -783,6 +835,64 @@ class TestCli(TrustedPeerPathFixture):
                     2,
                 )
             self.assertEqual(protected.read_bytes(), before)
+
+    @mock.patch("system_gap_master.trusted_peer_paths.subprocess.Popen")
+    def test_windows_short_output_aliases_fail_before_side_effects(self, popen):
+        self.publish()
+        publisher_config = self._write_json(
+            "publisher-short-output.json", self.publisher_config
+        )
+        peer_config = self._write_json("peer-short-output.json", self.peer_config)
+        entries = self._write_json("entries-short-output.json", self.entries(2))
+        short_yard = self.windows_short_path(self.yard)
+        yard_output = short_yard / "alias-result.json"
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(
+                main(
+                    [
+                        "publish",
+                        "--config",
+                        str(publisher_config),
+                        "--entries",
+                        str(entries),
+                        "--output",
+                        str(yard_output),
+                    ]
+                ),
+                2,
+            )
+        self.assertFalse(yard_output.exists())
+        self.assertEqual(
+            json.loads(self.registry_path().read_text(encoding="utf-8"))["revision"],
+            1,
+        )
+
+        destination = self.pull_root / "same-short-alias.json"
+        short_destination = (
+            self.windows_short_path(self.pull_root) / "same-short-alias.json"
+        )
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(
+                main(
+                    [
+                        "pull",
+                        "--config",
+                        str(peer_config),
+                        "--host-id",
+                        "HOST-A",
+                        "--path-id",
+                        "service-credential-file",
+                        "--destination",
+                        str(destination),
+                        "--apply",
+                        "--output",
+                        str(short_destination),
+                    ]
+                ),
+                2,
+            )
+        popen.assert_not_called()
+        self.assertFalse(destination.exists())
 
     def test_duplicate_json_keys_and_nonfinite_numbers_fail_closed(self):
         publisher_config = self._write_json(
