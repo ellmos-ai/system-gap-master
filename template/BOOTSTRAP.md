@@ -42,6 +42,15 @@
 - [ ] Generate one persistent high-entropy `receipt_salt`, protect the
       host-local config/state directory, and make every adapter for the same
       root use that same state directory. Start every adapter as `observer`.
+- [ ] Optional trusted-peer paths: create host-local config/entries and one
+      high-entropy HMAC key outside the yard; provision each publisher key
+      out-of-band only to allowed peers, pin peer SSH host keys in a
+      host-local `known_hosts`, pin the absolute OpenSSH `sftp` executable,
+      and create allowlisted import roots.
+- [ ] Run `trusted-peer-paths publish` for this host's own slot, then verify
+      it from one peer with `validate`, `list`, `resolve` and `pull-plan`.
+      Test an ordinary-file `pull --apply` only after the SSH account is
+      read-only. Keep SQLite on the R9 `sqlite-transit-sync` adapter.
 
 ## 5. First sync
 

@@ -129,6 +129,33 @@ at the yard root. Tool-owned zones are exempt from R1 and R3 — the tool
 manages ownership and lifecycle itself; agents do not hand-edit or archive
 anything inside them during the daily ritual.
 
+### R10 — Signed trusted-peer path registries
+
+A host may publish exact local paths for pre-authorized direct pulls in
+`hosts/<OWN-HOST>/trusted-peer-paths/registry.json`. It writes only this own
+slot. The document names a stable `path_id`, host, exact local and SFTP path,
+SFTP endpoint/transport and `allowed_peer_ids`; it never contains referenced
+file content, credential values, HMAC keys or SSH private keys.
+
+Treat the yard as semi-trusted. Registries must be atomically published,
+HMAC-signed through a host-local key reference, checked against a pinned host
+and key ID, and protected against revision replay before use. Keys,
+`known_hosts`, validation state and pull staging stay outside the yard.
+Authorized peers may then read the registry and pull independently over a
+preconfigured Tailscale/LAN SFTP service; no request-time counter-message is
+required. SSH authentication and server-side read-only ACLs remain a
+separate mandatory enforcement layer.
+
+Direct pull is limited to explicitly enabled ordinary files. Destinations
+are allowlisted and never overwritten. Directory transfer needs a reviewed
+adapter. Live SQLite paths and `.db`, `.sqlite`, `.sqlite3`, `-wal`, `-shm`
+payloads may be advertised only as `kind=database/sqlite` with
+`direct_pull=false` and `adapter=sqlite-transit-sync`; their bytes still use
+the R9 `db-transit/<namespace>` snapshot workflow.
+
+The executable contract and threat model are in
+`docs/trusted-peer-path-registry.md`; schemas are in `schemas/`.
+
 ## Artifact naming conventions
 
 | Artifact | Pattern | Notes |
@@ -140,6 +167,7 @@ anything inside them during the daily ritual.
 | Topic document | `<TOPIC>_<YYYY-MM-DD>.md` at root | living status source; archive when obsolete |
 | Handoff/runbook | `<SYSTEM>_HANDOFF.md` at root | how to operate something from another machine |
 | Database transit zone | `db-transit/<namespace>/` at root | tool-owned (R9): managed by a snapshot tool like sqlite-transit-sync, not by hand |
+| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned, signed metadata only (R10); exact paths allowed, content/keys forbidden |
 
 Extend the table in your local `SYNC_PROTOCOL.md` as your yard grows — the
 convention that a convention EXISTS is the load-bearing part.
@@ -157,3 +185,6 @@ convention that a convention EXISTS is the load-bearing part.
 - **Discovery never establishes canonicality.** A shorter filename, newer
   timestamp or provider suffix can identify a candidate, but only a manifest,
   pointer, registry or documented writer policy may authorize mutation.
+- **Signed discovery is not transport authority.** A trusted-peer registry
+  authenticates metadata and peer intent; SSH host keys, authentication and
+  server-side read ACLs still authorize the network read.

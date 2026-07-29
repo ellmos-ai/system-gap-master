@@ -31,9 +31,16 @@ items arrive, get integrated by their target system, then move to `_archive/`.
 6. **No secrets** in the yard — reference local locations instead.
 7. **Conflict copies:** check daily (gate: `CONFLICT_REVIEW_LOG.md`).
 8. **BOOTSTRAP.md** must always be able to bring up a fresh machine.
+9. **Structured payloads:** live SQLite/WAL/SHM files use a tool-owned
+   `db-transit/<namespace>` snapshot adapter, never direct file sync.
+10. **Trusted peer paths:** a host publishes only its own signed
+    `hosts/<HOST>/trusted-peer-paths/registry.json`; authorized peers verify
+    before direct SFTP. Registry metadata may contain exact credential paths,
+    but never values, content or keys. SQLite remains R9-only.
 
 ## Artifact types in this yard
 
 | Artifact | Pattern | Notes |
 |---|---|---|
+| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned signed metadata; direct ordinary-file pull only |
 | (extend as conventions emerge) | | |

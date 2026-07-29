@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-path-local-config.schema.json",
+  "title": "Host-local trusted peer path configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "yard_root",
+    "local_host_id",
+    "local_peer_id",
+    "state_dir",
+    "trusted_hosts",
+    "pull_destination_roots",
+    "ssh"
+  ],
+  "properties": {
+    "schema": {
+      "const": "system-gap.trusted-peer-paths.local-config.v1"
+    },
+    "yard_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "local_host_id": {
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+    },
+    "local_peer_id": {
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+    },
+    "state_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_id",
+        "signing_key_ref",
+        "endpoints"
+      ],
+      "properties": {
+        "key_id": {
+          "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+        },
+        "signing_key_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "endpoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "trusted-peer-path-registry.schema.json#/$defs/endpoint"
+          }
+        }
+      }
+    },
+    "trusted_hosts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "host_id",
+          "key_id",
+          "verification_key_ref",
+          "min_revision"
+        ],
+        "properties": {
+          "host_id": {
+            "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+          },
+          "key_id": {
+            "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+          },
+          "verification_key_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "min_revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "pull_destination_roots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "ssh": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "known_hosts_ref",
+        "sftp_executable_ref",
+        "connect_timeout_seconds"
+      ],
+      "properties": {
+        "known_hosts_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sftp_executable_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "connect_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        }
+      }
+    }
+  }
+}

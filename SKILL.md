@@ -36,6 +36,12 @@ asking the user once. `<HOST>` is this machine's name.
      (install, configure, note down), then move fully-integrated items to
      `_archive/` — but only items addressed to this machine or marked done
      everywhere they apply.
+   - Trusted peer registries: use `trusted-peer-paths list|resolve` with the
+     host-local trust config. Never act on unsigned/unverified path metadata.
+     An authorized ordinary file may be pulled directly with a reviewed
+     `pull-plan` and explicit `pull --apply`; no counter-message is required.
+     SQLite/`-wal`/`-shm` paths always stay on the R9
+     `sqlite-transit-sync`/`db-transit/<namespace>` route.
 4. **Write outbound** —
    - Update this machine's slot `hosts/<HOST>/` with anything the other
      systems need (new lessons, changed setup, running long jobs).
@@ -44,6 +50,9 @@ asking the user once. `<HOST>` is this machine's name.
      local file stays authoritative).
    - Leave messages for other hosts/agents where action is needed on their
      side (`messages/to-<recipient>.md`, `[<HOST>/<agent> YYYY-MM-DD] …`).
+   - If path publication changed, atomically publish only this host's signed
+     `hosts/<HOST>/trusted-peer-paths/registry.json`. Local source entries,
+     keys, SSH files, state and referenced content never enter the yard.
 5. **Bootstrap freshness (R8)** — if the yard's structure or the machine
    inventory changed today, update `BOOTSTRAP.md` accordingly.
 6. **Mark the gate** — `python scripts/system_gap_daily_check.py mark` (appends
@@ -54,6 +63,8 @@ asking the user once. `<HOST>` is this machine's name.
 
 - Never edit foreign host slots (R1) — leave a message instead.
 - Never place secrets or personal/case data in the yard (R6).
+- Exact credential paths are allowed only as signed R10 registry metadata;
+  credential values and key material remain forbidden.
 - Archive, don't delete (R3) — except read messages (R4).
 - Don't expand the ritual: it should stay a 2–5 minute routine. Anything
   bigger becomes a normal task outside the sync.

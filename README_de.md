@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-49%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-74%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -48,7 +48,7 @@ Die Nische von **system-gap-master**: **Multi-Machine + Multi-Agent + Serverless
 ## Inhalt des Repositories
 
 ```text
-PROTOCOL.md          Vollständiges Protokoll (8 Regeln) + Design-Entscheidungen
+PROTOCOL.md          Vollständiges Protokoll (10 Regeln) + Design-Entscheidungen
 SKILL.md             Das tägliche Sync-Ritual als agentenneutraler Skill
 CHANGELOG.md         Änderungsprotokoll und Release-Notizen
 llms.txt             Maschinenlesbarer Index für KI-Agenten
@@ -62,7 +62,10 @@ template/            Kopierfähiges Yard-Skelett:
 scripts/system_gap_daily_check.py   Das Tages-Gate (check|mark), zero dependencies
 system_gap_master/conflict_copy_reconciler.py
                       sichere Scan/Plan/Apply/Verify/Rollback-Engine
+system_gap_master/trusted_peer_paths.py
+                      signierte Publish/Validate/List/Resolve/Pull-CLI
 docs/adapting-your-agents.md  Anbindung an CLAUDE.md/AGENTS.md/GEMINI.md
+docs/trusted-peer-path-registry_de.md  direkter Trusted-Peer-Pull-Vertrag
 ```
 
 ## Schnellstart
@@ -84,7 +87,7 @@ python scripts/system_gap_daily_check.py check   # Gate-Prüfung: Heute fällig?
 python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
 ```
 
-## Die acht Kernregeln (Kurzübersicht)
+## Die zehn Kernregeln (Kurzübersicht)
 
 1. **Slot-Regel** — Jeder Rechner schreibt nur in seinen eigenen Host-Slot (`hosts/<hostname>/`); fremde Slots werden niemals editiert.
 2. **Standard-Pfade** — Übergabeordner wird über die Umgebungsvariable `SYSTEM_GAP_MASTER_DIR` adressiert.
@@ -94,6 +97,8 @@ python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
 6. **Snapshot-Transite** — Datenbanken (z. B. SQLite) werden via Snapshot-Tools übertragen, nicht im Hot-Sync.
 7. **Konflikt-Bereinigung** — Automatisch erzeugte Konfliktkopien werden beim täglichen Ritual konsolidiert.
 8. **Bootstrap-Runbook** — Jedes neue Gerät wird anhand von `BOOTSTRAP.md` in das Netz integriert.
+9. **Strukturierte Payloads nutzen Adapter** — Live-SQLite-/WAL-Dateien werden niemals direkt synchronisiert.
+10. **Trusted-Peer-Pfade sind signiert** — Hosts veröffentlichen nur die eigene Registry; berechtigte Peers verifizieren vor dem direkten SFTP-Pull.
 
 ## Sichere Konfliktkopien-Abstimmung
 
@@ -116,6 +121,28 @@ und lokale Backups; danach folgen Verify, recoverable Archiv und Rollback.
 Vertrag und Beispiele:
 [`docs/conflict-copy-reconciler.md`](docs/conflict-copy-reconciler.md) und
 [`examples/conflict-reconciler.config.example.json`](examples/conflict-reconciler.config.example.json).
+
+## Direkte Trusted-Peer-Pulls
+
+Die optionale CLI `trusted-peer-paths` veröffentlicht pro Host atomar eine
+signierte Registry im eigenen Slot
+`hosts/<HOST>/trusted-peer-paths/`. Sie enthält genaue lokale/SFTP-Pfade,
+Endpunktdaten und erlaubte Peer-IDs, aber niemals Dateiinhalte,
+Credential-Werte oder Signing-Keys. Autorisierte Peers können gewöhnliche
+Dateien ohne Gegenkoordination direkt per SFTP über Tailscale/LAN prüfen,
+auflösen und abrufen.
+
+Die Ausführung braucht ein ausdrückliches `pull --apply`, verwendet keine
+Shell, prüft `known_hosts`, erzwingt erlaubte Zielwurzeln und überschreibt
+nichts. Live-SQLite-Pfade sind nur als `kind=database/sqlite`,
+`direct_pull=false`, `adapter=sqlite-transit-sync` sichtbar; R9 leitet ihre
+Bytes weiterhin über verifizierte Snapshots in
+`db-transit/<namespace>`.
+
+Details:
+[`docs/trusted-peer-path-registry_de.md`](docs/trusted-peer-path-registry_de.md),
+[`schemas/`](schemas/) und
+[`examples/trusted-peer-paths.local-config.example.json`](examples/trusted-peer-paths.local-config.example.json).
 
 ## Lizenz
 

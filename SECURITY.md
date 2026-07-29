@@ -42,3 +42,33 @@ Security reports concerning path validation, file access boundaries, or unexpect
   replacement after a final guard/token/fingerprint check. A malformed lease
   is quarantined only when explicit takeover is enabled and stable mtime age
   exceeds the configured TTL; recent damage remains busy.
+
+## Trusted peer path registry boundary
+
+- The yard is semi-trusted. Exact credential paths may be registry metadata,
+  but file content, credential values, HMAC keys, SSH private keys,
+  `known_hosts`, validation state and staging files remain host-local.
+- A host publishes only
+  `hosts/<OWN-HOST>/trusted-peer-paths/registry.json`; the CLI derives this
+  path and rejects host/slot substitution.
+- HMAC-SHA256 signatures, pinned host/key identities, minimum revisions and
+  host-local highest-seen state fail closed on tampering, replay and
+  same-revision equivocation. Crash-released local OS locks serialize state
+  and publish updates. HMAC verification keys are symmetric and must be
+  distributed only to the publisher's trusted peers.
+- Peer allowlists protect resolve/pull in this CLI. They do not replace SSH
+  authentication or server-side read-only ACLs.
+- Executed pulls use OpenSSH SFTP with `shell=False`, batch mode, strict
+  host-key checking, exact host-local executable/`known_hosts` references, no
+  inherited SSH config, conservative non-globbing paths, destination-root
+  allowlists and no-overwrite install. `pull` is a dry-run unless `--apply`
+  is explicit.
+- Symlink, junction or reparse destinations, command-like endpoint/path
+  values, unknown transports, unauthorized peers and unverifiable registries
+  fail closed. Subprocess output is not returned because it could contain
+  remote diagnostics.
+- Directories require a separate reviewed adapter. SQLite `.db`, `.sqlite`,
+  `.sqlite3`, `-wal` and `-shm` paths require
+  `kind=database/sqlite`, `direct_pull=false` and
+  `adapter=sqlite-transit-sync`; transfer remains in the R9
+  `db-transit/<namespace>` snapshot boundary.

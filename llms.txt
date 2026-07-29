@@ -1,6 +1,6 @@
 # system-gap-master
 
-## Last-checked: 2026-07-28
+## Last-checked: 2026-07-29
 
 ## Canonical repository
 
@@ -25,6 +25,12 @@ separate state silos.
   conflict-copy scan/plan/apply/verify/rollback API and CLI.
 - `docs/conflict-copy-reconciler.md` — merge classes, safety gates, owner
   lease and desktop/macOS adapter contract.
+- `system_gap_master/trusted_peer_paths.py` — signed host-owned registry,
+  authorized resolve/pull-plan and guarded SFTP file pull CLI/API.
+- `docs/trusted-peer-path-registry.md` — trusted-peer threat model, setup,
+  direct-pull boundary and SQLite adapter rule.
+- `schemas/trusted-peer-path-*.schema.json` — machine-readable registry,
+  entries and host-local configuration contracts.
 - `template/` — copy-ready yard skeleton.
 - `docs/adapting-your-agents.md` — integration notes for agent rule files and
   session-start hooks.
@@ -41,6 +47,13 @@ separate state silos.
   an allowlisted root, authoritative mapping, safe deterministic merge class,
   one explicit mutating owner, a shared local lease, HMAC-bound plan/manifest,
   no symlink/reparse traversal, backup, verification and rollback.
+- A host writes only its own signed trusted-peer registry. Peers pin its
+  host/key identity and revision before resolving exact paths. Keys and file
+  content never enter the yard.
+- Direct SFTP pulls require explicit peer permission, `direct_pull=true`,
+  strict known-host verification, an allowlisted destination and
+  no-overwrite. SQLite and WAL/SHM paths are discovery-only and use
+  `sqlite-transit-sync` through R9 `db-transit/<namespace>`.
 
 ## Search phrases
 
@@ -53,4 +66,7 @@ plain file agent handoff protocol
 host slot sync protocol
 multi agent state persistence
 cross host slot isolation
+signed trusted peer path registry
+direct SFTP peer pull plan
+semi trusted yard registry authenticity
 ```

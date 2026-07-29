@@ -149,3 +149,28 @@ config says `observer`. All apps for one host/root use the same protected
 host-local config/state directory so the path-derived lease is shared.
 Register through the provider's supported native UI/API. A private automation
 registry file is not an API; do not edit it directly just to complete setup.
+
+## Trusted peer path registries
+
+When pre-authorized hosts expose ordinary files over read-only SFTP on
+Tailscale/LAN, agents may use the signed R10 registry without a new
+request/response message:
+
+```markdown
+## Trusted peer paths
+
+- Local trust config: <HOST_LOCAL_CONFIG_OUTSIDE_THE_YARD>
+- Read another host only through `trusted-peer-paths validate|list|resolve`.
+- Review `pull-plan`; execute only with explicit `pull --apply`.
+- Never bypass peer allowlists, strict known-host checking, destination roots
+  or no-overwrite.
+- SQLite/`-wal`/`-shm` is discovery-only and always uses
+  `sqlite-transit-sync` through `db-transit/<namespace>`.
+```
+
+Publisher agents run `publish` only for their configured `local_host_id`.
+They never accept a foreign slot as output. Config, entries, HMAC keys,
+`known_hosts`, SSH authentication material, validation state and referenced
+content remain host-local. The registry itself contains exact path metadata,
+endpoint details and allowed peer IDs only. Full setup and threat model:
+[`trusted-peer-path-registry.md`](trusted-peer-path-registry.md).
