@@ -11,6 +11,17 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+## 1.3.1 - 2026-07-29
+
+- Serialized lease creation, expired takeover, renewal and release with a
+  crash-released host-local OS lock; renewal now writes only through the
+  token- and inode-bound lease descriptor.
+- Bound every signed operation manifest to the operation ID requested by the
+  caller, preventing valid-manifest substitution under another filename.
+- Rebound rollback inputs immediately before each mutation, restored missing
+  conflict copies without overwrite, and retained recoverable archives as
+  immutable rollback evidence.
+
 ## 1.3.0 - 2026-07-29
 
 - Added the user-neutral `conflict-copy-reconciler` API/CLI with explicit

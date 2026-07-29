@@ -35,3 +35,6 @@ Security reports concerning path validation, file access boundaries, or unexpect
   state directory so the path-derived lease is effective.
 - Symlinks, junctions, reparse points, alternate data streams, device names,
   changed sources, changed rollback targets and tampered backups fail closed.
+- Lease mutations share a persistent host-local guard inode with a
+  kernel-released OS lock. Rollback rebinds every input immediately before
+  mutation and retains recoverable archives rather than deleting them.

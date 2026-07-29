@@ -37,6 +37,11 @@ import uuid
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
 CONFIG_SCHEMA = "system-gap.conflict-reconciler.config.v1"
 SCAN_SCHEMA = "system-gap.conflict-reconciler.scan.v1"
 PLAN_SCHEMA = "system-gap.conflict-reconciler.plan.v1"
@@ -242,9 +247,13 @@ def _assert_plain_path(
     if not _is_relative_to(path, root):
         raise ReconcilerError("path escapes protected root")
     if not root.exists() or not root.is_dir() or _is_link_or_reparse(root):
-        raise ReconcilerError("protected root is missing, non-directory, or reparse-backed")
+        raise ReconcilerError(
+            "protected root is missing, non-directory, or reparse-backed"
+        )
     if os.path.normcase(str(root.resolve())) != os.path.normcase(str(root)):
-        raise ReconcilerError("protected root resolves through a symlink or reparse point")
+        raise ReconcilerError(
+            "protected root resolves through a symlink or reparse point"
+        )
     current = root
     relative = path.relative_to(root)
     for index, part in enumerate(relative.parts):
@@ -343,7 +352,9 @@ def _metadata_unchanged(before: os.stat_result, after: os.stat_result) -> bool:
     )
 
 
-def _read_bytes_stable(path: Path, root: Path | None = None) -> tuple[bytes, Fingerprint]:
+def _read_bytes_stable(
+    path: Path, root: Path | None = None
+) -> tuple[bytes, Fingerprint]:
     if root is not None:
         _assert_plain_path(root, path, require_file=True)
     descriptor = _open_readonly(path)
@@ -361,10 +372,7 @@ def _read_bytes_stable(path: Path, root: Path | None = None) -> tuple[bytes, Fin
     finally:
         os.close(descriptor)
     data = b"".join(chunks)
-    if (
-        not _metadata_unchanged(before, after)
-        or len(data) != after.st_size
-    ):
+    if not _metadata_unchanged(before, after) or len(data) != after.st_size:
         raise ReconcilerError(f"active writer detected for {path.name}")
     return data, _fingerprint_from_stat(_sha256_bytes(data), after)
 
@@ -397,6 +405,7 @@ def _atomic_write(
     *,
     root: Path | None = None,
     mode: int | None = None,
+    expected: Fingerprint | None = None,
 ) -> None:
     if root is not None:
         _assert_plain_path(root, path.parent, require_dir=True)
@@ -417,12 +426,41 @@ def _atomic_write(
         if root is not None:
             _assert_plain_path(root, path.parent, require_dir=True)
             _assert_plain_path(root, path, allow_missing=True)
+        if expected is not None:
+            if not path.exists() or _fingerprint(path, root) != expected:
+                raise ReconcilerError(f"compare-before-replace failed for {path.name}")
         os.replace(temporary_path, path)
         if root is not None:
             _assert_plain_path(root, path, require_file=True)
     finally:
         with contextlib.suppress(FileNotFoundError):
             temporary_path.unlink()
+
+
+def _write_new_file(
+    path: Path,
+    data: bytes,
+    *,
+    root: Path,
+    mode: int,
+) -> None:
+    """Create a missing rollback target without overwriting a late writer."""
+
+    _assert_plain_path(root, path.parent, require_dir=True)
+    _assert_plain_path(root, path, allow_missing=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | int(getattr(os, "O_BINARY", 0))
+    flags |= int(getattr(os, "O_NOFOLLOW", 0))
+    try:
+        descriptor = os.open(path, flags, mode)
+    except FileExistsError as exc:
+        raise ReconcilerError(
+            f"rollback target appeared before restore: {path.name}"
+        ) from exc
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    _assert_plain_path(root, path, require_file=True)
 
 
 def _json_object_merge(left: Any, right: Any, pointer: str = "$") -> Any:
@@ -440,7 +478,9 @@ def _json_object_merge(left: Any, right: Any, pointer: str = "$") -> Any:
     return merged
 
 
-def _diff_edits(base: Sequence[str], changed: Sequence[str]) -> list[tuple[int, int, list[str]]]:
+def _diff_edits(
+    base: Sequence[str], changed: Sequence[str]
+) -> list[tuple[int, int, list[str]]]:
     edits: list[tuple[int, int, list[str]]] = []
     matcher = difflib.SequenceMatcher(a=base, b=changed, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -463,7 +503,9 @@ def _edits_overlap(
     return max(l_start, r_start) < min(l_end, r_end)
 
 
-def _three_way_merge(base_data: bytes, canonical_data: bytes, conflict_data: bytes) -> bytes:
+def _three_way_merge(
+    base_data: bytes, canonical_data: bytes, conflict_data: bytes
+) -> bytes:
     try:
         base = base_data.decode("utf-8").splitlines(keepends=True)
         canonical = canonical_data.decode("utf-8").splitlines(keepends=True)
@@ -484,7 +526,9 @@ def _three_way_merge(base_data: bytes, canonical_data: bytes, conflict_data: byt
         if not duplicate:
             combined.append(candidate)
     merged = list(base)
-    for start, end, replacement in sorted(combined, key=lambda item: item[0], reverse=True):
+    for start, end, replacement in sorted(
+        combined, key=lambda item: item[0], reverse=True
+    ):
         merged[start:end] = replacement
     return "".join(merged).encode("utf-8")
 
@@ -503,7 +547,9 @@ def _looks_binary_or_blocked(path: Path, data: bytes) -> str | None:
         for marker in ("credential", "private-key", "private_key", "secret", "token")
     ):
         return "secret-path"
-    if path.suffix.lower() in BLOCKED_EXTENSIONS or lower_name.endswith(("-wal", "-shm")):
+    if path.suffix.lower() in BLOCKED_EXTENSIONS or lower_name.endswith(
+        ("-wal", "-shm")
+    ):
         return "binary-database-or-archive"
     if any(part.lower() == ".git" for part in path.parts):
         return "git-internal"
@@ -551,10 +597,89 @@ class RootLease:
         self.acquired = False
         self.token = uuid.uuid4().hex
 
+    @contextlib.contextmanager
+    def _mutation_guard(self) -> Iterator[None]:
+        """Serialize every mutation of this lease generation.
+
+        The guard is a persistent host-local file whose OS lock is released by
+        the kernel on process exit.  Keeping it separate from the replaceable
+        lease path closes the check/replace gap during expired takeover.
+        """
+
+        guard_path = self.lease_path.with_name(f".{self.lease_path.name}.guard")
+        if guard_path.exists() and _is_link_or_reparse(guard_path):
+            raise LeaseBusy("lease mutation guard is a symlink or reparse point")
+        flags = os.O_RDWR | os.O_CREAT | int(getattr(os, "O_BINARY", 0))
+        flags |= int(getattr(os, "O_NOFOLLOW", 0))
+        try:
+            descriptor = os.open(guard_path, flags, 0o600)
+        except OSError as exc:
+            raise LeaseBusy("lease mutation guard is unavailable") from exc
+        locked = False
+        try:
+            info = os.fstat(descriptor)
+            if not stat.S_ISREG(info.st_mode):
+                raise LeaseBusy("lease mutation guard is not a regular file")
+            if _is_link_or_reparse(guard_path):
+                raise LeaseBusy("lease mutation guard became unsafe")
+            path_info = guard_path.stat()
+            if path_info.st_dev != info.st_dev or path_info.st_ino != info.st_ino:
+                raise LeaseBusy("lease mutation guard identity changed")
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            try:
+                if os.name == "nt":
+                    msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
+                else:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise LeaseBusy("lease mutation already in progress") from exc
+            locked = True
+            if _is_link_or_reparse(guard_path):
+                raise LeaseBusy("lease mutation guard became unsafe")
+            path_info = guard_path.stat()
+            if path_info.st_dev != info.st_dev or path_info.st_ino != info.st_ino:
+                raise LeaseBusy("lease mutation guard identity changed")
+            if info.st_size == 0:
+                os.write(descriptor, b"\0")
+                os.fsync(descriptor)
+            yield
+        finally:
+            if locked:
+                with contextlib.suppress(OSError):
+                    os.lseek(descriptor, 0, os.SEEK_SET)
+                    if os.name == "nt":
+                        msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+                    else:
+                        fcntl.flock(descriptor, fcntl.LOCK_UN)
+            os.close(descriptor)
+
+    def _restore_displaced_lease(self, data: bytes) -> bool:
+        """Best-effort no-overwrite restore after a failed identity proof."""
+
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        flags |= int(getattr(os, "O_BINARY", 0))
+        flags |= int(getattr(os, "O_NOFOLLOW", 0))
+        try:
+            descriptor = os.open(self.lease_path, flags, 0o600)
+        except OSError:
+            return False
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except OSError:
+            return False
+        if _is_link_or_reparse(self.lease_path):
+            return False
+        try:
+            restored = self.lease_path.read_bytes()
+        except OSError:
+            return False
+        return hmac.compare_digest(restored, data)
+
     def __enter__(self) -> "RootLease":
         self.lease_path.parent.mkdir(parents=True, exist_ok=True)
-        if self.lease_path.exists() and _is_link_or_reparse(self.lease_path):
-            raise LeaseBusy("lease path is a symlink or reparse point")
         payload = {
             "schema": "system-gap.conflict-reconciler.lease.v1",
             "actor": self.actor,
@@ -563,34 +688,54 @@ class RootLease:
             "created_epoch": time.time(),
             "expires_epoch": time.time() + self.ttl_seconds,
         }
-        for attempt in range(2):
-            try:
-                descriptor = os.open(
-                    self.lease_path,
-                    os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-                    0o600,
-                )
-                with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-                    json.dump(payload, stream, sort_keys=True)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                self.acquired = True
-                return self
-            except FileExistsError:
-                if attempt or not self.allow_expired_takeover:
-                    raise LeaseBusy(f"lease busy: {self.lease_path.name}")
+        with self._mutation_guard():
+            if self.lease_path.exists() and _is_link_or_reparse(self.lease_path):
+                raise LeaseBusy("lease path is a symlink or reparse point")
+            for attempt in range(2):
                 try:
-                    existing = json.loads(self.lease_path.read_text(encoding="utf-8"))
-                    expired = float(existing["expires_epoch"]) < time.time()
-                except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
-                    expired = False
-                if not expired:
-                    raise LeaseBusy(f"lease busy: {self.lease_path.name}")
-                stale = self.lease_path.with_suffix(f".expired-{uuid.uuid4().hex}.lock")
-                try:
-                    os.replace(self.lease_path, stale)
-                except OSError as exc:
-                    raise LeaseBusy("expired lease takeover lost a race") from exc
+                    descriptor = os.open(
+                        self.lease_path,
+                        os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                        0o600,
+                    )
+                    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                        json.dump(payload, stream, sort_keys=True)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    self.acquired = True
+                    return self
+                except FileExistsError:
+                    if attempt or not self.allow_expired_takeover:
+                        raise LeaseBusy(f"lease busy: {self.lease_path.name}")
+                    try:
+                        observed = self.lease_path.read_bytes()
+                        existing = json.loads(observed.decode("utf-8"))
+                        expired = float(existing["expires_epoch"]) < time.time()
+                    except (
+                        OSError,
+                        UnicodeDecodeError,
+                        ValueError,
+                        KeyError,
+                        TypeError,
+                        json.JSONDecodeError,
+                    ):
+                        expired = False
+                    if not expired:
+                        raise LeaseBusy(f"lease busy: {self.lease_path.name}")
+                    current = self.lease_path.read_bytes()
+                    if not hmac.compare_digest(current, observed):
+                        raise LeaseBusy("expired lease changed during takeover")
+                    stale = self.lease_path.with_suffix(
+                        f".expired-{uuid.uuid4().hex}.lock"
+                    )
+                    try:
+                        os.replace(self.lease_path, stale)
+                    except OSError as exc:
+                        raise LeaseBusy("expired lease takeover lost a race") from exc
+                    displaced = stale.read_bytes()
+                    if not hmac.compare_digest(displaced, observed):
+                        self._restore_displaced_lease(displaced)
+                        raise LeaseBusy("expired lease takeover identity check failed")
         raise LeaseBusy("unable to acquire lease")
 
     def renew(self) -> None:
@@ -598,60 +743,103 @@ class RootLease:
 
         if not self.acquired:
             raise LeaseBusy("lease is not owned")
-        if _is_link_or_reparse(self.lease_path):
-            self.acquired = False
-            raise LeaseBusy("lease path became a symlink or reparse point")
-        try:
-            existing = json.loads(self.lease_path.read_text(encoding="utf-8"))
-            expires = float(existing["expires_epoch"])
-        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-            raise LeaseBusy("lease ownership cannot be verified") from exc
-        if existing.get("token") != self.token:
-            self.acquired = False
-            raise LeaseBusy("lease ownership was lost")
-        if expires <= time.time():
-            self.acquired = False
-            raise LeaseBusy("lease expired before renewal")
-        payload = {
-            **existing,
-            "renewed_epoch": time.time(),
-            "expires_epoch": time.time() + self.ttl_seconds,
-        }
-        temporary = self.lease_path.with_name(
-            f".{self.lease_path.name}.{self.token}.renew"
-        )
-        descriptor = os.open(
-            temporary,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-            0o600,
-        )
-        try:
-            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-                json.dump(payload, stream, sort_keys=True)
-                stream.flush()
-                os.fsync(stream.fileno())
-            current = json.loads(self.lease_path.read_text(encoding="utf-8"))
-            if current.get("token") != self.token:
+        with self._mutation_guard():
+            if _is_link_or_reparse(self.lease_path):
                 self.acquired = False
-                raise LeaseBusy("lease ownership was lost during renewal")
-            os.replace(temporary, self.lease_path)
-        finally:
-            with contextlib.suppress(FileNotFoundError):
-                temporary.unlink()
+                raise LeaseBusy("lease path became a symlink or reparse point")
+            flags = os.O_RDWR | int(getattr(os, "O_BINARY", 0))
+            flags |= int(getattr(os, "O_NOFOLLOW", 0))
+            try:
+                descriptor = os.open(self.lease_path, flags)
+            except OSError as exc:
+                self.acquired = False
+                raise LeaseBusy("lease ownership cannot be verified") from exc
+            try:
+                before = os.fstat(descriptor)
+                raw = os.read(descriptor, before.st_size + 1)
+                after_read = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(before.st_mode)
+                    or not _metadata_unchanged(before, after_read)
+                    or len(raw) != before.st_size
+                ):
+                    raise LeaseBusy("lease changed during renewal")
+                existing = json.loads(raw.decode("utf-8"))
+                expires = float(existing["expires_epoch"])
+                if existing.get("token") != self.token:
+                    self.acquired = False
+                    raise LeaseBusy("lease ownership was lost")
+                if expires <= time.time():
+                    self.acquired = False
+                    raise LeaseBusy("lease expired before renewal")
+                path_info = self.lease_path.stat()
+                if (
+                    path_info.st_dev != before.st_dev
+                    or path_info.st_ino != before.st_ino
+                ):
+                    self.acquired = False
+                    raise LeaseBusy("lease path identity changed during renewal")
+                payload = {
+                    **existing,
+                    "renewed_epoch": time.time(),
+                    "expires_epoch": time.time() + self.ttl_seconds,
+                }
+                encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
+                os.lseek(descriptor, 0, os.SEEK_SET)
+                remaining = memoryview(encoded)
+                while remaining:
+                    written = os.write(descriptor, remaining)
+                    if written <= 0:
+                        raise OSError("lease renewal write made no progress")
+                    remaining = remaining[written:]
+                os.ftruncate(descriptor, len(encoded))
+                os.fsync(descriptor)
+                final_info = self.lease_path.stat()
+                if (
+                    final_info.st_dev != before.st_dev
+                    or final_info.st_ino != before.st_ino
+                ):
+                    self.acquired = False
+                    raise LeaseBusy("lease path identity changed during renewal")
+                final = json.loads(self.lease_path.read_text(encoding="utf-8"))
+                if final.get("token") != self.token:
+                    self.acquired = False
+                    raise LeaseBusy("lease ownership was lost during renewal")
+            except LeaseBusy:
+                self.acquired = False
+                raise
+            except (
+                OSError,
+                UnicodeDecodeError,
+                ValueError,
+                KeyError,
+                TypeError,
+                json.JSONDecodeError,
+            ) as exc:
+                self.acquired = False
+                raise LeaseBusy("lease ownership cannot be verified") from exc
+            finally:
+                os.close(descriptor)
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
         if self.acquired:
-            if _is_link_or_reparse(self.lease_path):
-                self.acquired = False
-                return
             try:
-                existing = json.loads(self.lease_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                existing = {}
-            if existing.get("token") == self.token:
-                with contextlib.suppress(FileNotFoundError):
-                    self.lease_path.unlink()
-            self.acquired = False
+                with self._mutation_guard():
+                    if _is_link_or_reparse(self.lease_path):
+                        return
+                    try:
+                        existing = json.loads(
+                            self.lease_path.read_text(encoding="utf-8")
+                        )
+                    except (OSError, json.JSONDecodeError):
+                        existing = {}
+                    if existing.get("token") == self.token:
+                        with contextlib.suppress(FileNotFoundError):
+                            self.lease_path.unlink()
+            except LeaseBusy:
+                pass
+            finally:
+                self.acquired = False
 
 
 class ConflictCopyReconciler:
@@ -680,7 +868,9 @@ class ConflictCopyReconciler:
         if os.path.normcase(str(lexical_state)) != os.path.normcase(
             str(resolved_state)
         ):
-            raise ReconcilerError("state_dir resolves through a symlink or reparse point")
+            raise ReconcilerError(
+                "state_dir resolves through a symlink or reparse point"
+            )
         self.state_dir = lexical_state
         raw_salt = self.config.get("receipt_salt")
         if not isinstance(raw_salt, str) or len(raw_salt) < 16:
@@ -896,7 +1086,9 @@ class ConflictCopyReconciler:
                         return "cloud-placeholder-or-recall-pending"
             except (AttributeError, OSError):
                 return "cloud-attribute-check-unavailable"
-        if sys.platform == "darwin" and any(path.name.endswith(".icloud") for path in paths):
+        if sys.platform == "darwin" and any(
+            path.name.endswith(".icloud") for path in paths
+        ):
             return "icloud-placeholder"
         return None
 
@@ -1016,10 +1208,14 @@ class ConflictCopyReconciler:
         try:
             if canonical == conflict:
                 merge_class, result = "exact", canonical
-            elif requested in {"auto", "append-only-text"} and conflict.startswith(canonical):
+            elif requested in {"auto", "append-only-text"} and conflict.startswith(
+                canonical
+            ):
                 suffix = conflict[len(canonical) :]
-                if not canonical or canonical.endswith((b"\n", b"\r")) or suffix.startswith(
-                    (b"\n", b"\r")
+                if (
+                    not canonical
+                    or canonical.endswith((b"\n", b"\r"))
+                    or suffix.startswith((b"\n", b"\r"))
                 ):
                     merge_class, result = "append-only-text", conflict
             if merge_class is None and requested == "json-object":
@@ -1027,7 +1223,8 @@ class ConflictCopyReconciler:
                 right = json.loads(conflict.decode("utf-8"))
                 merged = _json_object_merge(left, right)
                 result = (
-                    json.dumps(merged, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+                    json.dumps(merged, ensure_ascii=False, indent=2, sort_keys=True)
+                    + "\n"
                 ).encode("utf-8")
                 merge_class = "json-object"
             if merge_class is None and requested == "three-way-text":
@@ -1080,12 +1277,8 @@ class ConflictCopyReconciler:
                     candidates.append(item)
                     continue
                 try:
-                    _assert_plain_path(
-                        root.path, conflict_path, require_file=True
-                    )
-                    _assert_plain_path(
-                        root.path, canonical_path, require_file=True
-                    )
+                    _assert_plain_path(root.path, conflict_path, require_file=True)
+                    _assert_plain_path(root.path, canonical_path, require_file=True)
                 except ReconcilerError as exc:
                     item["blockers"] = [str(exc).split(":", 1)[0]]
                     item["status"] = "blocked"
@@ -1094,9 +1287,7 @@ class ConflictCopyReconciler:
                 blockers: list[str] = []
                 cloud = self._cloud_blocker(root, [canonical_path, conflict_path])
                 lock = self._lock_blocker(root, [canonical_path, conflict_path])
-                git = self._git_blocker(
-                    root, [canonical_relative, conflict_relative]
-                )
+                git = self._git_blocker(root, [canonical_relative, conflict_relative])
                 blockers.extend(value for value in (cloud, lock, git) if value)
                 try:
                     canonical_fp = _fingerprint(canonical_path, root.path)
@@ -1335,6 +1526,10 @@ class ConflictCopyReconciler:
             raise ReconcilerError("invalid operation manifest")
         if not _verify_signed_payload(manifest, self.receipt_salt):
             raise ReconcilerError("operation manifest integrity check failed")
+        if manifest.get("operation_id") != operation_id:
+            raise ReconcilerError(
+                "operation manifest identity does not match requested operation"
+            )
         if manifest.get("actor") != self.actor:
             raise ReconcilerError("operation manifest actor does not match config")
         if manifest.get("config_sha256") != self.config_digest:
@@ -1428,12 +1623,14 @@ class ConflictCopyReconciler:
         )
         mapping = root.mappings.get(conflict_relative)
         if not mapping or mapping.get("canonical") != canonical_relative:
-            raise ReconcilerError("operation record no longer matches authority mapping")
+            raise ReconcilerError(
+                "operation record no longer matches authority mapping"
+            )
         archive, archive_relative = _safe_relative(
             root.path, str(record.get("archive") or "")
         )
-        expected_archive_prefix = (
-            Path(root.archive_dir) / str(record.get("operation_id") or "")
+        expected_archive_prefix = Path(root.archive_dir) / str(
+            record.get("operation_id") or ""
         )
         if not _is_relative_to(Path(archive_relative), expected_archive_prefix):
             raise ReconcilerError("operation archive path is outside operation scope")
@@ -1485,7 +1682,9 @@ class ConflictCopyReconciler:
                 root = self.roots[str(item["root_id"])]
                 lease = leases[root.root_id]
                 lease.renew()
-                canonical_path, conflict_path, result = self._recompute_result(root, item)
+                canonical_path, conflict_path, result = self._recompute_result(
+                    root, item
+                )
                 canonical_data, canonical_fp = _read_bytes_stable(
                     canonical_path, root.path
                 )
@@ -1516,9 +1715,15 @@ class ConflictCopyReconciler:
                 conflict_backup = self._write_private_backup(
                     conflict_backup_relative, conflict_data
                 )
-                if _fingerprint(canonical_backup, self.state_dir).sha256 != canonical_fp.sha256:
+                if (
+                    _fingerprint(canonical_backup, self.state_dir).sha256
+                    != canonical_fp.sha256
+                ):
                     raise ReconcilerError("canonical backup hash verification failed")
-                if _fingerprint(conflict_backup, self.state_dir).sha256 != conflict_fp.sha256:
+                if (
+                    _fingerprint(conflict_backup, self.state_dir).sha256
+                    != conflict_fp.sha256
+                ):
                     raise ReconcilerError("conflict backup hash verification failed")
                 archive_root, _ = _safe_relative(root.path, root.archive_dir)
                 _mkdir_plain(root.path, archive_root)
@@ -1537,8 +1742,12 @@ class ConflictCopyReconciler:
                     "conflict_before": item["conflict_fingerprint"],
                     "merge_class": item["merge_class"],
                     "result_sha256": item["result_sha256"],
-                    "canonical_backup": canonical_backup.relative_to(self.state_dir).as_posix(),
-                    "conflict_backup": conflict_backup.relative_to(self.state_dir).as_posix(),
+                    "canonical_backup": canonical_backup.relative_to(
+                        self.state_dir
+                    ).as_posix(),
+                    "conflict_backup": conflict_backup.relative_to(
+                        self.state_dir
+                    ).as_posix(),
                     "canonical_metadata": self._file_metadata(canonical_path),
                     "conflict_metadata": self._file_metadata(conflict_path),
                     "stage": "backed-up",
@@ -1610,15 +1819,19 @@ class ConflictCopyReconciler:
         archive, _ = _safe_relative(root.path, str(record["archive"]))
         _assert_plain_path(root.path, canonical, require_file=True)
         _assert_plain_path(root.path, archive, require_file=True)
-        if not canonical.is_file() or _fingerprint(
-            canonical, root.path
-        ).sha256 != record["result_sha256"]:
+        if (
+            not canonical.is_file()
+            or _fingerprint(canonical, root.path).sha256 != record["result_sha256"]
+        ):
             raise ReconcilerError("canonical verification failed")
         if conflict.exists():
             raise ReconcilerError("conflict copy still present")
         if not archive.is_file():
             raise ReconcilerError("recoverable archive missing")
-        if _fingerprint(archive, root.path).sha256 != record["conflict_before"]["sha256"]:
+        if (
+            _fingerprint(archive, root.path).sha256
+            != record["conflict_before"]["sha256"]
+        ):
             raise ReconcilerError("archive hash verification failed")
         canonical_data, _ = _read_bytes_stable(canonical, root.path)
         _validate_result(canonical, canonical_data)
@@ -1629,7 +1842,9 @@ class ConflictCopyReconciler:
             raise ReconcilerError("rolled-back operation cannot be verified as applied")
         leases: dict[str, RootLease] = {}
         try:
-            for root_id in sorted({str(record["root_id"]) for record in manifest["records"]}):
+            for root_id in sorted(
+                {str(record["root_id"]) for record in manifest["records"]}
+            ):
                 lease = self._lease(root_id)
                 lease.__enter__()
                 leases[root_id] = lease
@@ -1646,130 +1861,182 @@ class ConflictCopyReconciler:
             for lease in reversed(list(leases.values())):
                 lease.__exit__(None, None, None)
 
+    def _inspect_rollback_record(
+        self,
+        record: Mapping[str, Any],
+        lease: RootLease | None,
+    ) -> dict[str, Any]:
+        """Bind every rollback input to a stable fingerprint."""
+
+        (
+            root,
+            canonical,
+            conflict,
+            archive,
+            canonical_backup,
+            conflict_backup,
+        ) = self._record_paths(record)
+        if lease:
+            lease.renew()
+        _assert_plain_path(root.path, canonical, require_file=True)
+        _assert_plain_path(root.path, conflict, allow_missing=True)
+        _assert_plain_path(root.path, archive, allow_missing=True)
+        canonical_fp = _fingerprint(canonical, root.path)
+        allowed_canonical_hashes = {
+            str(record["canonical_before"]["sha256"]),
+            str(record["result_sha256"]),
+        }
+        if canonical_fp.sha256 not in allowed_canonical_hashes:
+            raise ReconcilerError("rollback would overwrite a changed canonical file")
+        canonical_backup_data, canonical_backup_fp = _read_bytes_stable(
+            canonical_backup, self.state_dir
+        )
+        conflict_backup_data, conflict_backup_fp = _read_bytes_stable(
+            conflict_backup, self.state_dir
+        )
+        if canonical_backup_fp.sha256 != str(
+            record["canonical_before"]["sha256"]
+        ) or conflict_backup_fp.sha256 != str(record["conflict_before"]["sha256"]):
+            raise ReconcilerError("rollback backup integrity check failed")
+        conflict_exists = conflict.exists()
+        archive_exists = archive.exists()
+        if not conflict_exists and not archive_exists:
+            raise ReconcilerError(
+                "rollback source and recoverable archive are both missing"
+            )
+        conflict_fp = _fingerprint(conflict, root.path) if conflict_exists else None
+        archive_fp = _fingerprint(archive, root.path) if archive_exists else None
+        expected_conflict_hash = str(record["conflict_before"]["sha256"])
+        if conflict_fp and conflict_fp.sha256 != expected_conflict_hash:
+            raise ReconcilerError("rollback would overwrite a changed conflict copy")
+        if (
+            archive_fp
+            and archive_fp.sha256 != expected_conflict_hash
+            and (not conflict_exists or record.get("archive_created"))
+        ):
+            raise ReconcilerError("rollback would touch a changed recoverable archive")
+        active_paths = [canonical]
+        if conflict_exists:
+            active_paths.append(conflict)
+        if archive_exists:
+            active_paths.append(archive)
+        safety = [
+            self._cloud_blocker(root, active_paths),
+            self._lock_blocker(root, active_paths),
+        ]
+        if any(safety):
+            raise ReconcilerError("rollback safety gate is not green")
+        return {
+            "root": root,
+            "canonical": canonical,
+            "conflict": conflict,
+            "archive": archive,
+            "canonical_backup_data": canonical_backup_data,
+            "conflict_backup_data": conflict_backup_data,
+            "canonical_fp": canonical_fp,
+            "canonical_backup_fp": canonical_backup_fp,
+            "conflict_backup_fp": conflict_backup_fp,
+            "conflict_exists": conflict_exists,
+            "conflict_fp": conflict_fp,
+            "archive_exists": archive_exists,
+            "archive_fp": archive_fp,
+        }
+
+    @staticmethod
+    def _rollback_bindings_match(
+        before: Mapping[str, Any],
+        after: Mapping[str, Any],
+        *,
+        include_canonical: bool,
+    ) -> bool:
+        keys = [
+            "root",
+            "canonical",
+            "conflict",
+            "archive",
+            "canonical_backup_fp",
+            "conflict_backup_fp",
+            "conflict_exists",
+            "conflict_fp",
+            "archive_exists",
+            "archive_fp",
+        ]
+        if include_canonical:
+            keys.append("canonical_fp")
+        return all(before[key] == after[key] for key in keys)
+
     def _rollback_manifest(
         self,
         manifest: dict[str, Any],
         leases: Mapping[str, RootLease] | None = None,
     ) -> None:
-        """Preflight every record before restoring any byte."""
+        """Preflight all records, then bind again immediately before mutation."""
 
-        prepared: list[
-            tuple[dict[str, Any], RootPolicy, Path, Path, Path, bytes, bytes]
-        ] = []
+        prepared: list[tuple[dict[str, Any], dict[str, Any]]] = []
         for raw_record in reversed(manifest["records"]):
             if not isinstance(raw_record, dict):
                 raise ReconcilerError("operation record must be an object")
             record = raw_record
             if record.get("rolled_back"):
                 continue
-            (
-                root,
-                canonical,
-                conflict,
-                archive,
-                canonical_backup,
-                conflict_backup,
-            ) = self._record_paths(record)
-            if leases:
-                leases[root.root_id].renew()
-            _assert_plain_path(root.path, canonical, require_file=True)
-            canonical_fp = _fingerprint(canonical, root.path)
-            allowed_canonical_hashes = {
-                str(record["canonical_before"]["sha256"]),
-                str(record["result_sha256"]),
-            }
-            if canonical_fp.sha256 not in allowed_canonical_hashes:
-                raise ReconcilerError(
-                    "rollback would overwrite a changed canonical file"
-                )
-            canonical_backup_data, canonical_backup_fp = _read_bytes_stable(
-                canonical_backup, self.state_dir
-            )
-            conflict_backup_data, conflict_backup_fp = _read_bytes_stable(
-                conflict_backup, self.state_dir
-            )
-            if (
-                canonical_backup_fp.sha256
-                != str(record["canonical_before"]["sha256"])
-                or conflict_backup_fp.sha256
-                != str(record["conflict_before"]["sha256"])
-            ):
-                raise ReconcilerError("rollback backup integrity check failed")
-            conflict_exists = conflict.exists()
-            archive_exists = archive.exists()
-            if not conflict_exists and not archive_exists:
-                raise ReconcilerError(
-                    "rollback source and recoverable archive are both missing"
-                )
-            if conflict_exists:
-                _assert_plain_path(root.path, conflict, require_file=True)
-                if (
-                    _fingerprint(conflict, root.path).sha256
-                    != str(record["conflict_before"]["sha256"])
-                ):
-                    raise ReconcilerError(
-                        "rollback would overwrite a changed conflict copy"
-                    )
-            if archive_exists:
-                _assert_plain_path(root.path, archive, require_file=True)
-                archive_matches = (
-                    _fingerprint(archive, root.path).sha256
-                    == str(record["conflict_before"]["sha256"])
-                )
-                if (not conflict_exists or record.get("archive_created")) and not archive_matches:
-                    raise ReconcilerError(
-                        "rollback would remove a changed recoverable archive"
-                    )
-            active_path = conflict if conflict_exists else archive
-            safety = [
-                self._cloud_blocker(root, [canonical, active_path]),
-                self._lock_blocker(root, [canonical, active_path]),
-            ]
-            if any(safety):
-                raise ReconcilerError("rollback safety gate is not green")
-            prepared.append(
-                (
-                    record,
-                    root,
-                    canonical,
-                    conflict,
-                    archive,
-                    canonical_backup_data,
-                    conflict_backup_data,
-                )
-            )
+            root_id = str(record.get("root_id") or "")
+            lease = leases[root_id] if leases else None
+            prepared.append((record, self._inspect_rollback_record(record, lease)))
 
-        for (
-            record,
-            root,
-            canonical,
-            conflict,
-            archive,
-            canonical_backup_data,
-            conflict_backup_data,
-        ) in prepared:
-            if leases:
-                leases[root.root_id].renew()
+        for record, snapshot in prepared:
+            root = snapshot["root"]
+            lease = leases[root.root_id] if leases else None
+            current = self._inspect_rollback_record(record, lease)
+            if not self._rollback_bindings_match(
+                snapshot, current, include_canonical=True
+            ):
+                raise ReconcilerError("rollback inputs changed after preflight")
+            canonical = current["canonical"]
+            conflict = current["conflict"]
+            archive = current["archive"]
             _atomic_write(
                 canonical,
-                canonical_backup_data,
+                current["canonical_backup_data"],
                 root=root.path,
                 mode=int(record["canonical_metadata"]["mode"]),
+                expected=current["canonical_fp"],
             )
+            rebound = self._inspect_rollback_record(record, lease)
+            if not self._rollback_bindings_match(
+                snapshot, rebound, include_canonical=False
+            ):
+                raise ReconcilerError("rollback inputs changed after canonical restore")
+            if rebound["canonical_fp"].sha256 != str(
+                record["canonical_before"]["sha256"]
+            ):
+                raise ReconcilerError("canonical rollback verification failed")
+            if _fingerprint(canonical, root.path) != rebound["canonical_fp"]:
+                raise ReconcilerError("canonical changed before metadata restore")
             self._restore_metadata(canonical, record["canonical_metadata"])
-            if not conflict.exists():
-                _atomic_write(
+            before_conflict = self._inspect_rollback_record(record, lease)
+            if not self._rollback_bindings_match(
+                snapshot, before_conflict, include_canonical=False
+            ):
+                raise ReconcilerError("rollback inputs changed before conflict restore")
+            if before_conflict["canonical_fp"].sha256 != str(
+                record["canonical_before"]["sha256"]
+            ):
+                raise ReconcilerError("canonical changed before conflict restore")
+            if not snapshot["conflict_exists"]:
+                _write_new_file(
                     conflict,
-                    conflict_backup_data,
+                    before_conflict["conflict_backup_data"],
                     root=root.path,
                     mode=int(record["conflict_metadata"]["mode"]),
                 )
+                restored_conflict = _fingerprint(conflict, root.path)
+                if restored_conflict.sha256 != str(record["conflict_before"]["sha256"]):
+                    raise ReconcilerError("conflict rollback verification failed")
                 self._restore_metadata(conflict, record["conflict_metadata"])
-            if archive.exists() and (
-                not conflict.exists() or record.get("archive_created")
-            ):
-                _assert_plain_path(root.path, archive, require_file=True)
-                archive.unlink()
+            # Keep the recoverable archive as immutable rollback evidence.
+            # A cleanup policy may remove it later only under a separate,
+            # explicitly reviewed lifecycle.
+            record["archive_retained"] = archive.exists()
             record["rolled_back"] = True
             record["verified"] = False
             record["stage"] = "rolled-back"
@@ -1781,7 +2048,9 @@ class ConflictCopyReconciler:
         manifest = self._load_manifest(operation_id)
         leases: dict[str, RootLease] = {}
         try:
-            for root_id in sorted({record["root_id"] for record in manifest["records"]}):
+            for root_id in sorted(
+                {record["root_id"] for record in manifest["records"]}
+            ):
                 lease = self._lease(root_id)
                 lease.__enter__()
                 leases[root_id] = lease
@@ -1837,7 +2106,9 @@ def run_canary() -> dict[str, Any]:
         verified = reconciler.verify(applied["operation_id"])
         second_plan = reconciler.plan()
         reconciler.rollback(applied["operation_id"])
-        restored = canonical.read_text(encoding="utf-8") == "alpha\n" and conflict.is_file()
+        restored = (
+            canonical.read_text(encoding="utf-8") == "alpha\n" and conflict.is_file()
+        )
         return {
             "schema": "system-gap.conflict-reconciler.canary.v1",
             "status": "pass"

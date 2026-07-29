@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import system_gap_master.conflict_copy_reconciler as reconciler_module
 from system_gap_master.conflict_copy_reconciler import (
     CONFIG_SCHEMA,
     ConflictCopyReconciler,
@@ -83,20 +84,25 @@ class TestSafeMergeClasses(ReconcilerFixture):
     def test_exact_copy_apply_verify_and_rollback(self):
         self.write("notes.md", "same\n")
         self.write("notes (host conflicted copy).md", "same\n")
-        reconciler = self.reconciler(
-            "notes (host conflicted copy).md", "notes.md"
-        )
+        reconciler = self.reconciler("notes (host conflicted copy).md", "notes.md")
         plan = reconciler.plan()
         self.assertEqual(plan["items"][0]["merge_class"], "exact")
         applied = reconciler.apply(plan)
         self.assertEqual(applied["applied"], 1)
         self.assertFalse((self.root / "notes (host conflicted copy).md").exists())
+        manifest = json.loads(
+            (self.state / "operations" / f"{applied['operation_id']}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        archive = self.root / manifest["records"][0]["archive"]
         verified = reconciler.verify(applied["operation_id"])
         self.assertEqual(verified["status"], "verified")
         rolled_back = reconciler.rollback(applied["operation_id"])
         self.assertEqual(rolled_back["status"], "rolled-back")
         self.assertEqual((self.root / "notes.md").read_text(), "same\n")
         self.assertTrue((self.root / "notes (host conflicted copy).md").is_file())
+        self.assertTrue(archive.is_file())
 
     def test_append_only_superset(self):
         self.write("log.md", "alpha\n")
@@ -111,9 +117,7 @@ class TestSafeMergeClasses(ReconcilerFixture):
     def test_three_way_non_overlapping(self):
         base_path = self.write("base.md", "one\ntwo\nthree\n")
         canonical = self.write("story.md", "ONE\ntwo\nthree\n")
-        conflict = self.write(
-            "story (host conflicted copy).md", "one\ntwo\nTHREE\n"
-        )
+        conflict = self.write("story (host conflicted copy).md", "one\ntwo\nTHREE\n")
         base = {
             "path": base_path.name,
             "sha256": __import__("hashlib").sha256(base_path.read_bytes()).hexdigest(),
@@ -144,7 +148,9 @@ class TestSafeMergeClasses(ReconcilerFixture):
             base=base,
         ).plan()["items"][0]
         self.assertEqual(item["status"], "blocked")
-        self.assertTrue(any(value.startswith("merge-validation:") for value in item["blockers"]))
+        self.assertTrue(
+            any(value.startswith("merge-validation:") for value in item["blockers"])
+        )
 
     def test_json_object_disjoint_merge(self):
         canonical = self.write("state.json", '{"left": 1}\n')
@@ -162,7 +168,9 @@ class TestSafeMergeClasses(ReconcilerFixture):
             "state (conflict).json", "state.json", adapter="json-object"
         ).plan()["items"][0]
         self.assertEqual(item["status"], "blocked")
-        self.assertTrue(any(value.startswith("merge-validation:") for value in item["blockers"]))
+        self.assertTrue(
+            any(value.startswith("merge-validation:") for value in item["blockers"])
+        )
 
 
 class TestFailClosedGates(ReconcilerFixture):
@@ -208,19 +216,17 @@ class TestFailClosedGates(ReconcilerFixture):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")
         self.write("LOCK.writer.txt", "owner: another\n")
-        item = self.reconciler(
-            "notes (conflict).md", "notes.md"
-        ).plan()["items"][0]
+        item = self.reconciler("notes (conflict).md", "notes.md").plan()["items"][0]
         self.assertEqual(item["status"], "blocked")
-        self.assertTrue(any(value.startswith("active-lock:") for value in item["blockers"]))
+        self.assertTrue(
+            any(value.startswith("active-lock:") for value in item["blockers"])
+        )
 
     def test_cloud_attestation_is_required(self):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")
         self.assert_blocked(
-            self.reconciler(
-                "notes (conflict).md", "notes.md", cloud_ready=False
-            ),
+            self.reconciler("notes (conflict).md", "notes.md", cloud_ready=False),
             "cloud-readiness-not-attested",
         )
 
@@ -237,27 +243,19 @@ class TestFailClosedGates(ReconcilerFixture):
         self.write("known.md", "same\n")
         self.write("known (conflict).md", "same\n")
         self.write("unknown (conflict).md", "other\n")
-        items = self.reconciler(
-            "known (conflict).md", "known.md"
-        ).plan()["items"]
+        items = self.reconciler("known (conflict).md", "known.md").plan()["items"]
         unknown = next(item for item in items if item["conflict"].startswith("unknown"))
         self.assertEqual(unknown["blockers"], ["canonical-authority-missing"])
 
     def test_path_escape_rejected(self):
         with self.assertRaises(ReconcilerError):
-            ConflictCopyReconciler(
-                self.config("../escape.txt", "safe.txt")
-            )
+            ConflictCopyReconciler(self.config("../escape.txt", "safe.txt"))
 
     def test_windows_ads_and_reserved_paths_are_rejected_portably(self):
         with self.assertRaises(ReconcilerError):
-            ConflictCopyReconciler(
-                self.config("notes.md:stream", "safe.txt")
-            )
+            ConflictCopyReconciler(self.config("notes.md:stream", "safe.txt"))
         with self.assertRaises(ReconcilerError):
-            ConflictCopyReconciler(
-                self.config("CON.txt", "safe.txt")
-            )
+            ConflictCopyReconciler(self.config("CON.txt", "safe.txt"))
 
     def test_state_directory_inside_root_is_rejected(self):
         config = self.config("copy (conflict).md", "copy.md")
@@ -271,9 +269,17 @@ class TestFailClosedGates(ReconcilerFixture):
         self.write("notes.md", "old\n")
         self.write("notes-HOST.md", "old\n")
         subprocess.run(["git", "init", "-q"], cwd=self.root, check=True)
-        subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=self.root, check=True)
-        subprocess.run(["git", "config", "user.name", "Test"], cwd=self.root, check=True)
-        subprocess.run(["git", "add", "notes.md", "notes-HOST.md"], cwd=self.root, check=True)
+        subprocess.run(
+            ["git", "config", "user.email", "test@example.invalid"],
+            cwd=self.root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Test"], cwd=self.root, check=True
+        )
+        subprocess.run(
+            ["git", "add", "notes.md", "notes-HOST.md"], cwd=self.root, check=True
+        )
         subprocess.run(["git", "commit", "-qm", "base"], cwd=self.root, check=True)
         (self.root / "notes.md").write_text("dirty\n", encoding="utf-8")
         item = self.reconciler(
@@ -317,14 +323,28 @@ class TestSafetyLifecycle(ReconcilerFixture):
         self.write("notes (conflict).md", "same\n")
         reconciler = self.reconciler("notes (conflict).md", "notes.md")
         applied = reconciler.reconcile()
-        manifest_path = (
-            self.state / "operations" / f"{applied['operation_id']}.json"
-        )
+        manifest_path = self.state / "operations" / f"{applied['operation_id']}.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["records"][0]["canonical"] = "other.md"
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         with self.assertRaisesRegex(ReconcilerError, "integrity"):
             reconciler.rollback(applied["operation_id"])
+
+    def test_signed_manifest_cannot_substitute_requested_operation(self):
+        self.write("notes.md", "same\n")
+        self.write("notes (conflict).md", "same\n")
+        reconciler = self.reconciler("notes (conflict).md", "notes.md")
+        applied = reconciler.reconcile()
+        operation_path = self.state / "operations" / f"{applied['operation_id']}.json"
+        substituted_id = "f" * 32
+        if substituted_id == applied["operation_id"]:
+            substituted_id = "e" * 32
+        substituted_path = self.state / "operations" / f"{substituted_id}.json"
+        substituted_path.write_bytes(operation_path.read_bytes())
+        with self.assertRaisesRegex(
+            ReconcilerError, "identity does not match requested operation"
+        ):
+            reconciler.verify(substituted_id)
 
     def test_changed_canonical_blocks_rollback_before_any_restore(self):
         canonical = self.write("notes.md", "alpha\n")
@@ -358,14 +378,67 @@ class TestSafetyLifecycle(ReconcilerFixture):
         reconciler = self.reconciler("notes (conflict).md", "notes.md")
         applied = reconciler.reconcile()
         manifest = json.loads(
-            (
-                self.state / "operations" / f"{applied['operation_id']}.json"
-            ).read_text(encoding="utf-8")
+            (self.state / "operations" / f"{applied['operation_id']}.json").read_text(
+                encoding="utf-8"
+            )
         )
         backup = self.state / manifest["records"][0]["canonical_backup"]
         backup.write_text("tampered\n", encoding="utf-8")
         with self.assertRaisesRegex(ReconcilerError, "backup integrity"):
             reconciler.rollback(applied["operation_id"])
+
+    def test_rollback_rechecks_canonical_after_preflight(self):
+        canonical = self.write("notes.md", "alpha\n")
+        conflict = self.write("notes (conflict).md", "alpha\nbeta\n")
+        reconciler = self.reconciler(
+            conflict.name, canonical.name, adapter="append-only-text"
+        )
+        applied = reconciler.reconcile()
+        original_renew = RootLease.renew
+        renew_calls = 0
+
+        def race_after_preflight(lease):
+            nonlocal renew_calls
+            original_renew(lease)
+            renew_calls += 1
+            if renew_calls == 2:
+                canonical.write_text("foreign-after-preflight\n", encoding="utf-8")
+
+        with mock.patch.object(RootLease, "renew", new=race_after_preflight):
+            with self.assertRaises(ReconcilerError):
+                reconciler.rollback(applied["operation_id"])
+        self.assertEqual(canonical.read_text(), "foreign-after-preflight\n")
+        self.assertFalse(conflict.exists())
+
+    def test_rollback_never_removes_archive_changed_after_preflight(self):
+        canonical = self.write("notes.md", "alpha\n")
+        conflict = self.write("notes (conflict).md", "alpha\nbeta\n")
+        reconciler = self.reconciler(
+            conflict.name, canonical.name, adapter="append-only-text"
+        )
+        applied = reconciler.reconcile()
+        manifest = json.loads(
+            (self.state / "operations" / f"{applied['operation_id']}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        archive = self.root / manifest["records"][0]["archive"]
+        original_renew = RootLease.renew
+        renew_calls = 0
+
+        def race_after_preflight(lease):
+            nonlocal renew_calls
+            original_renew(lease)
+            renew_calls += 1
+            if renew_calls == 2:
+                archive.write_text("foreign-archive\n", encoding="utf-8")
+
+        with mock.patch.object(RootLease, "renew", new=race_after_preflight):
+            with self.assertRaises(ReconcilerError):
+                reconciler.rollback(applied["operation_id"])
+        self.assertEqual(canonical.read_text(), "alpha\nbeta\n")
+        self.assertFalse(conflict.exists())
+        self.assertEqual(archive.read_text(), "foreign-archive\n")
 
     def test_compare_before_swap_detects_race(self):
         canonical = self.write("notes.md", "alpha\n")
@@ -403,13 +476,96 @@ class TestSafetyLifecycle(ReconcilerFixture):
     def test_expired_lease_takeover(self):
         lease_path = self.state / "lease.lock"
         lease_path.parent.mkdir(parents=True)
-        lease_path.write_text(
-            json.dumps({"expires_epoch": 0}), encoding="utf-8"
-        )
+        lease_path.write_text(json.dumps({"expires_epoch": 0}), encoding="utf-8")
         lease = RootLease(lease_path, "new-owner", 60, True)
         lease.__enter__()
         lease.__exit__(None, None, None)
         self.assertFalse(lease_path.exists())
+
+    def test_expired_takeover_cannot_cross_lease_mutation_guard(self):
+        lease_path = self.state / "lease.lock"
+        lease_path.parent.mkdir(parents=True)
+        lease_path.write_text(json.dumps({"expires_epoch": 0}), encoding="utf-8")
+        guard_holder = RootLease(lease_path, "guard-holder", 60, True)
+        with guard_holder._mutation_guard():
+            with self.assertRaisesRegex(
+                LeaseBusy, "lease mutation already in progress"
+            ):
+                RootLease(lease_path, "racing-owner", 60, True).__enter__()
+        self.assertEqual(
+            json.loads(lease_path.read_text(encoding="utf-8"))["expires_epoch"],
+            0,
+        )
+
+    def test_windows_guard_reparse_check_precedes_first_write(self):
+        if reconciler_module.os.name != "nt":
+            self.skipTest("Windows O_NOFOLLOW=0 regression")
+        self.assertEqual(getattr(reconciler_module.os, "O_NOFOLLOW", 0), 0)
+        self.state.mkdir(parents=True)
+        lease = RootLease(self.state / "lease.lock", "owner", 60, False)
+        real_write = reconciler_module.os.write
+        with (
+            mock.patch.object(
+                reconciler_module,
+                "_is_link_or_reparse",
+                return_value=True,
+            ),
+            mock.patch.object(
+                reconciler_module.os,
+                "write",
+                wraps=real_write,
+            ) as write,
+        ):
+            with self.assertRaisesRegex(LeaseBusy, "guard became unsafe"):
+                with lease._mutation_guard():
+                    pass
+        write.assert_not_called()
+
+    def test_expired_takeover_restores_displaced_fresh_lease(self):
+        lease_path = self.state / "lease.lock"
+        lease_path.parent.mkdir(parents=True)
+        lease_path.write_text(
+            json.dumps({"token": "expired", "expires_epoch": 0}),
+            encoding="utf-8",
+        )
+        fresh = {
+            "schema": "system-gap.conflict-reconciler.lease.v1",
+            "actor": "fresh-owner",
+            "token": "f" * 32,
+            "expires_epoch": 99999999999,
+        }
+        real_replace = reconciler_module.os.replace
+
+        def replace_after_foreign_takeover(source, destination):
+            if Path(source) == lease_path:
+                lease_path.write_text(json.dumps(fresh), encoding="utf-8")
+            return real_replace(source, destination)
+
+        with mock.patch.object(
+            reconciler_module.os,
+            "replace",
+            side_effect=replace_after_foreign_takeover,
+        ):
+            with self.assertRaisesRegex(LeaseBusy, "identity check failed"):
+                RootLease(lease_path, "racing-owner", 60, True).__enter__()
+        self.assertEqual(
+            json.loads(lease_path.read_text(encoding="utf-8"))["token"],
+            fresh["token"],
+        )
+
+    def test_renew_cannot_cross_lease_mutation_guard(self):
+        lease_path = self.state / "lease.lock"
+        lease = RootLease(lease_path, "owner", 60, False)
+        lease.__enter__()
+        try:
+            with lease._mutation_guard():
+                with self.assertRaisesRegex(
+                    LeaseBusy, "lease mutation already in progress"
+                ):
+                    lease.renew()
+            lease.renew()
+        finally:
+            lease.__exit__(None, None, None)
 
     def test_lost_lease_owner_does_not_delete_successor(self):
         lease_path = self.state / "lease.lock"
@@ -476,7 +632,9 @@ class TestSafetyLifecycle(ReconcilerFixture):
         self.assertEqual(canonical.read_text(), "alpha\n")
         self.assertTrue(conflict.is_file())
 
-    def test_archive_collision_after_swap_restores_canonical_and_preserves_foreign_file(self):
+    def test_archive_collision_after_swap_restores_canonical_and_preserves_foreign_file(
+        self,
+    ):
         canonical = self.write("notes.md", "alpha\n")
         conflict = self.write("notes (conflict).md", "alpha\nbeta\n")
         reconciler = self.reconciler(
@@ -503,9 +661,7 @@ class TestSafetyLifecycle(ReconcilerFixture):
     def test_second_run_is_idempotent(self):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")
-        reconciler = self.reconciler(
-            "notes (conflict).md", "notes.md"
-        )
+        reconciler = self.reconciler("notes (conflict).md", "notes.md")
         reconciler.reconcile()
         second = reconciler.reconcile()
         self.assertEqual(second["applied"], 0)
@@ -513,9 +669,7 @@ class TestSafetyLifecycle(ReconcilerFixture):
     def test_receipt_has_no_absolute_paths_or_content(self):
         self.write("notes.md", "private-looking-content\n")
         self.write("notes (conflict).md", "private-looking-content\n")
-        reconciler = self.reconciler(
-            "notes (conflict).md", "notes.md"
-        )
+        reconciler = self.reconciler("notes (conflict).md", "notes.md")
         result = reconciler.reconcile()
         receipt = json.dumps(result["receipt_data"])
         self.assertNotIn(str(self.root), receipt)

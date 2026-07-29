@@ -71,6 +71,17 @@ high-entropy value during host setup, keep it outside the synced yard, and
 protect the config with host-local permissions. It signs plans and operation
 manifests as well as salting receipt path identifiers.
 
+Lease creation, expired takeover, renewal and release share a persistent
+host-local guard file. Its OS lock is released by the kernel if the process
+crashes; the harmless guard inode remains and therefore needs no stale-lock
+cleanup. A corrupt lease itself fails closed for manual review.
+
+Rollback preflights every record, then rebinds the lease, paths, canonical,
+conflict copy, archive and backups immediately before each mutation. A
+missing conflict copy is restored with no-overwrite creation. Recoverable
+archives remain as immutable rollback evidence and are never lifecycle-
+cleaned by rollback.
+
 ## CLI and API
 
 ```bash
