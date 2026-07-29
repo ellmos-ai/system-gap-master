@@ -74,7 +74,16 @@ manifests as well as salting receipt path identifiers.
 Lease creation, expired takeover, renewal and release share a persistent
 host-local guard file. Its OS lock is released by the kernel if the process
 crashes; the harmless guard inode remains and therefore needs no stale-lock
-cleanup. A corrupt lease itself fails closed for manual review.
+cleanup. Renewal writes and fsyncs a unique no-overwrite temporary file,
+rebinds the guard plus the current lease fingerprint, token and expiry, and
+only then atomically replaces the lease. An interrupted temporary write
+therefore leaves the active lease intact; an orphaned temporary file is inert.
+
+A malformed lease fails closed while it is recent. It may be quarantined only
+when the adapter has explicit expired-takeover authority and the stable file
+mtime is older than the configured lease TTL. This age gate supports recovery
+from an older crashed writer without treating active or fresh corruption as
+an expired lease.
 
 Rollback preflights every record, then rebinds the lease, paths, canonical,
 conflict copy, archive and backups immediately before each mutation. A

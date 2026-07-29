@@ -38,3 +38,7 @@ Security reports concerning path validation, file access boundaries, or unexpect
 - Lease mutations share a persistent host-local guard inode with a
   kernel-released OS lock. Rollback rebinds every input immediately before
   mutation and retains recoverable archives rather than deleting them.
+- Lease renewal uses a fsynced no-overwrite temporary file and atomic
+  replacement after a final guard/token/fingerprint check. A malformed lease
+  is quarantined only when explicit takeover is enabled and stable mtime age
+  exceeds the configured TTL; recent damage remains busy.

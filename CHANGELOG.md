@@ -11,6 +11,16 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+## 1.3.2 - 2026-07-29
+
+- Renew leases through a unique no-overwrite temporary file followed by
+  flush, fsync, final guard/token/fingerprint binding and atomic replacement;
+  a failed or interrupted temporary write cannot corrupt the active lease.
+- Added fail-safe malformed-lease recovery: only an adapter with explicit
+  expired-takeover authority may quarantine a stable malformed lease whose
+  file age exceeds the configured lease TTL. Recent or unstable damage stays
+  busy for review.
+
 ## 1.3.1 - 2026-07-29
 
 - Serialized lease creation, expired takeover, renewal and release with a

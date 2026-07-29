@@ -567,6 +567,76 @@ class TestSafetyLifecycle(ReconcilerFixture):
         finally:
             lease.__exit__(None, None, None)
 
+    def test_partial_temp_renewal_preserves_lease_and_allows_later_takeover(self):
+        lease_path = self.state / "lease.lock"
+        lease = RootLease(lease_path, "owner", 60, False)
+        lease.__enter__()
+        original = lease_path.read_bytes()
+        real_fdopen = reconciler_module.os.fdopen
+
+        class PartialWriter:
+            def __init__(self, descriptor, *args, **kwargs):
+                self.stream = real_fdopen(descriptor, *args, **kwargs)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback):
+                self.stream.close()
+
+            def write(self, data):
+                self.stream.write(data[: max(1, len(data) // 2)])
+                self.stream.flush()
+                raise OSError("injected partial temp write")
+
+            def flush(self):
+                self.stream.flush()
+
+            def fileno(self):
+                return self.stream.fileno()
+
+        with mock.patch.object(
+            reconciler_module.os, "fdopen", side_effect=PartialWriter
+        ):
+            with self.assertRaises(LeaseBusy):
+                lease.renew()
+        self.assertEqual(lease_path.read_bytes(), original)
+        self.assertFalse(list(lease_path.parent.glob(f".{lease_path.name}.*.renew")))
+        crashed_temp = lease_path.with_name(f".{lease_path.name}.crashed.partial.renew")
+        crashed_temp.write_bytes(b'{"token":"partial"')
+        future = reconciler_module.time.time() + 120
+        with mock.patch.object(reconciler_module.time, "time", return_value=future):
+            successor = RootLease(lease_path, "successor", 60, True)
+            successor.__enter__()
+            self.assertEqual(
+                json.loads(lease_path.read_text(encoding="utf-8"))["actor"],
+                "successor",
+            )
+            successor.__exit__(None, None, None)
+        self.assertEqual(crashed_temp.read_bytes(), b'{"token":"partial"')
+
+    def test_malformed_lease_requires_age_and_takeover_policy_for_quarantine(self):
+        lease_path = self.state / "lease.lock"
+        lease_path.parent.mkdir(parents=True)
+        malformed = b'{"token":"truncated"'
+        lease_path.write_bytes(malformed)
+        with self.assertRaisesRegex(LeaseBusy, "too recent"):
+            RootLease(lease_path, "new-owner", 30, True).__enter__()
+        self.assertEqual(lease_path.read_bytes(), malformed)
+
+        old = reconciler_module.time.time() - 60
+        reconciler_module.os.utime(lease_path, (old, old))
+        with self.assertRaises(LeaseBusy):
+            RootLease(lease_path, "disabled", 30, False).__enter__()
+        self.assertEqual(lease_path.read_bytes(), malformed)
+
+        recovered = RootLease(lease_path, "new-owner", 30, True)
+        recovered.__enter__()
+        quarantine = list(lease_path.parent.glob("lease.malformed-*.lock"))
+        self.assertEqual(len(quarantine), 1)
+        self.assertEqual(quarantine[0].read_bytes(), malformed)
+        recovered.__exit__(None, None, None)
+
     def test_lost_lease_owner_does_not_delete_successor(self):
         lease_path = self.state / "lease.lock"
         first = RootLease(lease_path, "first", 60, False)

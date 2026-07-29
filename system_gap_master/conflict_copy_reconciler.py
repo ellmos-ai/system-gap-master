@@ -597,8 +597,23 @@ class RootLease:
         self.acquired = False
         self.token = uuid.uuid4().hex
 
+    @staticmethod
+    def _assert_guard_binding(binding: tuple[Path, int, int, int]) -> None:
+        guard_path, descriptor, device, inode = binding
+        if _is_link_or_reparse(guard_path):
+            raise LeaseBusy("lease mutation guard became unsafe")
+        descriptor_info = os.fstat(descriptor)
+        path_info = guard_path.stat()
+        if (
+            descriptor_info.st_dev != device
+            or descriptor_info.st_ino != inode
+            or path_info.st_dev != device
+            or path_info.st_ino != inode
+        ):
+            raise LeaseBusy("lease mutation guard identity changed")
+
     @contextlib.contextmanager
-    def _mutation_guard(self) -> Iterator[None]:
+    def _mutation_guard(self) -> Iterator[tuple[Path, int, int, int]]:
         """Serialize every mutation of this lease generation.
 
         The guard is a persistent host-local file whose OS lock is released by
@@ -620,11 +635,8 @@ class RootLease:
             info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode):
                 raise LeaseBusy("lease mutation guard is not a regular file")
-            if _is_link_or_reparse(guard_path):
-                raise LeaseBusy("lease mutation guard became unsafe")
-            path_info = guard_path.stat()
-            if path_info.st_dev != info.st_dev or path_info.st_ino != info.st_ino:
-                raise LeaseBusy("lease mutation guard identity changed")
+            binding = (guard_path, descriptor, info.st_dev, info.st_ino)
+            self._assert_guard_binding(binding)
             os.lseek(descriptor, 0, os.SEEK_SET)
             try:
                 if os.name == "nt":
@@ -634,15 +646,11 @@ class RootLease:
             except OSError as exc:
                 raise LeaseBusy("lease mutation already in progress") from exc
             locked = True
-            if _is_link_or_reparse(guard_path):
-                raise LeaseBusy("lease mutation guard became unsafe")
-            path_info = guard_path.stat()
-            if path_info.st_dev != info.st_dev or path_info.st_ino != info.st_ino:
-                raise LeaseBusy("lease mutation guard identity changed")
+            self._assert_guard_binding(binding)
             if info.st_size == 0:
                 os.write(descriptor, b"\0")
                 os.fsync(descriptor)
-            yield
+            yield binding
         finally:
             if locked:
                 with contextlib.suppress(OSError):
@@ -688,7 +696,7 @@ class RootLease:
             "created_epoch": time.time(),
             "expires_epoch": time.time() + self.ttl_seconds,
         }
-        with self._mutation_guard():
+        with self._mutation_guard() as guard_binding:
             if self.lease_path.exists() and _is_link_or_reparse(self.lease_path):
                 raise LeaseBusy("lease path is a symlink or reparse point")
             for attempt in range(2):
@@ -708,31 +716,52 @@ class RootLease:
                     if attempt or not self.allow_expired_takeover:
                         raise LeaseBusy(f"lease busy: {self.lease_path.name}")
                     try:
-                        observed = self.lease_path.read_bytes()
+                        observed, observed_fp = _read_bytes_stable(
+                            self.lease_path, self.lease_path.parent
+                        )
+                    except (OSError, ReconcilerError) as exc:
+                        raise LeaseBusy(
+                            "lease ownership cannot be read stably"
+                        ) from exc
+                    quarantine_kind = "expired"
+                    try:
                         existing = json.loads(observed.decode("utf-8"))
                         expired = float(existing["expires_epoch"]) < time.time()
                     except (
-                        OSError,
                         UnicodeDecodeError,
                         ValueError,
                         KeyError,
                         TypeError,
                         json.JSONDecodeError,
                     ):
-                        expired = False
+                        quarantine_kind = "malformed"
+                        age_seconds = time.time() - (
+                            observed_fp.mtime_ns / 1_000_000_000
+                        )
+                        expired = age_seconds > self.ttl_seconds
                     if not expired:
-                        raise LeaseBusy(f"lease busy: {self.lease_path.name}")
-                    current = self.lease_path.read_bytes()
-                    if not hmac.compare_digest(current, observed):
+                        reason = (
+                            "malformed lease is too recent for quarantine"
+                            if quarantine_kind == "malformed"
+                            else f"lease busy: {self.lease_path.name}"
+                        )
+                        raise LeaseBusy(reason)
+                    current, current_fp = _read_bytes_stable(
+                        self.lease_path, self.lease_path.parent
+                    )
+                    if current_fp != observed_fp or not hmac.compare_digest(
+                        current, observed
+                    ):
                         raise LeaseBusy("expired lease changed during takeover")
-                    stale = self.lease_path.with_suffix(
-                        f".expired-{uuid.uuid4().hex}.lock"
+                    self._assert_guard_binding(guard_binding)
+                    quarantine = self.lease_path.with_suffix(
+                        f".{quarantine_kind}-{uuid.uuid4().hex}.lock"
                     )
                     try:
-                        os.replace(self.lease_path, stale)
+                        os.replace(self.lease_path, quarantine)
                     except OSError as exc:
                         raise LeaseBusy("expired lease takeover lost a race") from exc
-                    displaced = stale.read_bytes()
+                    displaced = quarantine.read_bytes()
                     if not hmac.compare_digest(displaced, observed):
                         self._restore_displaced_lease(displaced)
                         raise LeaseBusy("expired lease takeover identity check failed")
@@ -743,67 +772,61 @@ class RootLease:
 
         if not self.acquired:
             raise LeaseBusy("lease is not owned")
-        with self._mutation_guard():
-            if _is_link_or_reparse(self.lease_path):
-                self.acquired = False
-                raise LeaseBusy("lease path became a symlink or reparse point")
-            flags = os.O_RDWR | int(getattr(os, "O_BINARY", 0))
-            flags |= int(getattr(os, "O_NOFOLLOW", 0))
+        with self._mutation_guard() as guard_binding:
+            temporary = self.lease_path.with_name(
+                f".{self.lease_path.name}.{self.token}.{uuid.uuid4().hex}.renew"
+            )
             try:
-                descriptor = os.open(self.lease_path, flags)
-            except OSError as exc:
-                self.acquired = False
-                raise LeaseBusy("lease ownership cannot be verified") from exc
-            try:
-                before = os.fstat(descriptor)
-                raw = os.read(descriptor, before.st_size + 1)
-                after_read = os.fstat(descriptor)
-                if (
-                    not stat.S_ISREG(before.st_mode)
-                    or not _metadata_unchanged(before, after_read)
-                    or len(raw) != before.st_size
-                ):
-                    raise LeaseBusy("lease changed during renewal")
-                existing = json.loads(raw.decode("utf-8"))
+                if _is_link_or_reparse(self.lease_path):
+                    raise LeaseBusy("lease path became a symlink or reparse point")
+                observed, observed_fp = _read_bytes_stable(
+                    self.lease_path, self.lease_path.parent
+                )
+                existing = json.loads(observed.decode("utf-8"))
                 expires = float(existing["expires_epoch"])
                 if existing.get("token") != self.token:
-                    self.acquired = False
                     raise LeaseBusy("lease ownership was lost")
                 if expires <= time.time():
-                    self.acquired = False
                     raise LeaseBusy("lease expired before renewal")
-                path_info = self.lease_path.stat()
-                if (
-                    path_info.st_dev != before.st_dev
-                    or path_info.st_ino != before.st_ino
-                ):
-                    self.acquired = False
-                    raise LeaseBusy("lease path identity changed during renewal")
                 payload = {
                     **existing,
                     "renewed_epoch": time.time(),
                     "expires_epoch": time.time() + self.ttl_seconds,
                 }
                 encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
-                os.lseek(descriptor, 0, os.SEEK_SET)
-                remaining = memoryview(encoded)
-                while remaining:
-                    written = os.write(descriptor, remaining)
-                    if written <= 0:
-                        raise OSError("lease renewal write made no progress")
-                    remaining = remaining[written:]
-                os.ftruncate(descriptor, len(encoded))
-                os.fsync(descriptor)
-                final_info = self.lease_path.stat()
+                flags = (
+                    os.O_WRONLY
+                    | os.O_CREAT
+                    | os.O_EXCL
+                    | int(getattr(os, "O_BINARY", 0))
+                    | int(getattr(os, "O_NOFOLLOW", 0))
+                )
+                descriptor = os.open(temporary, flags, 0o600)
+                with os.fdopen(descriptor, "wb") as stream:
+                    stream.write(encoded)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                current, current_fp = _read_bytes_stable(
+                    self.lease_path, self.lease_path.parent
+                )
+                current_payload = json.loads(current.decode("utf-8"))
                 if (
-                    final_info.st_dev != before.st_dev
-                    or final_info.st_ino != before.st_ino
+                    current_fp != observed_fp
+                    or not hmac.compare_digest(current, observed)
+                    or current_payload.get("token") != self.token
+                    or float(current_payload["expires_epoch"]) <= time.time()
                 ):
-                    self.acquired = False
-                    raise LeaseBusy("lease path identity changed during renewal")
-                final = json.loads(self.lease_path.read_text(encoding="utf-8"))
-                if final.get("token") != self.token:
-                    self.acquired = False
+                    raise LeaseBusy("lease changed during renewal")
+                self._assert_guard_binding(guard_binding)
+                if _is_link_or_reparse(self.lease_path):
+                    raise LeaseBusy("lease path became unsafe during renewal")
+                os.replace(temporary, self.lease_path)
+                final, _ = _read_bytes_stable(self.lease_path, self.lease_path.parent)
+                final_payload = json.loads(final.decode("utf-8"))
+                if (
+                    not hmac.compare_digest(final, encoded)
+                    or final_payload.get("token") != self.token
+                ):
                     raise LeaseBusy("lease ownership was lost during renewal")
             except LeaseBusy:
                 self.acquired = False
@@ -819,7 +842,8 @@ class RootLease:
                 self.acquired = False
                 raise LeaseBusy("lease ownership cannot be verified") from exc
             finally:
-                os.close(descriptor)
+                with contextlib.suppress(FileNotFoundError):
+                    temporary.unlink()
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
         if self.acquired:
