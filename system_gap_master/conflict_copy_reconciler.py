@@ -250,10 +250,10 @@ def _assert_plain_path(
         raise ReconcilerError(
             "protected root is missing, non-directory, or reparse-backed"
         )
-    if os.path.normcase(str(root.resolve())) != os.path.normcase(str(root)):
-        raise ReconcilerError(
-            "protected root resolves through a symlink or reparse point"
-        )
+    # Do not compare this spelling with Path.resolve(): Windows 8.3 aliases
+    # (for example RUNNER~1 in CI) legitimately resolve to a different string.
+    # The root and every existing component are checked with lstat/reparse
+    # attributes below before reads, directory creation, writes, or replacement.
     current = root
     relative = path.relative_to(root)
     for index, part in enumerate(relative.parts):
