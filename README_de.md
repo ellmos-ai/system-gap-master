@@ -2,11 +2,11 @@
 
 [English](README.md) | [Deutsch](README_de.md)
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-49%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -60,6 +60,8 @@ template/            Kopierfähiges Yard-Skelett:
   CONFLICT_REVIEW_LOG.md  Tägliche Prüfung von Konfliktkopien
   agents/  messages/  hosts/  _archive/   (jeweils mit README-Regeln)
 scripts/system_gap_daily_check.py   Das Tages-Gate (check|mark), zero dependencies
+system_gap_master/conflict_copy_reconciler.py
+                      sichere Scan/Plan/Apply/Verify/Rollback-Engine
 docs/adapting-your-agents.md  Anbindung an CLAUDE.md/AGENTS.md/GEMINI.md
 ```
 
@@ -92,6 +94,28 @@ python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
 6. **Snapshot-Transite** — Datenbanken (z. B. SQLite) werden via Snapshot-Tools übertragen, nicht im Hot-Sync.
 7. **Konflikt-Bereinigung** — Automatisch erzeugte Konfliktkopien werden beim täglichen Ritual konsolidiert.
 8. **Bootstrap-Runbook** — Jedes neue Gerät wird anhand von `BOOTSTRAP.md` in das Netz integriert.
+
+## Sichere Konfliktkopien-Abstimmung
+
+Regel 7 bedeutet nicht mehr, anhand eines wahrscheinlich richtigen
+Dateinamens blind zu mergen. Der optionale `conflict-copy-reconciler`
+verlangt eine explizite Root-Allowlist und eine durch Manifest, Pointer,
+Registry oder Writer-Policy belegte Kanonik. Pro Pfadscope mutiert genau ein
+Owner; ein atomarer lokaler Lease verhindert konkurrierende Desktop-Apps.
+
+Automatisch zulässig sind nur exakte Kopien, append-only UTF-8-Supersets,
+konfliktfreie Dreiweg-Merges mit hashbelegter Basis und der explizite
+JSON-Objekt-Adapter. Semantische Kollisionen, unbekannte Kanonik, Secrets,
+Binärdateien, Datenbanken, Archive, `.git`, Dirty Work, Locks und nicht
+verfügbare Clouddateien sowie Symlinks, Junctions und Reparse-Pfade bleiben
+unverändert und werden als blockiert gemeldet. Signierte Pläne/Manifeste
+binden Akteur, Observer-/Owner-Modus und Konfiguration. Observer dürfen nicht
+mutieren. Vor jeder Mutation stehen ein stabiler Plan, Compare-before-swap
+und lokale Backups; danach folgen Verify, recoverable Archiv und Rollback.
+
+Vertrag und Beispiele:
+[`docs/conflict-copy-reconciler.md`](docs/conflict-copy-reconciler.md) und
+[`examples/conflict-reconciler.config.example.json`](examples/conflict-reconciler.config.example.json).
 
 ## Lizenz
 

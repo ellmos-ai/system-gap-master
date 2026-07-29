@@ -54,9 +54,9 @@ way; a shell profile line is a valid low-tech fallback.
 1. **Global/Local Rule File (`CLAUDE.md`):**
    ```markdown
    ## System Gap Master (Cross-machine Sync)
-   - Yard path: `C:\Users\username\OneDrive\.TOPICS\_control-center\_YARD\`
-   - Host slot: `hosts/WORKSTATION-LG/`
-   - Daily Gate: Run `python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check` at session start.
+   - Yard path: `<SYNC_DIR>`
+   - Host slot: `hosts/<HOST>/`
+   - Daily Gate: Run `python <LOCAL_REPO>/scripts/system_gap_daily_check.py check` at session start.
    ```
 
 2. **SessionStart Hook (`~/.claude/settings.json`):**
@@ -68,7 +68,7 @@ way; a shell profile line is a valid low-tech fallback.
            "hooks": [
              {
                "type": "command",
-               "command": "python C:/_Local_DEV/repos/system-gap-master/scripts/system_gap_daily_check.py check"
+             "command": "python <LOCAL_REPO>/scripts/system_gap_daily_check.py check"
              }
            ]
          }
@@ -84,12 +84,12 @@ way; a shell profile line is a valid low-tech fallback.
 
 ### B. Codex CLI & Codex Desktop (OpenAI Family)
 
-1. **Global Instruction File (`C:\Users\username\CLAUDE.md` or `.codex/GPT.md`):**
+1. **Global Instruction File (`<HOME>/CLAUDE.md` or `.codex/GPT.md`):**
    ```markdown
    ## System Gap Sync Protocol
-   - Check daily sync status: `python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check`
-   - Read inbox: `messages/to-codex.md` and `messages/to-WORKSTATION-LG.md`.
-   - Update state snapshot in `hosts/WORKSTATION-LG/STATE.md`.
+   - Check daily sync status: `python <LOCAL_REPO>/scripts/system_gap_daily_check.py check`
+   - Read inbox: `messages/to-codex.md` and `messages/to-<HOST>.md`.
+   - Update state snapshot in `hosts/<HOST>/STATE.md`.
    ```
 
 2. **Automation Startup Gate:**
@@ -102,7 +102,7 @@ way; a shell profile line is a valid low-tech fallback.
 1. **System Prompt / User Rules (`GEMINI.md` / `user_rules`):**
    ```markdown
    ## Cross-Machine Sync Rule
-   - Sync Yard: `OneDrive\.TOPICS\_control-center\_YARD\`
+   - Sync Yard: `<SYNC_DIR>`
    - Check daily gate status via `system_gap_daily_check.py check`.
    - If sync is due, read inbox messages in `messages/to-gemini.md` and update `hosts/<HOST>/STATE.md`.
    ```
@@ -110,7 +110,7 @@ way; a shell profile line is a valid low-tech fallback.
 2. **Launcher / Startup Script (`START-AGY.bat`):**
    ```cmd
    @echo off
-   python C:\_Local_DEV\repos\system-gap-master\scripts\system_gap_daily_check.py check
+   python <LOCAL_REPO>\scripts\system_gap_daily_check.py check
    agy chat
    ```
 
@@ -123,7 +123,7 @@ way; a shell profile line is a valid low-tech fallback.
    from pathlib import Path
    from system_gap_daily_check import check_sync_due, mark_sync_done
 
-   yard_dir = Path(r"C:\Users\username\OneDrive\.TOPICS\_control-center\_YARD")
+   yard_dir = Path("<SYNC_DIR>")
    if check_sync_due(yard_dir):
        print("Daily sync is due. Processing inbox...")
        # Perform sync tasks
@@ -138,3 +138,14 @@ If several agents run on the SAME machine, they share the host slot and the
 daily gate (one sync per day per machine, whichever agent gets there first).
 Per-agent message channels (`messages/to-<agent>.md`) keep their inboxes
 separate.
+
+For conflict-copy maintenance, all desktop-agent apps may have the
+provider-neutral task from
+`template/runners/desktop-agent/conflict-copy-reconciler.task.json`, but only
+one app is the mutating owner for a given host/root. The others are observers
+that inspect redacted receipts and may request a policy-governed takeover.
+Observers run the plan command only; the engine rejects mutation when their
+config says `observer`. All apps for one host/root use the same protected
+host-local config/state directory so the path-derived lease is shared.
+Register through the provider's supported native UI/API. A private automation
+registry file is not an API; do not edit it directly just to complete setup.

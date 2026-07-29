@@ -1,0 +1,46 @@
+{
+  "schema": "system-gap.desktop-automation-task.v1",
+  "task_key": "conflict-copy-reconciler",
+  "title_template": "{APP_DISPLAY_NAME} — Conflict Copy Reconciler",
+  "default_mode": "observer",
+  "allowed_modes": [
+    "observer",
+    "mutating-owner"
+  ],
+  "commands": {
+    "observer": [
+      "{PYTHON}",
+      "-m",
+      "system_gap_master.conflict_copy_reconciler",
+      "plan",
+      "--config",
+      "{HOST_LOCAL_CONFIG}",
+      "--output",
+      "{HOST_LOCAL_PLAN_OUTPUT}"
+    ],
+    "mutating-owner": [
+      "{PYTHON}",
+      "-m",
+      "system_gap_master.conflict_copy_reconciler",
+      "reconcile",
+      "--config",
+      "{HOST_LOCAL_CONFIG}"
+    ]
+  },
+  "ownership": {
+    "unit": "host-and-canonical-root-path",
+    "max_mutating_owners": 1,
+    "enforcement": "local-atomic-lease",
+    "takeover": "explicit-instance-policy-after-expiry"
+  },
+  "registration": {
+    "native_provider_path_required": true,
+    "raw_private_registry_mutation": false,
+    "registration_readback_required": true,
+    "successful_run_receipt_required": true
+  },
+  "privacy": {
+    "host_paths_in_public_template": false,
+    "shared_receipts": "path-redacted-only"
+  }
+}

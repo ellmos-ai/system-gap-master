@@ -9,7 +9,8 @@
   "provides": [
     "sync.files",
     "sync.yard",
-    "sync.messages"
+    "sync.messages",
+    "sync.conflict-copy-reconciliation"
   ],
   "requires": [],
   "optional": [
@@ -18,6 +19,7 @@
   "conflicts": [],
   "surfaces": [
     "cli",
+    "api",
     "workflow"
   ],
   "state": {

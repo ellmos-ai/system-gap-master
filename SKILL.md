@@ -19,10 +19,14 @@ asking the user once. `<HOST>` is this machine's name.
 1. **Gate check** — `python scripts/system_gap_daily_check.py check` (or read
    `DAILY_SYNC_LOG.md` directly). Today's row for `<HOST>` exists → say so and
    stop; the ritual runs once per day.
-2. **Conflict sweep (R7)** — look for sync-provider conflict copies in the
-   yard (patterns like `*conflict*` or duplicated names with a host suffix).
-   Found → merge content into the canonical file, remove the copy, log one
-   line in `CONFLICT_REVIEW_LOG.md`.
+2. **Conflict sweep (R7)** — run the `conflict-copy-reconciler` scan/plan for
+   the explicitly configured roots. Discovery never proves canonicality.
+   Apply only candidates marked ready by an authoritative mapping and a
+   deterministic safe class. The engine owns lease, backup, atomic write,
+   verify, recoverable archive and rollback. Leave every blocked candidate
+   untouched and log only the path-redacted receipt/status in
+   `CONFLICT_REVIEW_LOG.md`. Run observer configs with `plan`; never call
+   `reconcile` unless this host/root is the single documented mutating owner.
 3. **Read inbound** —
    - `messages/to-<HOST>.md` and `messages/to-<your-agent-name>.md`: act on
      each entry, move lasting information into local rule files/docs, then

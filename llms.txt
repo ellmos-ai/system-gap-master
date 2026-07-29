@@ -21,6 +21,10 @@ separate state silos.
 - `PROTOCOL.md` — full protocol and design rationale.
 - `SKILL.md` — daily sync ritual for agents.
 - `scripts/system_gap_daily_check.py` — zero-dependency daily gate script.
+- `system_gap_master/conflict_copy_reconciler.py` — policy-driven safe
+  conflict-copy scan/plan/apply/verify/rollback API and CLI.
+- `docs/conflict-copy-reconciler.md` — merge classes, safety gates, owner
+  lease and desktop/macOS adapter contract.
 - `template/` — copy-ready yard skeleton.
 - `docs/adapting-your-agents.md` — integration notes for agent rule files and
   session-start hooks.
@@ -33,6 +37,10 @@ separate state silos.
 - Integrated transfer items are archived, not silently deleted.
 - Hot SQLite files and other open data stores must use snapshot-based transit
   tooling instead of direct file-sync.
+- Conflict discovery never proves canonicality. Automatic mutation requires
+  an allowlisted root, authoritative mapping, safe deterministic merge class,
+  one explicit mutating owner, a shared local lease, HMAC-bound plan/manifest,
+  no symlink/reparse traversal, backup, verification and rollback.
 
 ## Search phrases
 

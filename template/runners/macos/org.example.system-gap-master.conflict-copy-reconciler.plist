@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>org.example.system-gap-master.conflict-copy-reconciler</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>__RUNNER_PATH__</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SYSTEM_GAP_RECONCILER_CONFIG</key>
+    <string>__HOST_LOCAL_CONFIG__</string>
+    <key>SYSTEM_GAP_PYTHON</key>
+    <string>__PYTHON_PATH__</string>
+    <key>SYSTEM_GAP_RECONCILER_MODE</key>
+    <string>observer</string>
+    <key>SYSTEM_GAP_RECONCILER_PLAN_OUTPUT</key>
+    <string>__LOCAL_STATE_DIR__/observer-plan.json</string>
+  </dict>
+  <key>StartInterval</key>
+  <integer>86400</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>__LOCAL_LOG_DIR__/conflict-copy-reconciler.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__LOCAL_LOG_DIR__/conflict-copy-reconciler.err.log</string>
+</dict>
+</plist>

@@ -93,8 +93,17 @@ encrypt it and pass the passphrase out-of-band.
 File-sync providers create conflict copies on concurrent edits (the slot rule
 makes this rare, but gates and shared documents can race). Check once per day
 (gate: `CONFLICT_REVIEW_LOG.md`): search for the provider's conflict pattern
-(e.g. `*conflict*`, `*-<HOSTNAME>*` duplicates), merge the content, remove the
-copy, log one line.
+(e.g. `*conflict*`, `*-<HOSTNAME>*` duplicates). Discovery is not proof of
+canonicality. Automatic reconciliation is allowed only through the
+policy-driven `conflict-copy-reconciler`: explicit allowlisted root,
+authoritative canonical mapping, one mutating lease owner, stable
+fingerprints, a deterministic safe merge class, local backup, atomic apply,
+verification and rollback. Unknown or semantic conflicts remain untouched.
+Every adapter starts as a read-only observer; exactly one host/root config may
+be promoted to mutating owner. Signed plans and operation manifests, plus
+no-symlink/reparse path checks, protect the handoff between scan and apply.
+The conflict copy moves to a recoverable archive only after hash readback;
+log the redacted receipt in `CONFLICT_REVIEW_LOG.md`.
 
 ### R8 — Bootstrap
 `BOOTSTRAP.md` is the disaster-recovery and new-device runbook: which tools to
@@ -145,3 +154,6 @@ convention that a convention EXISTS is the load-bearing part.
 - **Provider-agnostic by design.** Nothing here depends on OneDrive/Dropbox
   specifics; the conflict-copy check (R7) is the only provider-facing part.
 - **Archive over delete.** Cheap storage, expensive reconstructions.
+- **Discovery never establishes canonicality.** A shorter filename, newer
+  timestamp or provider suffix can identify a candidate, but only a manifest,
+  pointer, registry or documented writer policy may authorize mutation.

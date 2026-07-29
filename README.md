@@ -2,11 +2,11 @@
 
 [English](README.md) | [Deutsch](README_de.md)
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-49%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -75,6 +75,8 @@ template/            copy-ready yard skeleton:
   CONFLICT_REVIEW_LOG.md  daily conflict-copy sweep gate
   agents/  messages/  hosts/  _archive/   (each with its rules README)
 scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
+system_gap_master/conflict_copy_reconciler.py
+                      safe scan/plan/reconcile/verify/rollback engine
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
 ```
 
@@ -109,6 +111,44 @@ python scripts/system_gap_daily_check.py mark
 8. **BOOTSTRAP.md stays current** — it must always bring up a fresh machine.
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
+
+## Safe conflict-copy reconciliation
+
+Rule 7 no longer means "pick a likely filename and merge it". The optional
+`conflict-copy-reconciler` requires:
+
+- an explicit root allowlist and an authoritative canonical mapping from a
+  manifest, pointer, registry or writer policy;
+- one mutating owner per root, enforced by an atomic local lease;
+- a stable plan plus compare-before-swap, local backup, atomic replacement,
+  verification and rollback;
+- one of four deterministic classes: exact copy, append-only UTF-8 text,
+  non-overlapping three-way UTF-8 text with a hash-proven base, or the
+  explicit JSON-object adapter.
+
+Anything else remains in place and is reported as blocked. This includes
+semantic collisions, unknown canonical files, secrets, binaries, databases,
+archives, `.git`, dirty work, active locks, unavailable cloud files, symlinks,
+junctions and reparse paths. Signed plans/manifests bind the current actor,
+observer/owner mode and configuration. Observer mode cannot mutate.
+
+```bash
+conflict-copy-reconciler scan --config conflict-reconciler.config.json
+conflict-copy-reconciler plan --config conflict-reconciler.config.json \
+  --output plan.json
+conflict-copy-reconciler apply --config conflict-reconciler.config.json \
+  --plan plan.json
+conflict-copy-reconciler reconcile --config conflict-reconciler.config.json
+conflict-copy-reconciler verify --config conflict-reconciler.config.json \
+  --operation-id <OPERATION_ID>
+conflict-copy-reconciler rollback --config conflict-reconciler.config.json \
+  --operation-id <OPERATION_ID>
+conflict-copy-reconciler canary
+```
+
+See [the reconciler contract](docs/conflict-copy-reconciler.md), the
+[configuration example](examples/conflict-reconciler.config.example.json),
+and the provider-neutral desktop/macOS templates under `template/runners/`.
 
 ## Companion tools
 

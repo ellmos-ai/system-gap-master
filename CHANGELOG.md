@@ -11,6 +11,28 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+## 1.3.0 - 2026-07-29
+
+- Added the user-neutral `conflict-copy-reconciler` API/CLI with explicit
+  root allowlists, authoritative canonical mappings, scan/plan/apply/verify/
+  rollback, per-root leases, compare-before-swap, local backups, recoverable
+  archives and path-redacted receipts.
+- Added deterministic automatic classes for exact copies, append-only UTF-8
+  supersets, non-overlapping three-way text merges and conflict-free JSON
+  object merges. Semantic conflicts, secrets, binaries, databases, archives,
+  `.git`, dirty work, locks and unready cloud placeholders fail closed.
+- Added provider-neutral desktop-automation and macOS LaunchAgent/runner
+  templates. Provider registrations remain instance-owned; every path scope
+  has one mutating owner and any number of observers.
+- Added Windows/macOS detector, race, rollback, idempotency and real temporary
+  canary coverage.
+- Hardened the mutation boundary with observer/owner enforcement, signed
+  plan/manifest readback, stable file-descriptor fingerprints, no-symlink/
+  junction/reparse traversal, no-overwrite archives, token-safe lease renewal
+  and preflighted non-destructive rollback.
+- Set the package minimum to Python 3.10, matching the typed public API and
+  the existing CI matrix.
+
 ## 2026-07-26
 
 - Performed technical hygiene & maintenance check (Path A).

@@ -23,3 +23,15 @@ Please do not open public issues for security vulnerabilities. Use GitHub Privat
 `system-gap-master` defines a file-based sync protocol for AI agents over a shared directory ("Yard").
 No credentials, API keys, tokens, or confidential personal data may ever be stored in the yard.
 Security reports concerning path validation, file access boundaries, or unexpected data exposure are within scope.
+
+## Conflict-copy reconciler boundary
+
+- Host configs, receipt salts, roots, plans, operation manifests and backups
+  are private local state and must not be committed or synced.
+- Public examples contain placeholders only. A persistent high-entropy
+  `receipt_salt` HMAC-binds plans and manifests.
+- Observer mode is read-only. Only one host/root adapter may use
+  `mutating-owner`, and every adapter for that scope must share one local
+  state directory so the path-derived lease is effective.
+- Symlinks, junctions, reparse points, alternate data streams, device names,
+  changed sources, changed rollback targets and tampered backups fail closed.

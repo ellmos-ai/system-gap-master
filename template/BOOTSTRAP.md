@@ -33,6 +33,15 @@
 - [ ] Set `SYSTEM_GAP_MASTER_DIR` (user environment variable) to this folder.
 - [ ] Optional: wire `scripts/system_gap_daily_check.py check` into the agent's
       session-start hook for the once-a-day reminder.
+- [ ] If automatic conflict reconciliation is enabled, create a host-local
+      config from `examples/conflict-reconciler.config.example.json`. Keep
+      state/backups outside the synced yard, run `canary`, and register all
+      desktop-agent tasks as observers first.
+- [ ] Assign at most one `mutating-owner` per root. On macOS, instantiate and
+      lint the runner/LaunchAgent templates under `template/runners/macos/`.
+- [ ] Generate one persistent high-entropy `receipt_salt`, protect the
+      host-local config/state directory, and make every adapter for the same
+      root use that same state directory. Start every adapter as `observer`.
 
 ## 5. First sync
 
