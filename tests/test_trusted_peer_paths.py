@@ -325,6 +325,23 @@ class TestPullBoundary(TrustedPeerPathFixture):
                 self.root / "outside.json",
             )
 
+    def test_symlink_destination_parent_fails(self):
+        real = self.pull_root / "real"
+        real.mkdir()
+        linked = self.pull_root / "linked"
+        try:
+            linked.symlink_to(real, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"symlink creation unavailable: {exc}")
+        with self.assertRaisesRegex(
+            TrustedPeerPathError, "symlink, junction or reparse"
+        ):
+            TrustedPeerPathRegistry(self.peer_config).pull_plan(
+                "HOST-A",
+                "service-credential-file",
+                linked / "credential.json",
+            )
+
 
 class TestCli(TrustedPeerPathFixture):
     def _write_json(self, name, value):

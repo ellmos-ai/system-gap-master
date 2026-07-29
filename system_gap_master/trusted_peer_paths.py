@@ -194,11 +194,11 @@ def _lexical_absolute(raw: str | Path, label: str) -> Path:
     expanded = Path(raw_text).expanduser()
     if not expanded.is_absolute():
         raise TrustedPeerPathError(f"{label} must be absolute")
-    lexical = Path(os.path.abspath(expanded))
-    resolved = expanded.resolve(strict=False)
-    if os.path.normcase(str(lexical)) != os.path.normcase(str(resolved)):
-        raise TrustedPeerPathError(f"{label} resolves through a symlink or reparse point")
-    return lexical
+    # Do not compare this spelling with Path.resolve(): Windows 8.3 aliases
+    # (for example RUNNER~1 in CI) legitimately resolve to a different string.
+    # Every existing component is checked with lstat/reparse attributes by the
+    # caller before reads, directory creation, writes, or process execution.
+    return Path(os.path.abspath(expanded))
 
 
 def _assert_plain_existing(path: Path, *, directory: bool | None = None) -> None:
