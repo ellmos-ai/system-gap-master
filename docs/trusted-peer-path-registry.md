@@ -30,9 +30,12 @@ Each publisher writes exactly one derived location:
 <YARD>/hosts/<LOCAL_HOST_ID>/trusted-peer-paths/registry.json
 ```
 
-`publish` does not accept an output path or a host override. The destination
-comes from the host-local config, and the registry `host_id` must match its
-slot. Other hosts may read the file but never update it.
+`publish` does not accept a registry-path or host override. The registry
+destination comes from the host-local config, and its uppercase `host_id`
+must match the slot. The optional CLI `--output` is only a host-local result
+file: it is no-overwrite and cannot target the yard, state, config, keys,
+`known_hosts`, executable, input or pull destination. Other hosts may read
+the registry but never update it.
 
 Keep these items outside the synced yard:
 
@@ -65,6 +68,9 @@ revision fail closed as replay or equivocation. A publisher must increment
 `revision`; it cannot overwrite a newer or unverifiable yard document.
 Crash-released host-local OS locks serialize revision-pin and publish
 updates, so concurrent agents cannot move the highest-seen state backwards.
+The publisher checks the same strict revision/digest state under that lock
+before any yard registry write. Duplicate JSON keys, NaN/Infinity, malformed
+state digests and non-canonical or non-string IDs fail closed.
 
 ## Published fields
 
@@ -82,6 +88,12 @@ Each path has:
 Exact credential paths are allowed because the registry exists to publish
 locations. Treat path names as metadata that all yard readers can see.
 Credential values and file bytes remain forbidden.
+
+Filesystem-facing host and peer IDs use canonical uppercase form; other
+registry IDs use canonical lowercase form. Windows device aliases, alternate
+data streams and trailing dot/space aliases are rejected. For an existing
+Windows `local_path`, the final long path is also classified so an 8.3 alias
+cannot disguise SQLite state.
 
 The peer allowlist controls this CLI's resolve/pull boundary; the SSH server
 must separately enforce authentication, read-only filesystem permissions and
@@ -140,14 +152,23 @@ Direct execution is deliberately narrow:
 - an exact host-local `sftp_executable_ref`, not a PATH lookup, and no
   user/system SSH config (`-F none`);
 - batch mode, strict host-key checking and the exact host-local
-  `known_hosts_ref`;
+  `known_hosts_ref`; whitespace, quotes, `%` tokens and `${...}` expansion
+  syntax are rejected before OpenSSH sees the option;
 - conservative non-globbing remote paths and validated endpoint/user/port;
 - absolute destination inside a configured `pull_destination_root`;
 - no symlink, junction or reparse destination component;
-- unique host-local staging plus atomic no-overwrite installation;
-- no stdout/stderr content is returned or logged.
+- one immutable verified plan supplies both remote path and endpoint;
+- unique host-local staging, configured `max_download_bytes`, SHA-256
+  readback and atomic hardlink-based no-overwrite installation;
+- staging/final POSIX modes are forced and verified as `0600`;
+- the SFTP process runs in the private staging directory and sends stdout and
+  stderr directly to the null device.
 
 `pull` is a dry-run without `--apply`. Existing destinations always block.
+If the filesystem cannot provide atomic no-replace hardlinks, apply fails
+closed instead of exposing a partial final file. On Windows, `chmod(0600)`
+does not establish a complete NTFS ACL; operators must provision the allowed
+destination roots with owner-only ACLs.
 Directories produce a verified plan with
 `directory-pull-requires-reviewed-adapter`; this release does not recursively
 copy them.
@@ -165,7 +186,8 @@ discovery, but must use:
 }
 ```
 
-Any `.db`, `.sqlite`, `.sqlite3`, `-wal` or `-shm` path disguised as an
-ordinary file is rejected. `pull-plan` and `pull --apply` remain blocked and
-point to the R9 `db-transit/<namespace>` snapshot workflow. This module does
-not implement database synchronization.
+Any `.db`, `.sqlite`, `.sqlite3`, `-wal` or `-shm` path—including an existing
+Windows 8.3 alias—disguised as an ordinary file is rejected. `pull-plan` and
+`pull --apply` remain blocked and point to the R9
+`db-transit/<namespace>` snapshot workflow. This module does not implement
+database synchronization.

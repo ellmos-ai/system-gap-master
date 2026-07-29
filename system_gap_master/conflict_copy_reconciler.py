@@ -232,6 +232,27 @@ def _is_link_or_reparse(path: Path) -> bool:
     return stat.S_ISLNK(info.st_mode) or bool(attributes & reparse_flag)
 
 
+def _assert_no_reparse_components(
+    path: Path, *, allow_missing: bool = False
+) -> None:
+    """Reject real link/reparse components without confusing Windows 8.3 aliases."""
+
+    lexical = Path(os.path.abspath(path))
+    current = Path(lexical.anchor)
+    for part in lexical.parts[1:]:
+        current = current / part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            if allow_missing:
+                return
+            raise ReconcilerError(f"protected path is missing: {lexical}")
+        attributes = int(getattr(info, "st_file_attributes", 0))
+        reparse_flag = int(getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+        if stat.S_ISLNK(info.st_mode) or attributes & reparse_flag:
+            raise ReconcilerError(f"symlink-or-reparse-path:{lexical}")
+
+
 def _assert_plain_path(
     root: Path,
     path: Path,
@@ -250,10 +271,7 @@ def _assert_plain_path(
         raise ReconcilerError(
             "protected root is missing, non-directory, or reparse-backed"
         )
-    if os.path.normcase(str(root.resolve())) != os.path.normcase(str(root)):
-        raise ReconcilerError(
-            "protected root resolves through a symlink or reparse point"
-        )
+    _assert_no_reparse_components(root)
     current = root
     relative = path.relative_to(root)
     for index, part in enumerate(relative.parts):
@@ -887,6 +905,7 @@ class ConflictCopyReconciler:
         if not raw_state:
             raise ReconcilerError("state_dir is required and must be local/non-synced")
         expanded_state = Path(str(raw_state)).expanduser()
+        _assert_no_reparse_components(expanded_state, allow_missing=True)
         self.state_dir = expanded_state.resolve()
         raw_salt = self.config.get("receipt_salt")
         if not isinstance(raw_salt, str) or len(raw_salt) < 16:
@@ -963,6 +982,7 @@ class ConflictCopyReconciler:
             if not raw_path:
                 raise ReconcilerError("root path is required")
             expanded_path = Path(raw_path).expanduser()
+            _assert_no_reparse_components(expanded_path)
             path = expanded_path.resolve()
             _assert_plain_path(path, path, require_dir=True)
             if root_id in result:

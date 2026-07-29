@@ -9,7 +9,7 @@
       "remote_path": "/srv/private/example/credentials.json",
       "endpoint_id": "tailscale-sftp",
       "allowed_peer_ids": [
-        "peer-b"
+        "PEER-B"
       ],
       "direct_pull": true,
       "description": "The exact path may be published; the file content never enters the yard."
@@ -21,7 +21,7 @@
       "remote_path": "/var/lib/example/state.sqlite3",
       "endpoint_id": "tailscale-sftp",
       "allowed_peer_ids": [
-        "peer-b"
+        "PEER-B"
       ],
       "direct_pull": false,
       "adapter": "sqlite-transit-sync",

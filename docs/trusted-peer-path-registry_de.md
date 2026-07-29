@@ -33,9 +33,12 @@ Jeder Publisher schreibt genau an den abgeleiteten Ort:
 <YARD>/hosts/<LOCAL_HOST_ID>/trusted-peer-paths/registry.json
 ```
 
-`publish` akzeptiert weder einen Ausgabepfad noch eine fremde Host-ID. Das
-Ziel stammt aus der hostlokalen Konfiguration, und die `host_id` der Registry
-muss zum Slot passen. Andere Hosts dürfen lesen, aber niemals aktualisieren.
+`publish` akzeptiert weder einen Registry-Pfad noch eine fremde Host-ID. Das
+Registry-Ziel stammt aus der hostlokalen Konfiguration, und die
+großgeschriebene `host_id` muss zum Slot passen. Das optionale CLI-`--output`
+ist nur eine hostlokale Ergebnisdatei: ohne Überschreiben und niemals im
+Yard, State, in Konfiguration, Keys, `known_hosts`, Executable, Eingabe oder
+Pull-Ziel. Andere Hosts dürfen die Registry lesen, aber niemals aktualisieren.
 
 Außerhalb des synchronisierten Yards bleiben:
 
@@ -70,6 +73,10 @@ Publisher muss `revision` erhöhen und überschreibt keine neuere oder
 unprüfbare Yard-Datei. Crash-freigegebene hostlokale OS-Locks serialisieren
 Revisions-Pins und Publish-Vorgänge, damit parallele Agenten den höchsten
 gesehenen Stand nicht zurücksetzen.
+Der Publisher prüft denselben strikt typisierten Revisions-/Digest-Zustand
+unter diesem Lock vor jedem Registry-Schreibvorgang in den Yard. Doppelte
+JSON-Schlüssel, NaN/Infinity, ungültige State-Digests sowie nicht kanonische
+oder nicht als String typisierte IDs brechen geschlossen ab.
 
 ## Veröffentlichte Felder
 
@@ -87,6 +94,12 @@ Jeder Pfadeintrag enthält:
 Genaue Credential-Pfade sind zulässig, weil die Registry gerade Orte
 veröffentlichen soll. Pfadnamen sind aber Metadaten, die alle Yard-Leser
 sehen können. Credential-Werte und Dateiinhalte bleiben verboten.
+
+Dateisystemadressierende Host- und Peer-IDs verwenden kanonische
+Großschreibung, alle übrigen Registry-IDs kanonische Kleinschreibung.
+Windows-Gerätenamen, Alternate Data Streams und abschließende Punkte/Spaces
+werden abgelehnt. Bei vorhandenen Windows-`local_path`-Werten wird auch der
+finale Langpfad klassifiziert, sodass ein 8.3-Alias SQLite nicht tarnen kann.
 
 Die Peer-Allowlist schützt die Resolve-/Pull-Grenze dieser CLI. Unabhängig
 davon muss der SSH-Server Authentisierung, schreibgeschützte Dateirechte und
@@ -142,17 +155,25 @@ Die direkte Ausführung ist bewusst eng:
 - genauer hostlokaler `sftp_executable_ref` statt PATH-Suche und keine
   User-/System-SSH-Konfiguration (`-F none`);
 - Batch-Modus, strikte Host-Key-Prüfung und genauer hostlokaler
-  `known_hosts_ref`;
+  `known_hosts_ref`; Whitespace, Quotes, `%`-Tokens und `${...}`-Expansion
+  werden vor OpenSSH abgelehnt;
 - konservative, nicht globbende Remote-Pfade und geprüfte
   Endpunkt-/User-/Port-Felder;
 - absolutes Ziel in einem konfigurierten `pull_destination_root`;
 - keine Symlink-, Junction- oder Reparse-Komponente im Ziel;
-- eindeutiges hostlokales Staging und atomare Installation ohne
-  Überschreiben;
-- keine Inhaltsausgabe aus stdout/stderr.
+- ein unveränderlicher verifizierter Plan liefert Remote-Pfad und Endpunkt;
+- eindeutiges hostlokales Staging, konfiguriertes `max_download_bytes`,
+  SHA-256-Readback und atomare Hardlink-Installation ohne Überschreiben;
+- POSIX-Modi von Staging und Ziel werden als `0600` gesetzt und geprüft;
+- der SFTP-Prozess läuft im privaten Staging-Verzeichnis und leitet stdout
+  und stderr direkt ins Nullgerät.
 
 Ohne `--apply` bleibt `pull` ein Dry-Run. Ein vorhandenes Ziel blockiert
-immer. Verzeichnisse liefern einen verifizierten Plan mit
+immer. Kann das Dateisystem keinen atomaren No-Replace-Hardlink bereitstellen,
+bricht Apply geschlossen ab, statt eine teilweise Zieldatei sichtbar zu
+machen. Unter Windows stellt `chmod(0600)` keine vollständige NTFS-ACL her;
+die erlaubten Zielwurzeln brauchen daher hostseitig Owner-only-ACLs.
+Verzeichnisse liefern einen verifizierten Plan mit
 `directory-pull-requires-reviewed-adapter`; diese Version kopiert sie nicht
 rekursiv.
 
@@ -170,7 +191,8 @@ gelistet werden, müssen aber Folgendes festlegen:
 ```
 
 Als gewöhnliche Datei getarnte `.db`-, `.sqlite`-, `.sqlite3`-, `-wal`- oder
-`-shm`-Pfade werden abgelehnt. `pull-plan` und `pull --apply` bleiben
-blockiert und verweisen auf den R9-Snapshot-Weg
+`-shm`-Pfade einschließlich vorhandener Windows-8.3-Aliase werden abgelehnt.
+`pull-plan` und `pull --apply` bleiben blockiert und verweisen auf den
+R9-Snapshot-Weg
 `db-transit/<namespace>`. Dieses Modul implementiert keinen
 Datenbankabgleich.

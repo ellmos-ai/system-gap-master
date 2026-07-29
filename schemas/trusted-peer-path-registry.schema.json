@@ -18,7 +18,7 @@
       "const": "system-gap.trusted-peer-paths.registry.v1"
     },
     "host_id": {
-      "$ref": "#/$defs/id"
+      "$ref": "#/$defs/hostId"
     },
     "revision": {
       "type": "integer",
@@ -66,7 +66,20 @@
   "$defs": {
     "id": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+      "pattern": "^[a-z0-9](?:[a-z0-9_.-]{0,62}[a-z0-9_-])?$",
+      "not": {
+        "pattern": "^(?:aux|con|nul|prn|com[1-9]|lpt[1-9])(?:\\..*)?$"
+      }
+    },
+    "hostId": {
+      "type": "string",
+      "pattern": "^[A-Z0-9](?:[A-Z0-9_.-]{0,62}[A-Z0-9_-])?$",
+      "not": {
+        "pattern": "^(?:AUX|CON|NUL|PRN|COM[1-9]|LPT[1-9])(?:\\..*)?$"
+      }
+    },
+    "peerId": {
+      "$ref": "#/$defs/hostId"
     },
     "endpoint": {
       "type": "object",
@@ -103,7 +116,8 @@
           "maximum": 65535
         },
         "username": {
-          "$ref": "#/$defs/id"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
         },
         "description": {
           "type": "string",
@@ -152,7 +166,7 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/id"
+            "$ref": "#/$defs/peerId"
           }
         },
         "direct_pull": {

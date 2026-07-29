@@ -2,7 +2,7 @@
   "schema": "system-gap.trusted-peer-paths.local-config.v1",
   "yard_root": "/absolute/path/to/synced/SYNC",
   "local_host_id": "HOST-A",
-  "local_peer_id": "peer-a",
+  "local_peer_id": "PEER-A",
   "state_dir": "/absolute/host-local/state/system-gap-master",
   "publisher": {
     "key_id": "host-a-v1",
@@ -33,6 +33,7 @@
   "ssh": {
     "known_hosts_ref": "/absolute/host-local/ssh/known_hosts",
     "sftp_executable_ref": "/usr/bin/sftp",
-    "connect_timeout_seconds": 15
+    "connect_timeout_seconds": 15,
+    "max_download_bytes": 67108864
   }
 }

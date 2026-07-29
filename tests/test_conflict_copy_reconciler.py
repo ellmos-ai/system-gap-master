@@ -314,6 +314,41 @@ class TestSafetyLifecycle(ReconcilerFixture):
         plan = ConflictCopyReconciler(config).plan()
         self.assertEqual(plan["items"][0]["merge_class"], "exact")
 
+    def test_windows_root_junction_is_rejected_before_canonicalization(self):
+        if os.name != "nt":
+            self.skipTest("Windows junction test")
+        target = self.base / "outside-root"
+        target.mkdir()
+        junction = self.base / "root-junction"
+        created = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(junction), str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if created.returncode != 0:
+            self.skipTest(f"junction creation unavailable: {created.stderr}")
+        config = self.config("notes (conflict).md", "notes.md")
+        config["roots"][0]["path"] = str(junction)
+        with self.assertRaisesRegex(ReconcilerError, "symlink-or-reparse"):
+            ConflictCopyReconciler(config)
+
+    def test_windows_state_junction_is_rejected_before_canonicalization(self):
+        if os.name != "nt":
+            self.skipTest("Windows junction test")
+        target = self.base / "outside-state"
+        target.mkdir()
+        created = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(self.state), str(target)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if created.returncode != 0:
+            self.skipTest(f"junction creation unavailable: {created.stderr}")
+        with self.assertRaisesRegex(ReconcilerError, "symlink-or-reparse"):
+            self.reconciler("notes (conflict).md", "notes.md")
+
     def test_observer_mode_cannot_mutate(self):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")

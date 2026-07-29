@@ -23,10 +23,10 @@
       "minLength": 1
     },
     "local_host_id": {
-      "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
     },
     "local_peer_id": {
-      "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/peerId"
     },
     "state_dir": {
       "type": "string",
@@ -70,7 +70,7 @@
         ],
         "properties": {
           "host_id": {
-            "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+            "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
           },
           "key_id": {
             "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
@@ -99,7 +99,8 @@
       "required": [
         "known_hosts_ref",
         "sftp_executable_ref",
-        "connect_timeout_seconds"
+        "connect_timeout_seconds",
+        "max_download_bytes"
       ],
       "properties": {
         "known_hosts_ref": {
@@ -114,6 +115,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 120
+        },
+        "max_download_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
         }
       }
     }

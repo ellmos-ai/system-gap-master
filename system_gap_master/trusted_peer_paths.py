@@ -20,11 +20,11 @@ import ipaddress
 import json
 import os
 import re
-import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Mapping, Sequence
@@ -42,7 +42,9 @@ ERROR_SCHEMA = "system-gap.trusted-peer-paths.error.v1"
 STATE_SCHEMA = "system-gap.trusted-peer-paths.validation-state.v1"
 SIGNATURE_ALGORITHM = "hmac-sha256"
 
-ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
+ID_RE = re.compile(r"[a-z0-9][a-z0-9_.-]{0,63}")
+HOST_ID_RE = re.compile(r"[A-Z0-9][A-Z0-9_.-]{0,63}")
+PEER_ID_RE = HOST_ID_RE
 USERNAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
 DNS_RE = re.compile(
     r"(?=.{1,253}\Z)[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?"
@@ -54,6 +56,15 @@ WINDOWS_REPARSE_ATTRIBUTE = 0x400
 MAX_REGISTRY_BYTES = 1024 * 1024
 MAX_KEY_BYTES = 4096
 SQLITE_SUFFIXES = (".db", ".sqlite", ".sqlite3", "-wal", "-shm")
+WINDOWS_DEVICE_STEMS = {
+    "AUX",
+    "CON",
+    "NUL",
+    "PRN",
+    *(f"COM{index}" for index in range(1, 10)),
+    *(f"LPT{index}" for index in range(1, 10)),
+}
+SSH_CONFIG_PATH_RE = re.compile(r"[A-Za-z0-9._~/\\:-]{1,4096}")
 
 
 class TrustedPeerPathError(RuntimeError):
@@ -114,6 +125,7 @@ def _utc_now() -> str:
 def _canonical_json(value: Mapping[str, Any]) -> bytes:
     return json.dumps(
         value,
+        allow_nan=False,
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
@@ -122,6 +134,14 @@ def _canonical_json(value: Mapping[str, Any]) -> bytes:
 
 def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _expect_object(value: Any, label: str) -> dict[str, Any]:
@@ -149,18 +169,85 @@ def _expect_keys(
         )
 
 
+def _expect_string(value: Any, label: str) -> str:
+    if not isinstance(value, str):
+        raise TrustedPeerPathError(f"{label} must be a string")
+    return value
+
+
+def _is_windows_device_name(value: str) -> bool:
+    return value.rstrip(" .").split(".", 1)[0].upper() in WINDOWS_DEVICE_STEMS
+
+
+def _validate_identifier_shape(value: str, label: str) -> None:
+    if value.endswith((" ", ".")) or _is_windows_device_name(value):
+        raise TrustedPeerPathError(
+            f"{label} must not use trailing dot/space or a Windows device name"
+        )
+
+
 def _safe_id(value: Any, label: str) -> str:
-    result = str(value or "")
+    result = _expect_string(value, label)
     if not ID_RE.fullmatch(result):
         raise TrustedPeerPathError(f"{label} must be a path-neutral identifier")
+    _validate_identifier_shape(result, label)
+    return result
+
+
+def _safe_host_id(value: Any, label: str) -> str:
+    result = _expect_string(value, label)
+    if not HOST_ID_RE.fullmatch(result):
+        raise TrustedPeerPathError(
+            f"{label} must use the canonical uppercase host-ID form"
+        )
+    _validate_identifier_shape(result, label)
+    return result
+
+
+def _safe_peer_id(value: Any, label: str) -> str:
+    result = _expect_string(value, label)
+    if not PEER_ID_RE.fullmatch(result):
+        raise TrustedPeerPathError(
+            f"{label} must use the canonical uppercase peer-ID form"
+        )
+    _validate_identifier_shape(result, label)
     return result
 
 
 def _safe_text(value: Any, label: str, maximum: int = 512) -> str:
-    result = str(value or "")
+    result = _expect_string(value, label)
     if not result or len(result) > maximum or CONTROL_RE.search(result):
         raise TrustedPeerPathError(f"{label} contains invalid text")
     return result
+
+
+def _validate_windows_path_segments(value: str, label: str) -> None:
+    windows_path = PureWindowsPath(value)
+    for part in windows_path.parts:
+        if part in {windows_path.anchor, windows_path.drive, "\\", "/"}:
+            continue
+        if (
+            part.endswith((" ", "."))
+            or ":" in part
+            or _is_windows_device_name(part)
+        ):
+            raise TrustedPeerPathError(
+                f"{label} contains an NTFS alias, ADS, trailing dot/space, "
+                "or Windows device segment"
+            )
+
+
+def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise TrustedPeerPathError(f"duplicate JSON key is forbidden: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_constant(value: str) -> None:
+    raise TrustedPeerPathError(f"non-finite JSON number is forbidden: {value}")
 
 
 def _is_link_or_reparse(path: Path) -> bool:
@@ -182,7 +269,29 @@ def _is_relative_to(path: Path, root: Path) -> bool:
         return False
 
 
+def _assert_no_reparse_components(
+    path: Path, *, allow_missing: bool = False
+) -> None:
+    lexical = Path(os.path.abspath(path))
+    current = Path(lexical.anchor)
+    for part in lexical.parts[1:]:
+        current = current / part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            if allow_missing:
+                return
+            raise TrustedPeerPathError(f"path does not exist: {lexical}")
+        attributes = int(getattr(info, "st_file_attributes", 0))
+        if stat.S_ISLNK(info.st_mode) or attributes & WINDOWS_REPARSE_ATTRIBUTE:
+            raise TrustedPeerPathError(
+                f"symlink, junction or reparse path is not allowed: {current}"
+            )
+
+
 def _lexical_absolute(raw: str | Path, label: str) -> Path:
+    if not isinstance(raw, (str, os.PathLike)):
+        raise TrustedPeerPathError(f"{label} must be a string or path")
     raw_text = os.fspath(raw)
     if (
         not isinstance(raw_text, str)
@@ -191,27 +300,19 @@ def _lexical_absolute(raw: str | Path, label: str) -> Path:
         or CONTROL_RE.search(raw_text)
     ):
         raise TrustedPeerPathError(f"{label} contains invalid path text")
+    _validate_windows_path_segments(raw_text, label)
     expanded = Path(raw_text).expanduser()
     if not expanded.is_absolute():
         raise TrustedPeerPathError(f"{label} must be absolute")
-    # Do not compare this spelling with Path.resolve(): Windows 8.3 aliases
-    # (for example RUNNER~1 in CI) legitimately resolve to a different string.
-    # Every existing component is checked with lstat/reparse attributes by the
-    # caller before reads, directory creation, writes, or process execution.
-    return Path(os.path.abspath(expanded))
+    lexical = Path(os.path.abspath(expanded))
+    _assert_no_reparse_components(lexical, allow_missing=True)
+    return lexical
 
 
 def _assert_plain_existing(path: Path, *, directory: bool | None = None) -> None:
     if not path.exists():
         raise TrustedPeerPathError(f"path does not exist: {path}")
-    anchor = Path(path.anchor)
-    current = anchor
-    for part in path.parts[1:]:
-        current = current / part
-        if _is_link_or_reparse(current):
-            raise TrustedPeerPathError(
-                f"symlink, junction or reparse path is not allowed: {current}"
-            )
+    _assert_no_reparse_components(path)
     if directory is True and not path.is_dir():
         raise TrustedPeerPathError(f"directory required: {path}")
     if directory is False and not path.is_file():
@@ -237,7 +338,14 @@ def _read_json(path: Path, label: str) -> dict[str, Any]:
     if path.stat().st_size > MAX_REGISTRY_BYTES:
         raise TrustedPeerPathError(f"{label} exceeds {MAX_REGISTRY_BYTES} bytes")
     try:
-        return _expect_object(json.loads(path.read_text(encoding="utf-8")), label)
+        return _expect_object(
+            json.loads(
+                path.read_text(encoding="utf-8"),
+                object_pairs_hook=_reject_duplicate_pairs,
+                parse_constant=_reject_nonfinite_constant,
+            ),
+            label,
+        )
     except UnicodeDecodeError as exc:
         raise TrustedPeerPathError(f"{label} must be UTF-8") from exc
     except json.JSONDecodeError as exc:
@@ -267,6 +375,53 @@ def _atomic_write(path: Path, payload: bytes) -> None:
             pass
 
 
+def _link_no_overwrite(source: Path, destination: Path, label: str) -> None:
+    try:
+        os.link(source, destination)
+    except FileExistsError as exc:
+        raise TrustedPeerPathError(f"{label} already exists; refusing overwrite") from exc
+    except OSError as exc:
+        raise TrustedPeerPathError(
+            f"{label} requires an atomic no-replace hardlink on this filesystem"
+        ) from exc
+
+
+def _write_no_overwrite(path: Path, payload: bytes) -> None:
+    _assert_plain_existing(path.parent, directory=True)
+    if os.path.lexists(path):
+        raise TrustedPeerPathError("output already exists; refusing overwrite")
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    descriptor = os.open(temporary, flags, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb", closefd=True) as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        _link_no_overwrite(temporary, path, "output")
+        _assert_plain_existing(path, directory=False)
+        if path.read_bytes() != payload:
+            with contextlib.suppress(FileNotFoundError):
+                path.unlink()
+            raise TrustedPeerPathError("output readback failed")
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            temporary.unlink()
+
+
+def _comparison_path(path: Path) -> Path:
+    existing = path if path.exists() else path.parent
+    _assert_plain_existing(existing)
+    return path.resolve(strict=False)
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    return os.path.normcase(str(_comparison_path(left))) == os.path.normcase(
+        str(_comparison_path(right))
+    )
+
+
 def _read_key(path: Path, yard_root: Path) -> bytes:
     if _is_relative_to(path, yard_root) or _is_relative_to(yard_root, path):
         raise TrustedPeerPathError("key references must not overlap the synced yard")
@@ -287,7 +442,7 @@ def _sign_registry(payload: Mapping[str, Any], key: bytes) -> str:
 
 
 def _validate_network_host(value: Any) -> str:
-    host = str(value or "")
+    host = _expect_string(value, "endpoint host")
     if CONTROL_RE.search(host) or host.startswith("-"):
         raise TrustedPeerPathError("endpoint host is invalid")
     candidate = host[1:-1] if host.startswith("[") and host.endswith("]") else host
@@ -300,7 +455,7 @@ def _validate_network_host(value: Any) -> str:
 
 
 def _validate_exact_local_path(value: Any) -> str:
-    path = str(value or "")
+    path = _expect_string(value, "local_path")
     if (
         not path
         or len(path) > 4096
@@ -311,11 +466,12 @@ def _validate_exact_local_path(value: Any) -> str:
         raise TrustedPeerPathError("local_path must be an absolute traversal-free path")
     if not (PurePosixPath(path).is_absolute() or PureWindowsPath(path).is_absolute()):
         raise TrustedPeerPathError("local_path must be an absolute POSIX or Windows path")
+    _validate_windows_path_segments(path, "local_path")
     return path
 
 
 def _validate_remote_path(value: Any) -> str:
-    path = str(value or "")
+    path = _expect_string(value, "remote_path")
     parts = path.split("/")
     if (
         not SFTP_SAFE_REMOTE_RE.fullmatch(path)
@@ -327,11 +483,24 @@ def _validate_remote_path(value: Any) -> str:
             "remote_path must be an absolute, traversal-free, non-globbing SFTP path "
             "using the conservative portable character set"
         )
+    _validate_windows_path_segments(path, "remote_path")
     return path
 
 
 def _looks_like_sqlite_path(path: str) -> bool:
     return path.lower().endswith(SQLITE_SUFFIXES)
+
+
+def _existing_local_classification_path(path: str) -> str | None:
+    """Return an existing Windows path's final long spelling after link checks."""
+
+    if os.name != "nt":
+        return None
+    candidate = Path(path)
+    if not candidate.is_absolute() or not candidate.exists():
+        return None
+    _assert_plain_existing(candidate)
+    return str(candidate.resolve(strict=True))
 
 
 def _validate_endpoint(raw: Any) -> dict[str, Any]:
@@ -343,17 +512,17 @@ def _validate_endpoint(raw: Any) -> dict[str, Any]:
         label="endpoint",
     )
     endpoint_id = _safe_id(endpoint["endpoint_id"], "endpoint_id")
-    transport = str(endpoint["transport"])
+    transport = _expect_string(endpoint["transport"], "endpoint transport")
     if transport != "sftp":
         raise TrustedPeerPathError("only the sftp transport is supported")
-    network = str(endpoint["network"])
+    network = _expect_string(endpoint["network"], "endpoint network")
     if network not in {"tailscale", "lan"}:
         raise TrustedPeerPathError("endpoint network must be tailscale or lan")
     host = _validate_network_host(endpoint["host"])
     port = endpoint["port"]
     if not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
         raise TrustedPeerPathError("endpoint port must be an integer from 1 to 65535")
-    username = str(endpoint["username"] or "")
+    username = _expect_string(endpoint["username"], "endpoint username")
     if not USERNAME_RE.fullmatch(username):
         raise TrustedPeerPathError("endpoint username is invalid")
     result: dict[str, Any] = {
@@ -388,7 +557,7 @@ def _validate_path_entry(raw: Any, endpoint_ids: set[str]) -> dict[str, Any]:
         label="path entry",
     )
     path_id = _safe_id(item["path_id"], "path_id")
-    kind = str(item["kind"])
+    kind = _expect_string(item["kind"], "path kind")
     if kind not in {"file", "directory", "database/sqlite"}:
         raise TrustedPeerPathError(
             "path kind must be file, directory, or database/sqlite"
@@ -402,13 +571,16 @@ def _validate_path_entry(raw: Any, endpoint_ids: set[str]) -> dict[str, Any]:
     peers = item["allowed_peer_ids"]
     if not isinstance(peers, list) or not peers:
         raise TrustedPeerPathError(f"path {path_id} must allow at least one peer")
-    allowed = [_safe_id(peer, "allowed_peer_id") for peer in peers]
+    allowed = [_safe_peer_id(peer, "allowed_peer_id") for peer in peers]
     if len(set(allowed)) != len(allowed):
         raise TrustedPeerPathError(f"path {path_id} contains duplicate peer IDs")
     local_path = _validate_exact_local_path(item["local_path"])
     remote_path = _validate_remote_path(item["remote_path"])
-    sqlite_path = _looks_like_sqlite_path(local_path) or _looks_like_sqlite_path(
-        remote_path
+    final_local_path = _existing_local_classification_path(local_path)
+    sqlite_path = any(
+        _looks_like_sqlite_path(candidate)
+        for candidate in (local_path, remote_path, final_local_path)
+        if candidate is not None
     )
     adapter = item.get("adapter")
     if kind == "database/sqlite":
@@ -464,7 +636,7 @@ def _validate_registry_shape(
     )
     if raw["schema"] != REGISTRY_SCHEMA:
         raise TrustedPeerPathError(f"registry schema must be {REGISTRY_SCHEMA}")
-    host_id = _safe_id(raw["host_id"], "registry host_id")
+    host_id = _safe_host_id(raw["host_id"], "registry host_id")
     if host_id != expected_host_id:
         raise TrustedPeerPathError("registry host_id does not match its yard slot")
     revision = raw["revision"]
@@ -503,7 +675,7 @@ def _validate_registry_shape(
             f"signature algorithm must be {SIGNATURE_ALGORITHM}"
         )
     key_id = _safe_id(signature["key_id"], "signature key_id")
-    value = str(signature["value"])
+    value = _expect_string(signature["value"], "signature value")
     if not SHA256_RE.fullmatch(value):
         raise TrustedPeerPathError("signature value must be a lowercase SHA-256 HMAC")
     return {
@@ -585,10 +757,10 @@ class TrustedPeerPathRegistry:
             )
         self.yard_root = _lexical_absolute(self.config["yard_root"], "yard_root")
         _assert_plain_existing(self.yard_root, directory=True)
-        self.local_host_id = _safe_id(
+        self.local_host_id = _safe_host_id(
             self.config["local_host_id"], "local_host_id"
         )
-        self.local_peer_id = _safe_id(
+        self.local_peer_id = _safe_peer_id(
             self.config["local_peer_id"], "local_peer_id"
         )
         self.state_dir = _lexical_absolute(self.config["state_dir"], "state_dir")
@@ -666,7 +838,7 @@ class TrustedPeerPathRegistry:
                 optional=set(),
                 label="trusted host",
             )
-            host_id = _safe_id(item["host_id"], "trusted host_id")
+            host_id = _safe_host_id(item["host_id"], "trusted host_id")
             if host_id in result:
                 raise TrustedPeerPathError(f"duplicate trusted host: {host_id}")
             min_revision = item["min_revision"]
@@ -694,6 +866,7 @@ class TrustedPeerPathRegistry:
                 "known_hosts_ref",
                 "sftp_executable_ref",
                 "connect_timeout_seconds",
+                "max_download_bytes",
             },
             optional=set(),
             label="ssh",
@@ -703,6 +876,13 @@ class TrustedPeerPathRegistry:
         )
         if _is_relative_to(known_hosts_ref, self.yard_root):
             raise TrustedPeerPathError("known_hosts_ref must be host-local")
+        known_hosts_option = known_hosts_ref.as_posix()
+        if not SSH_CONFIG_PATH_RE.fullmatch(known_hosts_option):
+            raise TrustedPeerPathError(
+                "known_hosts_ref contains whitespace, quotes, OpenSSH tokens, "
+                "environment syntax, or non-portable characters"
+            )
+        _assert_plain_existing(known_hosts_ref, directory=False)
         sftp_executable_ref = _lexical_absolute(
             ssh["sftp_executable_ref"], "sftp_executable_ref"
         )
@@ -718,14 +898,25 @@ class TrustedPeerPathRegistry:
             raise TrustedPeerPathError(
                 "connect_timeout_seconds must be an integer from 1 to 120"
             )
+        max_download_bytes = ssh["max_download_bytes"]
+        if (
+            not isinstance(max_download_bytes, int)
+            or isinstance(max_download_bytes, bool)
+            or not 1 <= max_download_bytes <= 1024 * 1024 * 1024 * 1024
+        ):
+            raise TrustedPeerPathError(
+                "max_download_bytes must be an integer from 1 byte to 1 TiB"
+            )
         return {
             "known_hosts_ref": known_hosts_ref,
+            "known_hosts_option": known_hosts_option,
             "sftp_executable_ref": sftp_executable_ref,
             "connect_timeout_seconds": timeout,
+            "max_download_bytes": max_download_bytes,
         }
 
     def _registry_path(self, host_id: str, *, create: bool = False) -> Path:
-        safe_host = _safe_id(host_id, "host_id")
+        safe_host = _safe_host_id(host_id, "host_id")
         hosts_root = self.yard_root / "hosts"
         if create:
             _mkdir_plain(self.yard_root, hosts_root)
@@ -754,38 +945,96 @@ class TrustedPeerPathRegistry:
         except KeyError as exc:
             raise TrustedPeerPathError(f"host is not trusted: {host_id}") from exc
 
-    def _state_path(self, host_id: str) -> Path:
+    def _state_path(self, host_id: str, *, create: bool = True) -> Path:
         root = self.state_dir / "trusted-peer-paths"
-        _mkdir_plain(self.state_dir, root)
-        return root / f"{_safe_id(host_id, 'host_id')}.json"
+        if create:
+            _mkdir_plain(self.state_dir, root)
+        return root / f"{_safe_host_id(host_id, 'host_id')}.json"
+
+    @staticmethod
+    def _revision_guard_id(host_id: str) -> str:
+        safe_host = _safe_host_id(host_id, "host_id")
+        return f"revision-{_sha256_bytes(safe_host.encode('utf-8'))[:32]}"
+
+    def _read_revision_state(self, host_id: str) -> dict[str, Any] | None:
+        safe_host = _safe_host_id(host_id, "host_id")
+        path = self._state_path(safe_host, create=False)
+        if not os.path.lexists(path):
+            return None
+        state = _read_json(path, "validation state")
+        _expect_keys(
+            state,
+            required={"schema", "host_id", "revision", "registry_sha256"},
+            optional=set(),
+            label="validation state",
+        )
+        if state["schema"] != STATE_SCHEMA:
+            raise TrustedPeerPathError("validation state schema is invalid")
+        state_host = _safe_host_id(state["host_id"], "validation state host_id")
+        if state_host != safe_host:
+            raise TrustedPeerPathError("validation state identity mismatch")
+        revision = state["revision"]
+        if (
+            not isinstance(revision, int)
+            or isinstance(revision, bool)
+            or revision < 1
+        ):
+            raise TrustedPeerPathError(
+                "validation state revision must be an integer >= 1"
+            )
+        digest = state["registry_sha256"]
+        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+            raise TrustedPeerPathError(
+                "validation state digest must be a lowercase SHA-256"
+            )
+        return {
+            "schema": STATE_SCHEMA,
+            "host_id": state_host,
+            "revision": revision,
+            "registry_sha256": digest,
+        }
+
+    def _write_revision_state(
+        self, host_id: str, revision: int, digest: str
+    ) -> None:
+        safe_host = _safe_host_id(host_id, "host_id")
+        if (
+            not isinstance(revision, int)
+            or isinstance(revision, bool)
+            or revision < 1
+        ):
+            raise TrustedPeerPathError("revision state revision must be >= 1")
+        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+            raise TrustedPeerPathError(
+                "revision state digest must be a lowercase SHA-256"
+            )
+        payload = {
+            "schema": STATE_SCHEMA,
+            "host_id": safe_host,
+            "revision": revision,
+            "registry_sha256": digest,
+        }
+        encoded = (
+            json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+        )
+        _atomic_write(self._state_path(safe_host), encoded)
 
     def _record_revision(self, registry: Mapping[str, Any]) -> None:
-        host_id = str(registry["host_id"])
-        revision = int(registry["revision"])
+        host_id = _safe_host_id(registry["host_id"], "registry host_id")
+        revision = registry["revision"]
+        if (
+            not isinstance(revision, int)
+            or isinstance(revision, bool)
+            or revision < 1
+        ):
+            raise TrustedPeerPathError("registry revision must be an integer >= 1")
         digest = _sha256_bytes(_canonical_json(registry))
-        guard_id = f"validate-{_sha256_bytes(host_id.encode('utf-8'))[:32]}"
-        with _local_guard(self.state_dir, guard_id):
-            path = self._state_path(host_id)
-            if path.exists():
-                state = _read_json(path, "validation state")
-                _expect_keys(
-                    state,
-                    required={
-                        "schema",
-                        "host_id",
-                        "revision",
-                        "registry_sha256",
-                    },
-                    optional=set(),
-                    label="validation state",
-                )
-                if state["schema"] != STATE_SCHEMA or state["host_id"] != host_id:
-                    raise TrustedPeerPathError("validation state identity mismatch")
+        with _local_guard(
+            self.state_dir, self._revision_guard_id(host_id)
+        ):
+            state = self._read_revision_state(host_id)
+            if state is not None:
                 seen = state["revision"]
-                if not isinstance(seen, int) or isinstance(seen, bool):
-                    raise TrustedPeerPathError(
-                        "validation state revision is invalid"
-                    )
                 if revision < seen:
                     raise TrustedPeerPathError(
                         f"registry replay detected for {host_id}: {revision} < {seen}"
@@ -797,17 +1046,7 @@ class TrustedPeerPathRegistry:
                     )
                 if revision == seen:
                     return
-            payload = {
-                "schema": STATE_SCHEMA,
-                "host_id": host_id,
-                "revision": revision,
-                "registry_sha256": digest,
-            }
-            encoded = (
-                json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
-                + b"\n"
-            )
-            _atomic_write(path, encoded)
+            self._write_revision_state(host_id, revision, digest)
 
     def publish(self, entries: Mapping[str, Any]) -> dict[str, Any]:
         if self.publisher is None:
@@ -834,10 +1073,14 @@ class TrustedPeerPathRegistry:
         path_ids = [item["path_id"] for item in paths]
         if len(set(path_ids)) != len(path_ids):
             raise TrustedPeerPathError("entries path IDs must be unique")
-        guard_id = (
-            f"publish-{_sha256_bytes(self.local_host_id.encode('utf-8'))[:32]}"
-        )
+        guard_id = self._revision_guard_id(self.local_host_id)
         with _local_guard(self.state_dir, guard_id):
+            state = self._read_revision_state(self.local_host_id)
+            if state is not None and revision <= state["revision"]:
+                raise TrustedPeerPathError(
+                    "publish revision must be greater than the highest-seen "
+                    "host-local revision"
+                )
             output_path = self._registry_path(self.local_host_id, create=True)
             if output_path.exists():
                 existing = self.validate(self.local_host_id, record=False)
@@ -866,7 +1109,12 @@ class TrustedPeerPathRegistry:
                 + b"\n"
             )
             _atomic_write(output_path, encoded)
-            verified = self.validate(self.local_host_id)
+            verified = self.validate(self.local_host_id, record=False)
+            self._write_revision_state(
+                self.local_host_id,
+                verified["revision"],
+                _sha256_bytes(_canonical_json(verified)),
+            )
         return {
             "schema": "system-gap.trusted-peer-paths.publish-result.v1",
             "status": "published",
@@ -877,7 +1125,7 @@ class TrustedPeerPathRegistry:
         }
 
     def validate(self, host_id: str, *, record: bool = True) -> dict[str, Any]:
-        safe_host = _safe_id(host_id, "host_id")
+        safe_host = _safe_host_id(host_id, "host_id")
         trust = self._trust_for(safe_host)
         path = self._registry_path(safe_host)
         registry = _validate_registry_shape(
@@ -905,7 +1153,7 @@ class TrustedPeerPathRegistry:
         )
         visible: list[dict[str, Any]] = []
         for candidate in host_ids:
-            registry = self.validate(str(candidate))
+            registry = self.validate(candidate)
             endpoints = {
                 endpoint["endpoint_id"]: endpoint for endpoint in registry["endpoints"]
             }
@@ -1006,7 +1254,7 @@ class TrustedPeerPathRegistry:
             str(endpoint["port"]),
             "-oBatchMode=yes",
             "-oStrictHostKeyChecking=yes",
-            f"-oUserKnownHostsFile={known_hosts}",
+            f"-oUserKnownHostsFile={self.ssh['known_hosts_option']}",
             "-oGlobalKnownHostsFile=none",
             "-oClearAllForwardings=yes",
             f"-oConnectTimeout={self.ssh['connect_timeout_seconds']}",
@@ -1053,7 +1301,6 @@ class TrustedPeerPathRegistry:
             )
         destination_path = Path(plan.destination)
         self._destination(destination_path)
-        endpoint = self.resolve(host_id, path_id)["endpoint"]
         with tempfile.TemporaryDirectory(
             prefix=".trusted-peer-pull-", dir=destination_path.parent
         ) as temporary_dir:
@@ -1067,38 +1314,67 @@ class TrustedPeerPathRegistry:
             ).encode("utf-8")
             _atomic_write(batch, batch_payload)
             argv = [
-                str(plan.argv[0]),
-                "-q",
-                "-b",
-                str(batch),
-                "-F",
-                "none",
-                "-P",
-                str(endpoint["port"]),
-                "-oBatchMode=yes",
-                "-oStrictHostKeyChecking=yes",
-                f"-oUserKnownHostsFile={self.ssh['known_hosts_ref']}",
-                "-oGlobalKnownHostsFile=none",
-                "-oClearAllForwardings=yes",
-                f"-oConnectTimeout={self.ssh['connect_timeout_seconds']}",
-                f"{endpoint['username']}@{endpoint['host']}",
+                str(batch) if argument == "<HOST_LOCAL_BATCH_FILE>" else argument
+                for argument in plan.argv
             ]
-            try:
-                completed = subprocess.run(
-                    argv,
-                    shell=False,
-                    check=False,
-                    capture_output=True,
-                    timeout=self.ssh["connect_timeout_seconds"] + 30,
-                )
-            except subprocess.TimeoutExpired as exc:
-                raise TrustedPeerPathError("SFTP pull timed out") from exc
-            if completed.returncode != 0:
+            process = subprocess.Popen(
+                argv,
+                shell=False,
+                cwd=temporary_root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            deadline = (
+                time.monotonic() + self.ssh["connect_timeout_seconds"] + 30
+            )
+            return_code: int | None = None
+            while return_code is None:
+                return_code = process.poll()
+                if part.exists() and part.stat().st_size > self.ssh[
+                    "max_download_bytes"
+                ]:
+                    if return_code is None:
+                        with contextlib.suppress(OSError):
+                            process.terminate()
+                        with contextlib.suppress(
+                            OSError, subprocess.TimeoutExpired
+                        ):
+                            process.wait(timeout=5)
+                        if process.poll() is None:
+                            with contextlib.suppress(OSError):
+                                process.kill()
+                            process.wait(timeout=5)
+                    raise TrustedPeerPathError(
+                        "SFTP download exceeded max_download_bytes"
+                    )
+                if return_code is None and time.monotonic() >= deadline:
+                    with contextlib.suppress(OSError):
+                        process.terminate()
+                    with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                        process.wait(timeout=5)
+                    if process.poll() is None:
+                        with contextlib.suppress(OSError):
+                            process.kill()
+                        process.wait(timeout=5)
+                    raise TrustedPeerPathError("SFTP pull timed out")
+                if return_code is None:
+                    time.sleep(0.05)
+            if return_code != 0:
                 raise TrustedPeerPathError(
-                    f"SFTP pull failed with exit code {completed.returncode}"
+                    f"SFTP pull failed with exit code {return_code}"
                 )
             _assert_plain_existing(part, directory=False)
             size = part.stat().st_size
+            if size > self.ssh["max_download_bytes"]:
+                raise TrustedPeerPathError(
+                    "SFTP download exceeded max_download_bytes"
+                )
+            os.chmod(part, 0o600)
+            if os.name != "nt" and stat.S_IMODE(part.stat().st_mode) != 0o600:
+                raise TrustedPeerPathError(
+                    "download staging permissions are not owner-only"
+                )
+            digest = _sha256_file(part)
             self._install_no_overwrite(part, destination_path)
         return {
             "schema": "system-gap.trusted-peer-paths.pull-result.v1",
@@ -1107,32 +1383,17 @@ class TrustedPeerPathRegistry:
             "path_id": plan.path_id,
             "destination": plan.destination,
             "bytes": size,
+            "sha256": digest,
             "transport": "sftp",
             "overwritten": False,
         }
 
     def _install_no_overwrite(self, source: Path, destination: Path) -> None:
         self._destination(destination)
-        try:
-            os.link(source, destination)
-        except OSError:
-            descriptor = os.open(
-                destination,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
-                0o600,
-            )
-            try:
-                with os.fdopen(descriptor, "wb", closefd=True) as output:
-                    with source.open("rb") as input_file:
-                        shutil.copyfileobj(input_file, output)
-                    output.flush()
-                    os.fsync(output.fileno())
-            except BaseException:
-                try:
-                    destination.unlink()
-                except FileNotFoundError:
-                    pass
-                raise
+        os.chmod(source, 0o600)
+        if os.name != "nt" and stat.S_IMODE(source.stat().st_mode) != 0o600:
+            raise TrustedPeerPathError("download source permissions are not owner-only")
+        _link_no_overwrite(source, destination, "download destination")
         _assert_plain_existing(destination, directory=False)
         if source.stat().st_size != destination.stat().st_size:
             try:
@@ -1140,13 +1401,92 @@ class TrustedPeerPathRegistry:
             except FileNotFoundError:
                 pass
             raise TrustedPeerPathError("download install size verification failed")
+        if os.name != "nt" and stat.S_IMODE(destination.stat().st_mode) != 0o600:
+            with contextlib.suppress(FileNotFoundError):
+                destination.unlink()
+            raise TrustedPeerPathError(
+                "download destination permissions are not owner-only"
+            )
 
 
-def _dump(value: Mapping[str, Any], output: str | None) -> None:
-    payload = json.dumps(value, indent=2, sort_keys=True) + "\n"
-    if output:
-        output_path = _lexical_absolute(output, "output path")
-        _atomic_write(output_path, payload.encode("utf-8"))
+def _preflight_output(
+    output: str | None,
+    *,
+    config: Mapping[str, Any],
+    input_paths: Sequence[Path],
+    destination: str | None,
+) -> Path | None:
+    if output is None:
+        return None
+    output_path = _lexical_absolute(output, "output path")
+    _assert_plain_existing(output_path.parent, directory=True)
+    if os.path.lexists(output_path):
+        raise TrustedPeerPathError("output already exists; refusing overwrite")
+
+    protected_roots = [
+        _lexical_absolute(
+            _expect_string(config.get(key), key),
+            key,
+        )
+        for key in ("yard_root", "state_dir")
+    ]
+    canonical_output = _comparison_path(output_path)
+    for root in protected_roots:
+        canonical_root = _comparison_path(root)
+        if _is_relative_to(canonical_output, canonical_root):
+            raise TrustedPeerPathError(
+                "output must not be inside the synced yard or host-local state"
+            )
+
+    protected_files = list(input_paths)
+    publisher = config.get("publisher")
+    if isinstance(publisher, dict) and "signing_key_ref" in publisher:
+        protected_files.append(
+            _lexical_absolute(
+                _expect_string(
+                    publisher["signing_key_ref"], "publisher signing_key_ref"
+                ),
+                "publisher signing_key_ref",
+            )
+        )
+    trusted_hosts = config.get("trusted_hosts")
+    if isinstance(trusted_hosts, list):
+        for index, item in enumerate(trusted_hosts):
+            if isinstance(item, dict) and "verification_key_ref" in item:
+                protected_files.append(
+                    _lexical_absolute(
+                        _expect_string(
+                            item["verification_key_ref"],
+                            f"trusted_hosts[{index}] verification_key_ref",
+                        ),
+                        f"trusted_hosts[{index}] verification_key_ref",
+                    )
+                )
+    ssh = config.get("ssh")
+    if isinstance(ssh, dict):
+        for key in ("known_hosts_ref", "sftp_executable_ref"):
+            if key in ssh:
+                protected_files.append(
+                    _lexical_absolute(
+                        _expect_string(ssh[key], f"ssh {key}"),
+                        f"ssh {key}",
+                    )
+                )
+    if destination is not None:
+        protected_files.append(_lexical_absolute(destination, "destination"))
+    for protected in protected_files:
+        if _same_path(output_path, protected):
+            raise TrustedPeerPathError(
+                "output aliases a config, key, known-hosts, executable, input, "
+                "or pull destination path"
+            )
+    return output_path
+
+
+def _dump(value: Mapping[str, Any], output: Path | None) -> None:
+    payload = json.dumps(value, allow_nan=False, indent=2, sort_keys=True) + "\n"
+    if output is not None:
+        _write_no_overwrite(output, payload.encode("utf-8"))
     else:
         print(payload, end="")
 
@@ -1175,9 +1515,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         child.add_argument("--output")
     args = parser.parse_args(argv)
     try:
-        registry = TrustedPeerPathRegistry.from_file(args.config)
+        config_path = _lexical_absolute(args.config, "config path")
+        raw_config = _read_json(config_path, "local config")
+        input_paths = [config_path]
         if args.command == "publish":
-            entries_path = _lexical_absolute(args.entries, "entries path")
+            input_paths.append(_lexical_absolute(args.entries, "entries path"))
+        output_path = _preflight_output(
+            args.output,
+            config=raw_config,
+            input_paths=input_paths,
+            destination=getattr(args, "destination", None),
+        )
+        registry = TrustedPeerPathRegistry(raw_config)
+        if args.command == "publish":
+            entries_path = input_paths[1]
             result = registry.publish(_read_json(entries_path, "entries"))
         elif args.command == "validate":
             if not args.host_id:
@@ -1206,7 +1557,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.destination,
                 apply=args.apply,
             )
-        _dump(result, args.output)
+        _dump(result, output_path)
         return 0
     except (
         OSError,

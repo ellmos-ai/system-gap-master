@@ -56,13 +56,23 @@ Security reports concerning path validation, file access boundaries, or unexpect
   same-revision equivocation. Crash-released local OS locks serialize state
   and publish updates. HMAC verification keys are symmetric and must be
   distributed only to the publisher's trusted peers.
+- JSON duplicate keys/non-finite values, non-canonical IDs, malformed local
+  revision state and Windows ADS/device/trailing-dot aliases fail closed.
+  Publishers check strict highest-seen state before changing the yard.
 - Peer allowlists protect resolve/pull in this CLI. They do not replace SSH
   authentication or server-side read-only ACLs.
 - Executed pulls use OpenSSH SFTP with `shell=False`, batch mode, strict
   host-key checking, exact host-local executable/`known_hosts` references, no
   inherited SSH config, conservative non-globbing paths, destination-root
-  allowlists and no-overwrite install. `pull` is a dry-run unless `--apply`
+  allowlists and no-overwrite install. OpenSSH option expansion syntax is
+  forbidden in `known_hosts_ref`; the process runs in private staging with
+  stdout/stderr sent to the null device. `pull` is a dry-run unless `--apply`
   is explicit.
+- One verified plan binds remote path and endpoint. Download size is monitored
+  against `max_download_bytes`, SHA-256 is returned, and POSIX staging/final
+  modes are verified as `0600`. Atomic hardlink installation is required;
+  Windows destination roots still require separately provisioned owner-only
+  NTFS ACLs.
 - Symlink, junction or reparse destinations, command-like endpoint/path
   values, unknown transports, unauthorized peers and unverifiable registries
   fail closed. Subprocess output is not returned because it could contain
