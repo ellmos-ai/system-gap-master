@@ -250,10 +250,10 @@ def _assert_plain_path(
         raise ReconcilerError(
             "protected root is missing, non-directory, or reparse-backed"
         )
-    # Do not compare this spelling with Path.resolve(): Windows 8.3 aliases
-    # (for example RUNNER~1 in CI) legitimately resolve to a different string.
-    # The root and every existing component are checked with lstat/reparse
-    # attributes below before reads, directory creation, writes, or replacement.
+    if os.path.normcase(str(root.resolve())) != os.path.normcase(str(root)):
+        raise ReconcilerError(
+            "protected root resolves through a symlink or reparse point"
+        )
     current = root
     relative = path.relative_to(root)
     for index, part in enumerate(relative.parts):
@@ -887,15 +887,7 @@ class ConflictCopyReconciler:
         if not raw_state:
             raise ReconcilerError("state_dir is required and must be local/non-synced")
         expanded_state = Path(str(raw_state)).expanduser()
-        lexical_state = Path(os.path.abspath(expanded_state))
-        resolved_state = expanded_state.resolve()
-        if os.path.normcase(str(lexical_state)) != os.path.normcase(
-            str(resolved_state)
-        ):
-            raise ReconcilerError(
-                "state_dir resolves through a symlink or reparse point"
-            )
-        self.state_dir = lexical_state
+        self.state_dir = expanded_state.resolve()
         raw_salt = self.config.get("receipt_salt")
         if not isinstance(raw_salt, str) or len(raw_salt) < 16:
             raise ReconcilerError(
@@ -971,12 +963,7 @@ class ConflictCopyReconciler:
             if not raw_path:
                 raise ReconcilerError("root path is required")
             expanded_path = Path(raw_path).expanduser()
-            lexical_path = Path(os.path.abspath(expanded_path))
             path = expanded_path.resolve()
-            if os.path.normcase(str(lexical_path)) != os.path.normcase(str(path)):
-                raise ReconcilerError(
-                    f"root {root_id} resolves through a symlink or reparse point"
-                )
             _assert_plain_path(path, path, require_dir=True)
             if root_id in result:
                 raise ReconcilerError(f"duplicate root id: {root_id}")

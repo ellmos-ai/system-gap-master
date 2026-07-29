@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -291,6 +292,28 @@ class TestFailClosedGates(ReconcilerFixture):
 
 
 class TestSafetyLifecycle(ReconcilerFixture):
+    def test_windows_short_path_alias_is_not_treated_as_reparse(self):
+        if os.name != "nt":
+            self.skipTest("Windows 8.3 path test")
+        buffer = __import__("ctypes").create_unicode_buffer(32768)
+        length = __import__("ctypes").windll.kernel32.GetShortPathNameW(
+            str(self.base), buffer, len(buffer)
+        )
+        if not length or length >= len(buffer):
+            self.skipTest("Windows short-path alias unavailable")
+        short_base = Path(buffer.value)
+        if os.path.normcase(str(short_base)) == os.path.normcase(str(self.base)):
+            self.skipTest("Windows short-path alias is identical")
+
+        self.write("notes.md", "same\n")
+        self.write("notes (conflict).md", "same\n")
+        config = self.config("notes (conflict).md", "notes.md")
+        config["state_dir"] = str(short_base / "state")
+        config["roots"][0]["path"] = str(short_base / "yard")
+
+        plan = ConflictCopyReconciler(config).plan()
+        self.assertEqual(plan["items"][0]["merge_class"], "exact")
+
     def test_observer_mode_cannot_mutate(self):
         self.write("notes.md", "same\n")
         self.write("notes (conflict).md", "same\n")
