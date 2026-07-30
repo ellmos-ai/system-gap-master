@@ -33,14 +33,15 @@ items arrive, get integrated by their target system, then move to `_archive/`.
 8. **BOOTSTRAP.md** must always be able to bring up a fresh machine.
 9. **Structured payloads:** live SQLite/WAL/SHM files use a tool-owned
    `db-transit/<namespace>` snapshot adapter, never direct file sync.
-10. **Trusted peer paths:** a host publishes only its own signed
-    `hosts/<HOST>/trusted-peer-paths/registry.json`; authorized peers verify
-    before direct SFTP. Registry metadata may contain exact credential paths,
-    but never values, content or keys. SQLite remains R9-only.
+10. **Trusted peer paths:** a host-owned
+    `hosts/<HOST>/trusted-peer-paths/registry.json` contains path metadata
+    only. Peers validate owner/expiry/signature-reference/pin/path policy and
+    may emit a non-executable preparation receipt. Network transfer remains
+    a separate activation. SQLite stays on the R9 snapshot adapter.
 
 ## Artifact types in this yard
 
 | Artifact | Pattern | Notes |
 |---|---|---|
-| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned signed metadata; direct ordinary-file pull only |
+| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned metadata; read-only validation and no-transfer preparation only |
 | (extend as conventions emerge) | | |

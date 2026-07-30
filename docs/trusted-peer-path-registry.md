@@ -1,195 +1,155 @@
-# Trusted peer path registry
+# Trusted-peer path registry: read-only preparation
 
-The trusted peer path registry lets pre-authorized machines discover exact
-paths and pull ordinary files directly over SFTP on a Tailscale or LAN
-connection. The yard carries only a signed directory of locations,
-endpoints and peer permissions. It never relays the referenced file, a
-credential value, an HMAC key or an SSH private key.
+`trusted-peer-paths` validates cloud-safe path metadata and produces a
+deterministic pull-preparation receipt. It is intentionally **not a transfer
+client**. The module does not publish a registry, open a socket, invoke
+SSH/SFTP, read a credential/key/signature/known-hosts file, copy referenced
+bytes, or create the destination.
 
-No request-time coordination is required. After one-time trust and SSH
-server setup, each host publishes only its own slot and each authorized peer
-can independently verify, resolve and pull.
+The distinction is part of the contract:
 
-## Use cases
+- a registry may contain an exact approved SFTP path;
+- it must state `metadata_type=path-location` and
+  `content_included=false`;
+- credential values, file content, private keys, tokens and passwords are
+  rejected;
+- a signature *reference*, payload digest and known-host pin are metadata,
+  not proof that an external verifier or SSH client has used them.
 
-- Publish the exact host-local location of a credential file so an authorized
-  recovery machine can pull it through a read-only SSH account.
-- Publish an ordinary configuration, certificate bundle or export file that
-  peers need without copying its content into the semi-trusted yard.
-- Advertise the location of SQLite state for discovery while forcing the
-  actual transfer through the R9 `sqlite-transit-sync` snapshot adapter.
-- Give several agent runtimes the same verified, machine-readable pull plan
-  without giving them a shared shell script or permission to edit foreign
-  host slots.
+This is the V4 preflight boundary. Real two-host activation remains a separate
+reviewed change.
 
-## Files and ownership
+## Ownership and files
 
-Each publisher writes exactly one derived location:
+The validator derives one read location; callers cannot override it:
 
 ```text
-<YARD>/hosts/<LOCAL_HOST_ID>/trusted-peer-paths/registry.json
+<YARD>/hosts/<TRUSTED_HOST_ID>/trusted-peer-paths/registry.json
 ```
 
-`publish` does not accept a registry-path or host override. The registry
-destination comes from the host-local config, and its uppercase `host_id`
-must match the slot. The optional CLI `--output` is only a host-local result
-file: it is no-overwrite and cannot target the yard, state, config, keys,
-`known_hosts`, executable, input or pull destination. Other hosts may read
-the registry but never update it.
+The document's `host_id` must match that slot. The CLI has no `publish`,
+`pull`, `--apply` or `--output` operation. Results go to stdout. Therefore
+this capability never edits the yard or another host slot.
 
-Keep these items outside the synced yard:
+The local policy stays outside the yard. It contains only trust metadata:
 
-- local config and source entries;
-- signing/verification key files;
-- SSH `known_hosts` and private authentication material;
-- revision pins, pull staging files and validation state.
+- local host and peer IDs;
+- exact trusted host ID and minimum revision;
+- pinned signature algorithm, key ID and signature-reference URN;
+- exact remote-path allowlist;
+- allowed `direct` and/or `private-overlay` network labels;
+- endpoint-to-known-host SHA-256 pin mapping;
+- host-local destination roots and registry age/TTL limits.
 
-The public schemas live under [`schemas/`](../schemas/). Copy the examples in
-[`examples/`](../examples/) to a host-local directory, replace every path and
-identity, then protect that directory with operating-system permissions.
+It contains no authentication identity, key path, credential path for a
+client, SSH executable, or transfer command.
 
-## Authenticity and replay protection
+## Registry gates
 
-Every registry has a canonical JSON HMAC-SHA256 signature and a `key_id`.
-The signing key is read through `publisher.signing_key_ref`; peers pin the
-same out-of-band provisioned key through
-`trusted_hosts[].verification_key_ref`. The key bytes never enter the yard
-or command output.
+Validation fails closed unless all of these hold:
 
-HMAC is symmetric: every verifier holding a host's verification key could
-forge that host. Use a distinct high-entropy key per publisher and distribute
-it only to that host's trusted peers. Rotate by provisioning a new local key,
-changing `key_id`, and updating peer trust pins before publishing.
+1. strict UTF-8 JSON, no duplicate keys or non-finite numbers;
+2. exact v2 schema fields and canonical IDs;
+3. path is the derived host-owned slot, with no symlink/junction/reparse
+   traversal, and the opened handle retains the checked file identity;
+4. `host_id`, minimum revision, publication age and expiry/TTL are valid;
+5. the signature algorithm, key ID and signature-reference URN equal the
+   out-of-band local pins;
+6. `payload_sha256` matches canonical JSON excluding
+   `signature_reference`;
+7. every endpoint is read-only SFTP with a `direct` or `private-overlay` label;
+8. every endpoint pin exactly matches the local known-host pin;
+9. every published remote path exactly matches the local allowlist;
+10. metadata contains no secret/content fields or recognizable secret
+    material.
 
-Peers set a bootstrap `min_revision`. After a valid read, the CLI stores the
-highest revision and document digest in the configured host-local
-`state_dir`. Older signed documents and a different document at the same
-revision fail closed as replay or equivocation. A publisher must increment
-`revision`; it cannot overwrite a newer or unverifiable yard document.
-Crash-released host-local OS locks serialize revision-pin and publish
-updates, so concurrent agents cannot move the highest-seen state backwards.
-The publisher checks the same strict revision/digest state under that lock
-before any yard registry write. Duplicate JSON keys, NaN/Infinity, malformed
-state digests and non-canonical or non-string IDs fail closed.
+The payload digest detects accidental or unreviewed document changes. It
+does **not** authenticate the publisher. The receipt explicitly reports
+`cryptographic_signature_verified=false`; activation requires a separately
+reviewed detached-signature verifier.
 
-## Published fields
+## Pull-plan gates
 
-Each path has:
+`pull-plan` adds:
 
-- `path_id`: stable, path-neutral identifier;
-- `kind`: `file`, `directory`, or `database/sqlite`;
-- `local_path`: the exact absolute path on the publishing host;
-- `remote_path`: the exact absolute path exposed by the SFTP subsystem;
-- `endpoint_id`: one signed SFTP endpoint;
-- `allowed_peer_ids`: peers permitted to resolve or plan this path;
-- `direct_pull`: explicit publisher decision;
-- optional `adapter` and `description`.
+- the configured local peer must be in `allowed_peer_ids`;
+- `direct_pull` must already be `true` in the validated registry;
+- only `kind=file` is eligible;
+- the exact destination must be absent, have an existing parent, be inside a
+  configured host-local destination root, remain outside the yard and cross
+  no symlink/junction/reparse point;
+- SQLite-like paths are always `kind=database/sqlite`,
+  `direct_pull=false`, `adapter=sqlite-transit-sync`;
+- directories remain non-direct and need a separate reviewed adapter.
 
-Exact credential paths are allowed because the registry exists to publish
-locations. Treat path names as metadata that all yard readers can see.
-Credential values and file bytes remain forbidden.
-
-Filesystem-facing host and peer IDs use canonical uppercase form; other
-registry IDs use canonical lowercase form. Windows device aliases, alternate
-data streams and trailing dot/space aliases are rejected. For an existing
-Windows `local_path`, the final long path is also classified so an 8.3 alias
-cannot disguise SQLite state. Security-boundary comparisons first reject
-lexical reparse components, then compare the physical path so a legitimate
-8.3 spelling cannot hide overlap with the yard or another protected path.
-
-The peer allowlist controls this CLI's resolve/pull boundary; the SSH server
-must separately enforce authentication, read-only filesystem permissions and
-the intended network boundary. A signed registry is not an SSH ACL.
-
-## CLI
-
-Install the package, create the host-local config and entries files, then:
-
-```bash
-trusted-peer-paths publish \
-  --config /host-local/trusted-peer-paths.local.json \
-  --entries /host-local/trusted-peer-paths.entries.local.json
-
-trusted-peer-paths validate \
-  --config /host-local/trusted-peer-paths.local.json \
-  --host-id HOST-B
-
-trusted-peer-paths list \
-  --config /host-local/trusted-peer-paths.local.json
-
-trusted-peer-paths resolve \
-  --config /host-local/trusted-peer-paths.local.json \
-  --host-id HOST-B --path-id service-credential-file
-
-trusted-peer-paths pull-plan \
-  --config /host-local/trusted-peer-paths.local.json \
-  --host-id HOST-B --path-id service-credential-file \
-  --destination /allowed/imports/credentials.json
-
-# Dry-run unless --apply is explicit:
-trusted-peer-paths pull \
-  --config /host-local/trusted-peer-paths.local.json \
-  --host-id HOST-B --path-id service-credential-file \
-  --destination /allowed/imports/credentials.json
-
-trusted-peer-paths pull \
-  --config /host-local/trusted-peer-paths.local.json \
-  --host-id HOST-B --path-id service-credential-file \
-  --destination /allowed/imports/credentials.json --apply
-```
-
-`publish`, validation state and registry replacement use temporary files,
-fsync and atomic replacement. `list` returns only paths authorized for the
-configured `local_peer_id`. `resolve`, `pull-plan` and `pull` fail on
-untrusted hosts, invalid signatures, replayed revisions, unknown transports,
-traversal, unauthorized peers and malformed path data.
-
-## SFTP pull boundary
-
-Direct execution is deliberately narrow:
-
-- `transport=sftp` on `network=tailscale|lan`;
-- regular files only, with `direct_pull=true`;
-- OpenSSH `sftp` invoked as an argument vector with `shell=False`;
-- an exact host-local `sftp_executable_ref`, not a PATH lookup, and no
-  user/system SSH config (`-F none`);
-- batch mode, strict host-key checking and the exact host-local
-  `known_hosts_ref`; whitespace, quotes, `%` tokens and `${...}` expansion
-  syntax are rejected before OpenSSH sees the option;
-- conservative non-globbing remote paths and validated endpoint/user/port;
-- absolute destination inside a configured `pull_destination_root`;
-- no symlink, junction or reparse destination component;
-- one immutable verified plan supplies both remote path and endpoint;
-- unique host-local staging, configured `max_download_bytes`, SHA-256
-  readback and atomic hardlink-based no-overwrite installation;
-- staging/final POSIX modes are forced and verified as `0600`;
-- the SFTP process runs in the private staging directory and sends stdout and
-  stderr directly to the null device.
-
-`pull` is a dry-run without `--apply`. Existing destinations always block.
-If the filesystem cannot provide atomic no-replace hardlinks, apply fails
-closed instead of exposing a partial final file. On Windows, `chmod(0600)`
-does not establish a complete NTFS ACL; operators must provision the allowed
-destination roots with owner-only ACLs.
-Directories produce a verified plan with
-`directory-pull-requires-reviewed-adapter`; this release does not recursively
-copy them.
-
-## SQLite boundary (R9)
-
-Live SQLite databases and their `-wal`/`-shm` companions may be listed for
-discovery, but must use:
+The resulting receipt is deterministic for the same registry, policy and
+destination. Its `plan_id` is the SHA-256 of the canonical receipt body. It
+always says:
 
 ```json
 {
-  "kind": "database/sqlite",
-  "direct_pull": false,
-  "adapter": "sqlite-transit-sync"
+  "status": "prepared-no-transfer",
+  "executable": false,
+  "network_contacted": false,
+  "file_transfer_performed": false,
+  "referenced_files_read": false
 }
 ```
 
-Any `.db`, `.sqlite`, `.sqlite3`, `-wal` or `-shm` path—including an existing
-Windows 8.3 alias—disguised as an ordinary file is rejected. `pull-plan` and
-`pull --apply` remain blocked and point to the R9
-`db-transit/<namespace>` snapshot workflow. This module does not implement
-database synchronization.
+It emits no shell command or provider choice.
+
+## CLI
+
+```bash
+trusted-peer-paths validate \
+  --config /host-local/trusted-peer-paths.local.json \
+  --host-id HOST-A
+
+trusted-peer-paths list \
+  --config /host-local/trusted-peer-paths.local.json \
+  --host-id HOST-A
+
+trusted-peer-paths resolve \
+  --config /host-local/trusted-peer-paths.local.json \
+  --host-id HOST-A --path-id service-credential-file
+
+trusted-peer-paths pull-plan \
+  --config /host-local/trusted-peer-paths.local.json \
+  --host-id HOST-A --path-id service-credential-file \
+  --destination /host-local/imports/credentials.json
+```
+
+The API is `TrustedPeerPathRegistry.validate`, `list_paths`, `resolve` and
+`pull_plan`. Compatibility methods `publish` and `pull` fail closed without
+side effects.
+
+The examples intentionally contain `REPLACE_WITH_...` sentinels for pins,
+signature references and digests. They are JSON templates, not invented
+operational trust material, and runtime validation rejects them until an
+operator inserts independently verified values.
+
+## Remaining gates for real two-host activation
+
+Preparation is not authorization to transfer. A real activation needs all of
+the following, with evidence from both hosts:
+
+1. provision a publisher signing key and verify a detached signature through
+   a separately reviewed verifier;
+2. obtain the real SSH host-key fingerprint out of band, pin it locally and
+   verify it in the chosen SSH client;
+3. create a dedicated server-side account restricted to read-only access to
+   the exact approved paths, and test that writes and other reads fail;
+4. choose and authorize either the direct or private-overlay route, then verify
+   reachability without changing this provider-neutral registry;
+5. provision authentication material outside the yard and outside this
+   module; this preflight must never read it;
+6. review a separate shell-free, strict-host-key, no-overwrite,
+   bounded-download executor;
+7. revalidate registry freshness, signature, pin, peer allowlist and
+   destination ownership/permissions immediately before each transfer;
+8. add auditable anti-replay state and transfer receipts without writing a
+   foreign slot or placing sensitive content in the yard;
+9. run two-host negative tests for wrong pin, stale registry, denied path,
+   denied peer, write attempts, overwrite attempts and route failure;
+10. obtain explicit activation approval. This preparation neither enables
+    `direct_pull` nor performs that approval.

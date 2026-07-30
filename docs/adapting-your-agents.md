@@ -152,25 +152,25 @@ registry file is not an API; do not edit it directly just to complete setup.
 
 ## Trusted peer path registries
 
-When pre-authorized hosts expose ordinary files over read-only SFTP on
-Tailscale/LAN, agents may use the signed R10 registry without a new
-request/response message:
+Agents may validate a pre-authorized R10 registry and prepare a no-transfer
+receipt. This is metadata preflight, not SFTP activation:
 
 ```markdown
 ## Trusted peer paths
 
 - Local trust config: <HOST_LOCAL_CONFIG_OUTSIDE_THE_YARD>
 - Read another host only through `trusted-peer-paths validate|list|resolve`.
-- Review `pull-plan`; execute only with explicit `pull --apply`.
-- Never bypass peer allowlists, strict known-host checking, destination roots
-  or no-overwrite.
+- Review `pull-plan`; it is always non-executable and contacts no peer.
+- Never bypass peer/path/pin/expiry/destination gates. Detached-signature
+  verification, SSH ACL/authentication, route choice and any executor remain
+  separate activation gates.
 - SQLite/`-wal`/`-shm` is discovery-only and always uses
   `sqlite-transit-sync` through `db-transit/<namespace>`.
 ```
 
-Publisher agents run `publish` only for their configured `local_host_id`.
-They never accept a foreign slot as output. Config, entries, HMAC keys,
-`known_hosts`, SSH authentication material, validation state and referenced
-content remain host-local. The registry itself contains exact path metadata,
-endpoint details and allowed peer IDs only. Full setup and threat model:
+This CLI never publishes or writes a slot. A separately reviewed owner-only
+publisher is outside this capability. Authentication material and referenced
+content remain host-local and are never read by the preflight. The registry
+contains exact path metadata, endpoint details, pins and allowed peer IDs
+only. Full setup and threat model:
 [`trusted-peer-path-registry.md`](trusted-peer-path-registry.md).

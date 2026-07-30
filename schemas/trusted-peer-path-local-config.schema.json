@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-path-local-config.schema.json",
-  "title": "Host-local trusted peer path configuration",
+  "title": "Host-local trusted-peer preparation policy",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,14 +9,14 @@
     "yard_root",
     "local_host_id",
     "local_peer_id",
-    "state_dir",
     "trusted_hosts",
     "pull_destination_roots",
-    "ssh"
+    "max_registry_age_seconds",
+    "max_registry_ttl_seconds"
   ],
   "properties": {
     "schema": {
-      "const": "system-gap.trusted-peer-paths.local-config.v1"
+      "const": "system-gap.trusted-peer-paths.local-config.v2"
     },
     "yard_root": {
       "type": "string",
@@ -26,100 +26,109 @@
       "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
     },
     "local_peer_id": {
-      "$ref": "trusted-peer-path-registry.schema.json#/$defs/peerId"
-    },
-    "state_dir": {
-      "type": "string",
-      "minLength": 1
-    },
-    "publisher": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "key_id",
-        "signing_key_ref",
-        "endpoints"
-      ],
-      "properties": {
-        "key_id": {
-          "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
-        },
-        "signing_key_ref": {
-          "type": "string",
-          "minLength": 1
-        },
-        "endpoints": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "trusted-peer-path-registry.schema.json#/$defs/endpoint"
-          }
-        }
-      }
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
     },
     "trusted_hosts": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "host_id",
-          "key_id",
-          "verification_key_ref",
-          "min_revision"
-        ],
-        "properties": {
-          "host_id": {
-            "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
-          },
-          "key_id": {
-            "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
-          },
-          "verification_key_ref": {
-            "type": "string",
-            "minLength": 1
-          },
-          "min_revision": {
-            "type": "integer",
-            "minimum": 1
-          }
-        }
+        "$ref": "#/$defs/trustedHost"
       }
     },
     "pull_destination_roots": {
       "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string",
         "minLength": 1
       }
     },
-    "ssh": {
+    "max_registry_age_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 604800
+    },
+    "max_registry_ttl_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 604800
+    }
+  },
+  "$defs": {
+    "trustedHost": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "known_hosts_ref",
-        "sftp_executable_ref",
-        "connect_timeout_seconds",
-        "max_download_bytes"
+        "host_id",
+        "min_revision",
+        "signature_algorithm",
+        "key_id",
+        "signature_reference",
+        "allowed_network_labels",
+        "allowed_remote_paths",
+        "known_host_pins"
       ],
       "properties": {
-        "known_hosts_ref": {
-          "type": "string",
-          "minLength": 1
+        "host_id": {
+          "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
         },
-        "sftp_executable_ref": {
-          "type": "string",
-          "minLength": 1
-        },
-        "connect_timeout_seconds": {
+        "min_revision": {
           "type": "integer",
-          "minimum": 1,
-          "maximum": 120
+          "minimum": 1
         },
-        "max_download_bytes": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 1099511627776
+        "signature_algorithm": {
+          "enum": [
+            "external-ed25519",
+            "external-ssh-signature"
+          ]
+        },
+        "key_id": {
+          "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+        },
+        "signature_reference": {
+          "type": "string",
+          "pattern": "^urn:[A-Za-z0-9][A-Za-z0-9:._/-]{7,255}$"
+        },
+        "allowed_network_labels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "direct",
+              "private-overlay"
+            ]
+          }
+        },
+        "allowed_remote_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^/[^\\x00-\\x1f\\x7f\\\\*?\\[\\]{}$`]+$"
+          }
+        },
+        "known_host_pins": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "endpoint_id",
+              "sha256"
+            ],
+            "properties": {
+              "endpoint_id": {
+                "$ref": "trusted-peer-path-registry.schema.json#/$defs/id"
+              },
+              "sha256": {
+                "$ref": "trusted-peer-path-registry.schema.json#/$defs/pin"
+              }
+            }
+          }
         }
       }
     }

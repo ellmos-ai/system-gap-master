@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-path-registry.schema.json",
-  "title": "system-gap-master trusted peer path registry",
+  "title": "Read-only trusted-peer path metadata registry",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,13 +9,14 @@
     "host_id",
     "revision",
     "published_at",
+    "expires_at",
     "endpoints",
     "paths",
-    "signature"
+    "signature_reference"
   ],
   "properties": {
     "schema": {
-      "const": "system-gap.trusted-peer-paths.registry.v1"
+      "const": "system-gap.trusted-peer-paths.registry.v2"
     },
     "host_id": {
       "$ref": "#/$defs/hostId"
@@ -25,6 +26,10 @@
       "minimum": 1
     },
     "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
       "type": "string",
       "format": "date-time"
     },
@@ -41,45 +46,51 @@
         "$ref": "#/$defs/path"
       }
     },
-    "signature": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "algorithm",
-        "key_id",
-        "value"
-      ],
-      "properties": {
-        "algorithm": {
-          "const": "hmac-sha256"
-        },
-        "key_id": {
-          "$ref": "#/$defs/id"
-        },
-        "value": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        }
-      }
+    "signature_reference": {
+      "$ref": "#/$defs/signatureReference"
     }
   },
   "$defs": {
     "id": {
       "type": "string",
-      "pattern": "^[a-z0-9](?:[a-z0-9_.-]{0,62}[a-z0-9_-])?$",
-      "not": {
-        "pattern": "^(?:aux|con|nul|prn|com[1-9]|lpt[1-9])(?:\\..*)?$"
-      }
+      "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$"
     },
     "hostId": {
       "type": "string",
-      "pattern": "^[A-Z0-9](?:[A-Z0-9_.-]{0,62}[A-Z0-9_-])?$",
-      "not": {
-        "pattern": "^(?:AUX|CON|NUL|PRN|COM[1-9]|LPT[1-9])(?:\\..*)?$"
-      }
+      "pattern": "^[A-Z0-9][A-Z0-9_.-]{0,63}$"
     },
-    "peerId": {
-      "$ref": "#/$defs/hostId"
+    "pin": {
+      "type": "string",
+      "pattern": "^SHA256:[A-Za-z0-9+/]{43}$"
+    },
+    "signatureReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "ref",
+        "payload_sha256"
+      ],
+      "properties": {
+        "algorithm": {
+          "enum": [
+            "external-ed25519",
+            "external-ssh-signature"
+          ]
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "^urn:[A-Za-z0-9][A-Za-z0-9:._/-]{7,255}$"
+        },
+        "payload_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     },
     "endpoint": {
       "type": "object",
@@ -87,10 +98,12 @@
       "required": [
         "endpoint_id",
         "transport",
-        "network",
+        "network_label",
         "host",
         "port",
-        "username"
+        "username",
+        "read_only",
+        "known_host_pin"
       ],
       "properties": {
         "endpoint_id": {
@@ -99,16 +112,15 @@
         "transport": {
           "const": "sftp"
         },
-        "network": {
+        "network_label": {
           "enum": [
-            "tailscale",
-            "lan"
+            "direct",
+            "private-overlay"
           ]
         },
         "host": {
           "type": "string",
-          "minLength": 1,
-          "maxLength": 253
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,252}$"
         },
         "port": {
           "type": "integer",
@@ -118,6 +130,12 @@
         "username": {
           "type": "string",
           "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "read_only": {
+          "const": true
+        },
+        "known_host_pin": {
+          "$ref": "#/$defs/pin"
         },
         "description": {
           "type": "string",
@@ -132,7 +150,8 @@
       "required": [
         "path_id",
         "kind",
-        "local_path",
+        "metadata_type",
+        "content_included",
         "remote_path",
         "endpoint_id",
         "allowed_peer_ids",
@@ -149,14 +168,15 @@
             "database/sqlite"
           ]
         },
-        "local_path": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 4096
+        "metadata_type": {
+          "const": "path-location"
+        },
+        "content_included": {
+          "const": false
         },
         "remote_path": {
           "type": "string",
-          "pattern": "^/[A-Za-z0-9._/@+,=:() -]{1,4095}$"
+          "pattern": "^/[^\\x00-\\x1f\\x7f\\\\*?\\[\\]{}$`]+$"
         },
         "endpoint_id": {
           "$ref": "#/$defs/id"
@@ -166,7 +186,7 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/peerId"
+            "$ref": "#/$defs/hostId"
           }
         },
         "direct_pull": {
@@ -203,6 +223,25 @@
               },
               "adapter": {
                 "const": "sqlite-transit-sync"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "directory"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "direct_pull": {
+                "const": false
               }
             }
           }

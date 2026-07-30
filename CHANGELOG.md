@@ -11,6 +11,21 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Replaced live trusted-peer publishing and `pull --apply` with a read-only
+  V4 preparation boundary. The stable CLI now validates, lists, resolves and
+  emits deterministic non-executable pull receipts without network contact,
+  referenced-file reads or yard writes.
+- Added registry/config/receipt v2 schemas and fail-closed gates for owner
+  slot, schema/version, host/peer, freshness/expiry, pinned signature
+  reference, payload digest, known-host pins, exact remote paths, destination
+  safety and secret/content detection.
+- Documented the remaining detached-signature, SSH ACL/authentication,
+  network-route, anti-replay and reviewed-executor gates for real two-host
+  activation.
+- Reject UNC/device namespaces and non-portable Windows aliases before any
+  filesystem probe, bind registry reads to one checked file identity, and use
+  provider-neutral `direct`/`private-overlay` route labels.
+
 ## 1.4.0 - 2026-07-29
 
 - Added the user- and host-neutral `trusted-peer-paths` API/CLI with atomic

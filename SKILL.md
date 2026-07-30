@@ -37,9 +37,9 @@ asking the user once. `<HOST>` is this machine's name.
      `_archive/` — but only items addressed to this machine or marked done
      everywhere they apply.
    - Trusted peer registries: use `trusted-peer-paths list|resolve` with the
-     host-local trust config. Never act on unsigned/unverified path metadata.
-     An authorized ordinary file may be pulled directly with a reviewed
-     `pull-plan` and explicit `pull --apply`; no counter-message is required.
+     host-local trust config. `pull-plan` emits preparation metadata only:
+     it never contacts a peer, reads referenced files or performs a transfer.
+     Signature verification and any executor remain separate activation gates.
      SQLite/`-wal`/`-shm` paths always stay on the R9
      `sqlite-transit-sync`/`db-transit/<namespace>` route.
 4. **Write outbound** —
@@ -50,9 +50,10 @@ asking the user once. `<HOST>` is this machine's name.
      local file stays authoritative).
    - Leave messages for other hosts/agents where action is needed on their
      side (`messages/to-<recipient>.md`, `[<HOST>/<agent> YYYY-MM-DD] …`).
-   - If path publication changed, atomically publish only this host's signed
-     `hosts/<HOST>/trusted-peer-paths/registry.json`. Local source entries,
-     keys, SSH files, state and referenced content never enter the yard.
+   - This skill does not publish trusted-peer registries. A separately
+     reviewed owner-only publisher may update only
+     `hosts/<HOST>/trusted-peer-paths/registry.json`; keys, SSH files and
+     referenced content never enter the yard.
 5. **Bootstrap freshness (R8)** — if the yard's structure or the machine
    inventory changed today, update `BOOTSTRAP.md` accordingly.
 6. **Mark the gate** — `python scripts/system_gap_daily_check.py mark` (appends

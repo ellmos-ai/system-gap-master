@@ -1,0 +1,59 @@
+{
+  "plan_id": "sha256:REPLACED_BY_THE_DETERMINISTIC_PLANNER",
+  "schema": "system-gap.trusted-peer-pull-preparation-receipt.v1",
+  "status": "prepared-no-transfer",
+  "executable": false,
+  "network_contacted": false,
+  "file_transfer_performed": false,
+  "referenced_files_read": false,
+  "registry": {
+    "host_id": "HOST-A",
+    "revision": 1,
+    "published_at": "REPLACED_BY_THE_VALIDATOR",
+    "expires_at": "REPLACED_BY_THE_VALIDATOR",
+    "sha256": "REPLACED_BY_THE_VALIDATOR",
+    "signature_reference": {
+      "algorithm": "external-ed25519",
+      "key_id": "host-a-v1",
+      "ref": "urn:replace-with-out-of-band-signature-reference",
+      "payload_sha256": "REPLACED_BY_THE_REGISTRY_AUTHOR",
+      "reference_pinned": true,
+      "cryptographic_signature_verified": false
+    }
+  },
+  "peer_id": "PEER-B",
+  "source": {
+    "path_id": "service-credential-file",
+    "kind": "file",
+    "metadata_type": "path-location",
+    "content_included": false,
+    "remote_path": "/srv/private/example/credentials.json"
+  },
+  "endpoint": {
+    "endpoint_id": "trusted-sftp",
+    "transport": "sftp",
+    "network_label": "private-overlay",
+    "host": "host-a.internal",
+    "port": 22,
+    "username": "registry-reader",
+    "known_host_pin": "REPLACE_WITH_VERIFIED_SHA256_HOST_KEY_PIN"
+  },
+  "destination": "/absolute/host-local/imports/credentials.json",
+  "constraints": {
+    "read_only_remote_account_required": true,
+    "single_file_get_only": true,
+    "strict_host_key_checking_required": true,
+    "no_overwrite": true,
+    "shell_command_emitted": false,
+    "credentials": "external-not-read",
+    "provider_selected": false
+  },
+  "remaining_activation_gates": [
+    "verify detached signature through a separately reviewed verifier",
+    "install the pinned host key in the chosen SSH client",
+    "verify server-side read-only account and exact-path ACL",
+    "authorize and test the selected direct or private-overlay route",
+    "review a separate no-overwrite transfer executor",
+    "verify destination ownership and permissions immediately before transfer"
+  ]
+}

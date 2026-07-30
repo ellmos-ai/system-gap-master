@@ -12,7 +12,7 @@
     "sync.messages",
     "sync.conflict-copy-reconciliation",
     "sync.trusted-peer-path-registry",
-    "sync.trusted-peer-pull-plan"
+    "sync.trusted-peer-pull-preparation"
   ],
   "requires": [],
   "optional": [
@@ -29,8 +29,8 @@
     "location": "project"
   },
   "boundaries": {
-    "network": "transport-defined",
-    "data": "sensitive",
+    "network": "none",
+    "data": "path-metadata-only",
     "platforms": [
       "windows",
       "macos",
@@ -44,11 +44,11 @@
   },
   "adapters": [
     {
-      "id": "sftp",
-      "role": "trusted-peer-file-pull",
+      "id": "sftp-preparation",
+      "role": "trusted-peer-no-transfer-plan",
       "networks": [
-        "tailscale",
-        "lan"
+        "direct",
+        "private-overlay"
       ]
     },
     {

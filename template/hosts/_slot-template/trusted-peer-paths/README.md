@@ -1,17 +1,17 @@
-# trusted-peer-paths/ — signed path registry for this host
+# trusted-peer-paths/ — host-owned path metadata
 
-Only this host publishes `registry.json` here. Generate it atomically with:
+Only this host's separately reviewed publisher may place `registry.json`
+here. The `trusted-peer-paths` CLI in this repository is read-only and never
+writes this slot.
 
-```text
-trusted-peer-paths publish --config <HOST_LOCAL_CONFIG> --entries <HOST_LOCAL_ENTRIES>
-```
+The registry may contain exact approved SFTP paths, path IDs, read-only
+endpoints, network labels, known-host pins and peer allowlists. Every path
+declares `metadata_type=path-location` and `content_included=false`. File
+content, credential values, private keys, tokens and passwords are forbidden.
 
-The registry may contain exact local credential and ordinary-file paths,
-path IDs, SFTP endpoints and peer allowlists. It never contains file content,
-credential values, HMAC keys, SSH private keys or local verification state.
-All keys/config/state remain outside the synced yard.
-
-Peers verify the signature and revision before `list`, `resolve`,
-`pull-plan`, or `pull --apply`. SQLite, `-wal` and `-shm` paths are discovery
-only and must name `sqlite-transit-sync`; they travel through the R9
-`db-transit/<namespace>` snapshot flow, never direct SFTP.
+Peers may run `validate`, `list`, `resolve` and `pull-plan`. The result is a
+non-executable preparation receipt: no network contact, credential read or
+file transfer occurs. Detached-signature verification, real SSH setup and a
+reviewed transfer executor remain activation gates. SQLite, `-wal` and
+`-shm` paths are discovery-only and use the R9
+`sqlite-transit-sync`/`db-transit/<namespace>` flow.
