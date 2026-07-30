@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-97%20passed%20%2B%203%20platform%20skips-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-80%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -63,9 +63,9 @@ scripts/system_gap_daily_check.py   Das Tages-Gate (check|mark), zero dependenci
 system_gap_master/conflict_copy_reconciler.py
                       sichere Scan/Plan/Apply/Verify/Rollback-Engine
 system_gap_master/trusted_peer_paths.py
-                      signierte Publish/Validate/List/Resolve/Pull-CLI
+                      read-only Validate/List/Resolve/Pull-Plan-CLI
 docs/adapting-your-agents.md  Anbindung an CLAUDE.md/AGENTS.md/GEMINI.md
-docs/trusted-peer-path-registry_de.md  direkter Trusted-Peer-Pull-Vertrag
+docs/trusted-peer-path-registry_de.md  read-only Pull-Vorbereitungsvertrag
 ```
 
 ## Schnellstart
@@ -98,7 +98,7 @@ python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
 7. **Konflikt-Bereinigung** — Automatisch erzeugte Konfliktkopien werden beim täglichen Ritual konsolidiert.
 8. **Bootstrap-Runbook** — Jedes neue Gerät wird anhand von `BOOTSTRAP.md` in das Netz integriert.
 9. **Strukturierte Payloads nutzen Adapter** — Live-SQLite-/WAL-Dateien werden niemals direkt synchronisiert.
-10. **Trusted-Peer-Pfade sind signiert** — Hosts veröffentlichen nur die eigene Registry; berechtigte Peers verifizieren vor dem direkten SFTP-Pull.
+10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die host-eigene Registry und erzeugen einen nicht ausführbaren Beleg; der Transfer bleibt separat.
 
 ## Sichere Konfliktkopien-Abstimmung
 
@@ -122,21 +122,25 @@ Vertrag und Beispiele:
 [`docs/conflict-copy-reconciler.md`](docs/conflict-copy-reconciler.md) und
 [`examples/conflict-reconciler.config.example.json`](examples/conflict-reconciler.config.example.json).
 
-## Direkte Trusted-Peer-Pulls
+## Trusted-Peer-Pull-Vorbereitung
 
-Die optionale CLI `trusted-peer-paths` veröffentlicht pro Host atomar eine
-signierte Registry im eigenen Slot
-`hosts/<HOST>/trusted-peer-paths/`. Sie enthält genaue lokale/SFTP-Pfade,
-Endpunktdaten und erlaubte Peer-IDs, aber niemals Dateiinhalte,
-Credential-Werte oder Signing-Keys. Autorisierte Peers können gewöhnliche
-Dateien ohne Gegenkoordination direkt per SFTP über Tailscale/LAN prüfen,
-auflösen und abrufen.
+Die optionale CLI `trusted-peer-paths` liest die abgeleitete
+`hosts/<HOST>/trusted-peer-paths/registry.json`, prüft Owner-Slot,
+Schema/Version, Host-/Peer-Rechte, Frische/Expiry, gepinnte
+Signaturreferenz, Payload-Digest, Known-Host-Pins und die exakte
+Remote-Pfad-Allowlist. Danach erzeugt sie einen deterministischen, nicht
+ausführbaren Vorbereitungsbeleg.
 
-Die Ausführung braucht ein ausdrückliches `pull --apply`, verwendet keine
-Shell, prüft `known_hosts`, erzwingt erlaubte Zielwurzeln und überschreibt
-nichts. Live-SQLite-Pfade sind nur als `kind=database/sqlite`,
-`direct_pull=false`, `adapter=sqlite-transit-sync` sichtbar; R9 leitet ihre
-Bytes weiterhin über verifizierte Snapshots in
+Sie veröffentlicht nichts, kontaktiert keinen Peer, startet kein SSH/SFTP,
+liest keine referenzierten Credentials/Keys/Signaturen/Known-Hosts-Dateien,
+kopiert keine Bytes, legt kein Ziel an und aktiviert `direct_pull` nie.
+`direct` und `tailscale` sind nur validierte Netzlabels; es wird kein
+Provider gewählt. Secret-/Content-Felder blockieren, freigegebene exakte
+Credential-*Pfade* bleiben Metadaten.
+
+Live-SQLite-Pfade bleiben als `kind=database/sqlite`,
+`direct_pull=false`, `adapter=sqlite-transit-sync` reine Discovery; R9 leitet
+ihre Bytes weiterhin über verifizierte Snapshots in
 `db-transit/<namespace>`.
 
 Details:
@@ -154,8 +158,8 @@ Systemkarten-Export- und Receipt-Validierungskomponenten.
 
 Föderation ist für ein lokales System optional: Fehlt dieses Modul oder ist es
 nicht gesund, kann der lokale Kern weiterhin sein lokales Manifest und seine
-Gap-Ausgabe erzeugen. Import fremder Karten, Fleet-Analyse und direkter
-Trusted-Peer-Transfer sind dann nicht verfügbar und werden nicht still
+Gap-Ausgabe erzeugen. Import fremder Karten, Fleet-Analyse und
+Trusted-Peer-Vorbereitung sind dann nicht verfügbar und werden nicht still
 simuliert.
 
 Das verbindliche Bundle-Manifest definiert Mitgliedschaft, Versionen, Profile

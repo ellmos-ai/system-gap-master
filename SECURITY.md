@@ -45,40 +45,27 @@ Security reports concerning path validation, file access boundaries, or unexpect
 
 ## Trusted peer path registry boundary
 
-- The yard is semi-trusted. Exact credential paths may be registry metadata,
-  but file content, credential values, HMAC keys, SSH private keys,
-  `known_hosts`, validation state and staging files remain host-local.
-- A host publishes only
-  `hosts/<OWN-HOST>/trusted-peer-paths/registry.json`; the CLI derives this
-  path and rejects host/slot substitution.
-- HMAC-SHA256 signatures, pinned host/key identities, minimum revisions and
-  host-local highest-seen state fail closed on tampering, replay and
-  same-revision equivocation. Crash-released local OS locks serialize state
-  and publish updates. HMAC verification keys are symmetric and must be
-  distributed only to the publisher's trusted peers.
-- JSON duplicate keys/non-finite values, non-canonical IDs, malformed local
-  revision state and Windows ADS/device/trailing-dot aliases fail closed.
-  After lexical reparse checks, Windows 8.3 aliases are expanded for every
-  yard/state/key/pull/output containment comparison. Publishers check strict
-  highest-seen state before changing the yard.
-- Peer allowlists protect resolve/pull in this CLI. They do not replace SSH
-  authentication or server-side read-only ACLs.
-- Executed pulls use OpenSSH SFTP with `shell=False`, batch mode, strict
-  host-key checking, exact host-local executable/`known_hosts` references, no
-  inherited SSH config, conservative non-globbing paths, destination-root
-  allowlists and no-overwrite install. OpenSSH option expansion syntax is
-  forbidden in `known_hosts_ref`; the process runs in private staging with
-  stdout/stderr sent to the null device. `pull` is a dry-run unless `--apply`
-  is explicit.
-- One verified plan binds remote path and endpoint. Download size is monitored
-  against `max_download_bytes`, SHA-256 is returned, and POSIX staging/final
-  modes are verified as `0600`. Atomic hardlink installation is required;
-  Windows destination roots still require separately provisioned owner-only
-  NTFS ACLs.
-- Symlink, junction or reparse destinations, command-like endpoint/path
-  values, unknown transports, unauthorized peers and unverifiable registries
-  fail closed. Subprocess output is not returned because it could contain
-  remote diagnostics.
+- The yard is semi-trusted. Exact approved SFTP paths may be metadata, but
+  file content, credential values, private keys, tokens and passwords are
+  forbidden. Every path declares `metadata_type=path-location` and
+  `content_included=false`.
+- The CLI derives the read location
+  `hosts/<TRUSTED-HOST>/trusted-peer-paths/registry.json` and rejects
+  host/slot substitution. It has no publisher or yard-write operation.
+- Strict JSON, canonical IDs, revision, freshness/expiry, pinned signature
+  reference, canonical payload digest, known-host pin, peer permission and
+  exact remote-path allowlists fail closed.
+- A signature reference and digest are not publisher authentication. The
+  receipt says `cryptographic_signature_verified=false`; a detached-signature
+  verifier and anti-replay state remain activation gates.
+- `pull-plan` is deterministic but non-executable. It never opens a network
+  connection, invokes SSH/SFTP, reads referenced credentials/keys/signatures
+  or known-hosts files, writes the yard, creates a destination, enables
+  `direct_pull` or transfers bytes.
+- Destinations must be absent, allowlisted, host-local, outside the yard and
+  free of symlink/junction/reparse traversal. Server-side read-only ACLs,
+  authentication, route selection, real host-key installation and a reviewed
+  no-overwrite executor remain separate activation gates.
 - Directories require a separate reviewed adapter. SQLite `.db`, `.sqlite`,
   `.sqlite3`, `-wal` and `-shm` paths require
   `kind=database/sqlite`, `direct_pull=false` and

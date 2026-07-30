@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-97%20passed%20%2B%203%20platform%20skips-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-80%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -78,9 +78,9 @@ scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
 system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
-                      signed publish/validate/list/resolve/pull-plan/pull CLI
+                      read-only validate/list/resolve/pull-plan CLI
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
-docs/trusted-peer-path-registry.md  direct trusted-peer pull contract
+docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
 
 ## Quick start
@@ -113,8 +113,8 @@ python scripts/system_gap_daily_check.py mark
 7. **Conflict-copy sweep** — daily, provider-agnostic.
 8. **BOOTSTRAP.md stays current** — it must always bring up a fresh machine.
 9. **Structured payloads use adapters** — never sync live SQLite/WAL files.
-10. **Trusted peer paths are signed** — hosts publish only their own registry;
-    authorized peers verify it before direct SFTP pulls.
+10. **Trusted peer paths are gated metadata** — peers validate the host-owned
+    registry and prepare a non-executable receipt; transfer stays separate.
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
@@ -156,20 +156,23 @@ See [the reconciler contract](docs/conflict-copy-reconciler.md), the
 [configuration example](examples/conflict-reconciler.config.example.json),
 and the provider-neutral desktop/macOS templates under `template/runners/`.
 
-## Direct trusted-peer pulls
+## Trusted-peer pull preparation
 
-The optional `trusted-peer-paths` CLI lets each host atomically publish a
-signed registry in its own `hosts/<HOST>/trusted-peer-paths/` slot. A
-registry contains exact local/SFTP paths, endpoint metadata and allowed peer
-IDs, but never file content, credential values or signing keys. Authorized
-peers can validate, list, resolve and pull ordinary files directly over SFTP
-on Tailscale/LAN without per-request coordination.
+The optional `trusted-peer-paths` CLI reads the derived
+`hosts/<HOST>/trusted-peer-paths/registry.json`, validates its owner slot,
+schema/version, host/peer permissions, freshness/expiry, pinned signature
+reference, payload digest, known-host pins and exact remote-path allowlist,
+then emits a deterministic non-executable preparation receipt.
 
-Pull execution is explicit (`pull --apply`), shell-free, strict-known-host,
-destination-allowlisted and no-overwrite. Live SQLite paths remain
-discoverable only as `kind=database/sqlite`, `direct_pull=false`,
-`adapter=sqlite-transit-sync`; R9 keeps their bytes in the verified
-`db-transit/<namespace>` snapshot flow.
+It never publishes, contacts a peer, invokes SSH/SFTP, reads referenced
+credentials/keys/signatures/known-hosts files, copies bytes, creates a
+destination or enables `direct_pull`. `direct` and `tailscale` are validated
+network labels only; no provider is selected. Secret/content fields fail
+closed, while approved exact credential *paths* remain metadata.
+
+Live SQLite paths remain discovery-only as `kind=database/sqlite`,
+`direct_pull=false`, `adapter=sqlite-transit-sync`; R9 keeps their bytes in
+the verified `db-transit/<namespace>` snapshot flow.
 
 See the [trusted peer registry contract](docs/trusted-peer-path-registry.md),
 the [JSON schemas](schemas/) and the
@@ -206,7 +209,7 @@ receipt-validation components.
 
 Federation is optional for a local system: if this module is absent or not
 healthy, the local core may still produce its local manifest and gap output;
-foreign-map import, fleet analysis and direct trusted-peer transfer are then
+foreign-map import, fleet analysis and trusted-peer preparation are then
 unavailable rather than silently simulated.
 
 The authoritative bundle manifest defines membership, versions, profiles and
@@ -218,9 +221,10 @@ standalone discovery relationships.
 - The yard travels through your sync provider: treat it as **semi-trusted**.
   Never put credentials, tokens or personal/case data in it (rule 6) — the
   templates and the skill repeat this at every write point.
-- Exact credential *paths* may appear only in a signed trusted-peer registry;
-  referenced values, HMAC keys, SSH private keys and validation state stay
-  host-local. SFTP server ACLs remain authoritative.
+- Exact credential *paths* may appear in a host-owned trusted-peer registry;
+  referenced values, keys and file content remain forbidden. The current
+  module validates references and pins but deliberately does not verify a
+  detached signature or perform SFTP; those remain activation gates.
 - Everything is plain files: your existing backup, encryption and access
   control apply unchanged.
 

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-pull-preparation-receipt.schema.json",
+  "title": "Deterministic no-transfer trusted-peer preparation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "schema",
+    "status",
+    "executable",
+    "network_contacted",
+    "file_transfer_performed",
+    "referenced_files_read",
+    "registry",
+    "peer_id",
+    "source",
+    "endpoint",
+    "destination",
+    "constraints",
+    "remaining_activation_gates"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "schema": {
+      "const": "system-gap.trusted-peer-pull-preparation-receipt.v1"
+    },
+    "status": {
+      "const": "prepared-no-transfer"
+    },
+    "executable": {
+      "const": false
+    },
+    "network_contacted": {
+      "const": false
+    },
+    "file_transfer_performed": {
+      "const": false
+    },
+    "referenced_files_read": {
+      "const": false
+    },
+    "registry": {
+      "type": "object"
+    },
+    "peer_id": {
+      "$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"
+    },
+    "source": {
+      "type": "object"
+    },
+    "endpoint": {
+      "type": "object"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "object"
+    },
+    "remaining_activation_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -129,31 +129,37 @@ at the yard root. Tool-owned zones are exempt from R1 and R3 — the tool
 manages ownership and lifecycle itself; agents do not hand-edit or archive
 anything inside them during the daily ritual.
 
-### R10 — Signed trusted-peer path registries
+### R10 — Trusted-peer path metadata and preparation
 
-A host may publish exact local paths for pre-authorized direct pulls in
-`hosts/<OWN-HOST>/trusted-peer-paths/registry.json`. It writes only this own
-slot. The document names a stable `path_id`, host, exact local and SFTP path,
-SFTP endpoint/transport and `allowed_peer_ids`; it never contains referenced
-file content, credential values, HMAC keys or SSH private keys.
+A host-owned registry may advertise exact SFTP paths in
+`hosts/<OWN-HOST>/trusted-peer-paths/registry.json`. The document names a
+stable `path_id`, exact remote path, read-only SFTP endpoint, network label,
+known-host pin and `allowed_peer_ids`. Every path explicitly declares
+`metadata_type=path-location` and `content_included=false`; credential values,
+file content, private keys, tokens and passwords are forbidden.
 
-Treat the yard as semi-trusted. Registries must be atomically published,
-HMAC-signed through a host-local key reference, checked against a pinned host
-and key ID, and protected against revision replay before use. Keys,
-`known_hosts`, validation state and pull staging stay outside the yard.
-Authorized peers may then read the registry and pull independently over a
-preconfigured Tailscale/LAN SFTP service; no request-time counter-message is
-required. SSH authentication and server-side read-only ACLs remain a
-separate mandatory enforcement layer.
+The module in this repository is a read-only preflight. It derives the
+foreign registry path from the trusted host ID, validates owner slot,
+schema/version, revision, freshness/expiry, an out-of-band pinned signature
+reference, canonical payload digest, known-host pin, peer permission and an
+exact local remote-path allowlist. It neither publishes nor authenticates a
+detached signature, contacts a peer, invokes SSH/SFTP, reads any referenced
+file, writes the yard, enables `direct_pull` or copies bytes.
 
-Direct pull is limited to explicitly enabled ordinary files. Destinations
-are allowlisted and never overwritten. Directory transfer needs a reviewed
+For an explicitly enabled ordinary file it may emit a deterministic,
+non-executable pull-preparation receipt. Destinations must be absent,
+host-local, allowlisted and outside the yard. `direct` and `tailscale` are
+provider-neutral labels only. Directory transfer needs a separate reviewed
 adapter. Live SQLite paths and `.db`, `.sqlite`, `.sqlite3`, `-wal`, `-shm`
 payloads may be advertised only as `kind=database/sqlite` with
 `direct_pull=false` and `adapter=sqlite-transit-sync`; their bytes still use
 the R9 `db-transit/<namespace>` snapshot workflow.
 
-The executable contract and threat model are in
+Detached-signature verification, anti-replay state, real host-key
+installation, authentication, route selection, server-side read-only ACLs
+and a no-overwrite transfer executor remain explicit activation gates.
+
+The preparation contract and threat model are in
 `docs/trusted-peer-path-registry.md`; schemas are in `schemas/`.
 
 ## Artifact naming conventions
@@ -167,7 +173,7 @@ The executable contract and threat model are in
 | Topic document | `<TOPIC>_<YYYY-MM-DD>.md` at root | living status source; archive when obsolete |
 | Handoff/runbook | `<SYSTEM>_HANDOFF.md` at root | how to operate something from another machine |
 | Database transit zone | `db-transit/<namespace>/` at root | tool-owned (R9): managed by a snapshot tool like sqlite-transit-sync, not by hand |
-| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned, signed metadata only (R10); exact paths allowed, content/keys forbidden |
+| Trusted peer path registry | `hosts/<HOST>/trusted-peer-paths/registry.json` | host-owned path metadata only (R10); exact paths allowed, content/keys forbidden |
 
 Extend the table in your local `SYNC_PROTOCOL.md` as your yard grows — the
 convention that a convention EXISTS is the load-bearing part.
@@ -185,6 +191,7 @@ convention that a convention EXISTS is the load-bearing part.
 - **Discovery never establishes canonicality.** A shorter filename, newer
   timestamp or provider suffix can identify a candidate, but only a manifest,
   pointer, registry or documented writer policy may authorize mutation.
-- **Signed discovery is not transport authority.** A trusted-peer registry
-  authenticates metadata and peer intent; SSH host keys, authentication and
-  server-side read ACLs still authorize the network read.
+- **Prepared discovery is not transport authority.** A pinned signature
+  reference and digest are not cryptographic verification. SSH host keys,
+  authentication, server-side read ACLs and a reviewed executor remain
+  separate activation gates.

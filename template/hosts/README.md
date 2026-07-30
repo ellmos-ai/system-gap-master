@@ -13,11 +13,12 @@ automation/setup packages (`<tool>-automations_<YYYY-MM-DD>/`), notes about
 long-running jobs other machines should know about.
 
 Optional R10 path publication lives at
-`hosts/<HOST>/trusted-peer-paths/registry.json`. Generate it with the
-`trusted-peer-paths publish` CLI; never hand-copy a foreign registry into
-this slot. Exact credential paths are allowed metadata, but referenced
-content, credential values, signing keys, SSH files and validation state
-stay host-local. See `_slot-template/trusted-peer-paths/README.md`.
+`hosts/<HOST>/trusted-peer-paths/registry.json`. Only a separately reviewed
+owner-only publisher may create it; the `trusted-peer-paths` CLI is read-only.
+Never copy a foreign registry into this slot. Exact approved credential paths
+are metadata, but referenced content, credential values, signing keys and SSH
+authentication material stay host-local. See
+`_slot-template/trusted-peer-paths/README.md`.
 
 Create a new slot with a one-line `README.md` saying what the machine is —
 and add it to the slot table in `SYNC_PROTOCOL.md` and to `BOOTSTRAP.md`.

@@ -25,12 +25,12 @@ separate state silos.
   conflict-copy scan/plan/apply/verify/rollback API and CLI.
 - `docs/conflict-copy-reconciler.md` — merge classes, safety gates, owner
   lease and desktop/macOS adapter contract.
-- `system_gap_master/trusted_peer_paths.py` — signed host-owned registry,
-  authorized resolve/pull-plan and guarded SFTP file pull CLI/API.
+- `system_gap_master/trusted_peer_paths.py` — read-only host-owned registry
+  validation and deterministic, non-executable pull-preparation CLI/API.
 - `docs/trusted-peer-path-registry.md` — trusted-peer threat model, setup,
   direct-pull boundary and SQLite adapter rule.
-- `schemas/trusted-peer-path-*.schema.json` — machine-readable registry,
-  entries and host-local configuration contracts.
+- `schemas/trusted-peer-*.schema.json` — machine-readable registry,
+  host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.
 - `docs/adapting-your-agents.md` — integration notes for agent rule files and
   session-start hooks.
@@ -47,13 +47,13 @@ separate state silos.
   an allowlisted root, authoritative mapping, safe deterministic merge class,
   one explicit mutating owner, a shared local lease, HMAC-bound plan/manifest,
   no symlink/reparse traversal, backup, verification and rollback.
-- A host writes only its own signed trusted-peer registry. Peers pin its
-  host/key identity and revision before resolving exact paths. Keys and file
-  content never enter the yard.
-- Direct SFTP pulls require explicit peer permission, `direct_pull=true`,
-  strict known-host verification, an allowlisted destination and
-  no-overwrite. SQLite and WAL/SHM paths are discovery-only and use
-  `sqlite-transit-sync` through R9 `db-transit/<namespace>`.
+- The trusted-peer module is read-only: it validates owner slot, expiry,
+  pinned signature reference, digest, known-host pin, peer and exact path
+  allowlists. It never reads referenced files or contacts a peer.
+- `pull-plan` requires `direct_pull=true` but produces only a deterministic,
+  non-executable receipt. Signature verification, SSH setup and transfer
+  remain activation gates. SQLite and WAL/SHM paths are discovery-only and
+  use `sqlite-transit-sync` through R9 `db-transit/<namespace>`.
 
 ## Search phrases
 
@@ -66,7 +66,7 @@ plain file agent handoff protocol
 host slot sync protocol
 multi agent state persistence
 cross host slot isolation
-signed trusted peer path registry
-direct SFTP peer pull plan
+trusted peer path metadata registry
+read only SFTP pull preparation receipt
 semi trusted yard registry authenticity
 ```
