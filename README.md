@@ -2,6 +2,9 @@
 
 # system-gap-master
 
+<img src="assets/banner.png" width="100%" alt="System Gap Master banner">
+
+
 [English](README.md) | [Deutsch](README_de.md)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
