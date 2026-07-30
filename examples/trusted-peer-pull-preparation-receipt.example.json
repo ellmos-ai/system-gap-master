@@ -32,7 +32,7 @@
   "endpoint": {
     "endpoint_id": "trusted-sftp",
     "transport": "sftp",
-    "network_label": "tailscale",
+    "network_label": "private-overlay",
     "host": "host-a.internal",
     "port": 22,
     "username": "registry-reader",
@@ -52,7 +52,7 @@
     "verify detached signature through a separately reviewed verifier",
     "install the pinned host key in the chosen SSH client",
     "verify server-side read-only account and exact-path ACL",
-    "authorize and test the selected direct or Tailscale route",
+    "authorize and test the selected direct or private-overlay route",
     "review a separate no-overwrite transfer executor",
     "verify destination ownership and permissions immediately before transfer"
   ]

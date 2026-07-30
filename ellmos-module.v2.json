@@ -48,7 +48,7 @@
       "role": "trusted-peer-no-transfer-plan",
       "networks": [
         "direct",
-        "tailscale"
+        "private-overlay"
       ]
     },
     {

@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -43,9 +44,16 @@ WINDOWS_DEVICE_STEMS = {
     "prn",
     *(f"com{index}" for index in range(1, 10)),
     *(f"lpt{index}" for index in range(1, 10)),
+    "com¹",
+    "com²",
+    "com³",
+    "lpt¹",
+    "lpt²",
+    "lpt³",
 }
+WINDOWS_FORBIDDEN_COMPONENT_CHARS = frozenset('<>:"/\\|?*')
 SQLITE_SUFFIXES = (".db", ".sqlite", ".sqlite3", "-wal", "-shm")
-NETWORK_LABELS = {"direct", "tailscale"}
+NETWORK_LABELS = {"direct", "private-overlay"}
 SIGNATURE_ALGORITHMS = {"external-ed25519", "external-ssh-signature"}
 
 SECRET_FIELD_NAMES = {
@@ -144,10 +152,41 @@ def _reject_nonfinite(value: str) -> None:
 
 
 def _read_json(path: Path, label: str) -> dict[str, Any]:
+    _assert_no_reparse_components(path)
     try:
-        if path.stat().st_size > MAX_JSON_BYTES:
+        before = path.lstat()
+        if not stat.S_ISREG(before.st_mode):
+            raise TrustedPeerPathError(f"{label} must be a regular file")
+        if before.st_size > MAX_JSON_BYTES:
             raise TrustedPeerPathError(f"{label} exceeds {MAX_JSON_BYTES} bytes")
-        raw = path.read_bytes()
+        flags = (
+            os.O_RDONLY
+            | getattr(os, "O_BINARY", 0)
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        descriptor = os.open(path, flags)
+        try:
+            opened = os.fstat(descriptor)
+            _assert_no_reparse_components(path)
+            after = path.lstat()
+            identities = {
+                (before.st_dev, before.st_ino),
+                (opened.st_dev, opened.st_ino),
+                (after.st_dev, after.st_ino),
+            }
+            if len(identities) != 1 or not stat.S_ISREG(opened.st_mode):
+                raise TrustedPeerPathError(
+                    f"{label} changed identity or became unsafe while opening"
+                )
+            with os.fdopen(descriptor, "rb", closefd=True) as handle:
+                descriptor = -1
+                raw = handle.read(MAX_JSON_BYTES + 1)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+        if len(raw) > MAX_JSON_BYTES:
+            raise TrustedPeerPathError(f"{label} exceeds {MAX_JSON_BYTES} bytes")
     except OSError as exc:
         raise TrustedPeerPathError(f"cannot read {label}: {path}") from exc
     try:
@@ -255,7 +294,11 @@ def _safe_id(value: Any, label: str) -> str:
 
 def _reject_windows_alias(value: str, label: str) -> None:
     stem = value.split(".", 1)[0].rstrip(" .").lower()
-    if stem in WINDOWS_DEVICE_STEMS or value.endswith((" ", ".")) or ":" in value:
+    if (
+        stem in WINDOWS_DEVICE_STEMS
+        or value.endswith((" ", "."))
+        or any(character in WINDOWS_FORBIDDEN_COMPONENT_CHARS for character in value)
+    ):
         raise TrustedPeerPathError(f"{label} uses a forbidden filesystem alias")
 
 
@@ -270,6 +313,10 @@ def _is_link_or_reparse(path: Path) -> bool:
 
 def _lexical_absolute(raw: str | Path, label: str) -> Path:
     text = _expect_string(str(raw), label)
+    if text.replace("/", "\\").startswith("\\\\"):
+        raise TrustedPeerPathError(
+            f"{label} must be host-local; UNC and device namespaces are forbidden"
+        )
     candidate = Path(text).expanduser()
     if not candidate.is_absolute():
         raise TrustedPeerPathError(f"{label} must be absolute")
@@ -390,7 +437,9 @@ def _validate_endpoint(raw: Any, label: str) -> dict[str, Any]:
         endpoint["network_label"], f"{label}.network_label", 32
     )
     if network_label not in NETWORK_LABELS:
-        raise TrustedPeerPathError(f"{label}.network_label must be direct or tailscale")
+        raise TrustedPeerPathError(
+            f"{label}.network_label must be direct or private-overlay"
+        )
     host = _expect_string(endpoint["host"], f"{label}.host", 253)
     if not NETWORK_HOST_RE.fullmatch(host):
         raise TrustedPeerPathError(f"{label}.host is not a safe literal host label")
@@ -973,7 +1022,7 @@ class TrustedPeerPathRegistry:
                 "verify detached signature through a separately reviewed verifier",
                 "install the pinned host key in the chosen SSH client",
                 "verify server-side read-only account and exact-path ACL",
-                "authorize and test the selected direct or Tailscale route",
+                "authorize and test the selected direct or private-overlay route",
                 "review a separate no-overwrite transfer executor",
                 "verify destination ownership and permissions immediately before transfer",
             ],

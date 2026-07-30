@@ -12,7 +12,7 @@
       "signature_reference": "urn:replace-with-out-of-band-signature-reference",
       "allowed_network_labels": [
         "direct",
-        "tailscale"
+        "private-overlay"
       ],
       "allowed_remote_paths": [
         "/srv/private/example/credentials.json"

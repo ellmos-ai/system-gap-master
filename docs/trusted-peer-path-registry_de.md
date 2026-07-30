@@ -40,7 +40,7 @@ Trust-Metadaten:
 - exakte Trusted-Host-ID und minimale Revision;
 - gepinnte Signaturmethode, Key-ID und Signaturreferenz-URN;
 - exakte Remote-Pfad-Allowlist;
-- erlaubte Netzlabels `direct` und/oder `tailscale`;
+- erlaubte Netzlabels `direct` und/oder `private-overlay`;
 - Zuordnung Endpoint zu Known-Host-SHA-256-Pin;
 - host-lokale Zielroots und Grenzen für Alter/TTL der Registry.
 
@@ -53,7 +53,8 @@ Die Validierung verlangt striktes UTF-8-JSON ohne doppelte Keys, exakte
 v2-Felder, kanonische IDs, den abgeleiteten Owner-Slot, gültige
 Revision/Zeit/Expiry, identische lokale Pins für Signaturreferenz und
 Known-Host-Key, einen passenden kanonischen Payload-Digest, read-only SFTP,
-ein erlaubtes Netzlabel und eine exakte lokale Remote-Pfad-Freigabe.
+ein erlaubtes Netzlabel, eine beim Öffnen unveränderte Dateiidentität und eine
+exakte lokale Remote-Pfad-Freigabe.
 Secret-/Content-Felder und erkennbare Secret-Muster blockieren.
 
 Der Digest schützt gegen unbeabsichtigte Dokumentänderungen, authentisiert
@@ -114,7 +115,7 @@ verifizierte Werte eingesetzt wurden.
    gewählten SSH-Client verifizieren.
 3. Dedizierten Server-Account mit read-only ACL auf exakt freigegebene Pfade
    einrichten; Schreibzugriff und andere Reads müssen nachweislich scheitern.
-4. Route `direct` oder `tailscale` auswählen, autorisieren und prüfen, ohne
+4. Route `direct` oder `private-overlay` auswählen, autorisieren und prüfen, ohne
    die providerneutrale Registry umzubauen.
 5. Authentisierungsmaterial außerhalb des Yards und dieses Moduls
    provisionieren; der Preflight darf es nie lesen.

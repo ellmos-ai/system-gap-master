@@ -22,6 +22,9 @@ All notable changes to system-gap-master are documented here.
 - Documented the remaining detached-signature, SSH ACL/authentication,
   network-route, anti-replay and reviewed-executor gates for real two-host
   activation.
+- Reject UNC/device namespaces and non-portable Windows aliases before any
+  filesystem probe, bind registry reads to one checked file identity, and use
+  provider-neutral `direct`/`private-overlay` route labels.
 
 ## 1.4.0 - 2026-07-29
 

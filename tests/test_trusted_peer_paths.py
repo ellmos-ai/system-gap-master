@@ -2,10 +2,12 @@ import contextlib
 import hashlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from system_gap_master.trusted_peer_paths import (
     LOCAL_CONFIG_SCHEMA,
@@ -13,6 +15,7 @@ from system_gap_master.trusted_peer_paths import (
     REGISTRY_SCHEMA,
     TrustedPeerPathError,
     TrustedPeerPathRegistry,
+    _lexical_absolute,
     main,
 )
 
@@ -55,14 +58,14 @@ class TrustedPeerPathFixture(unittest.TestCase):
                     "signature_algorithm": "external-ed25519",
                     "key_id": "host-a-v1",
                     "signature_reference": TEST_SIGNATURE_REF,
-                    "allowed_network_labels": ["direct", "tailscale"],
+                    "allowed_network_labels": ["direct", "private-overlay"],
                     "allowed_remote_paths": [
                         self.credential_path,
                         self.sqlite_path,
                     ],
                     "known_host_pins": [
                         {
-                            "endpoint_id": "tailscale-sftp",
+                            "endpoint_id": "private-overlay-sftp",
                             "sha256": TEST_PIN,
                         }
                     ],
@@ -76,7 +79,7 @@ class TrustedPeerPathFixture(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def registry(self, *, network_label="tailscale", direct_pull=True):
+    def registry(self, *, network_label="private-overlay", direct_pull=True):
         unsigned = {
             "schema": REGISTRY_SCHEMA,
             "host_id": "HOST-A",
@@ -85,7 +88,7 @@ class TrustedPeerPathFixture(unittest.TestCase):
             "expires_at": "2026-07-30T13:00:00Z",
             "endpoints": [
                 {
-                    "endpoint_id": "tailscale-sftp",
+                    "endpoint_id": "private-overlay-sftp",
                     "transport": "sftp",
                     "network_label": network_label,
                     "host": "host-a.internal",
@@ -102,7 +105,7 @@ class TrustedPeerPathFixture(unittest.TestCase):
                     "metadata_type": "path-location",
                     "content_included": False,
                     "remote_path": self.credential_path,
-                    "endpoint_id": "tailscale-sftp",
+                    "endpoint_id": "private-overlay-sftp",
                     "allowed_peer_ids": ["PEER-B"],
                     "direct_pull": direct_pull,
                 },
@@ -112,7 +115,7 @@ class TrustedPeerPathFixture(unittest.TestCase):
                     "metadata_type": "path-location",
                     "content_included": False,
                     "remote_path": self.sqlite_path,
-                    "endpoint_id": "tailscale-sftp",
+                    "endpoint_id": "private-overlay-sftp",
                     "allowed_peer_ids": ["PEER-B"],
                     "direct_pull": False,
                     "adapter": "sqlite-transit-sync",
@@ -228,7 +231,7 @@ class TestRegistryValidation(TrustedPeerPathFixture):
             (
                 [
                     {
-                        "endpoint_id": "tailscale-sftp",
+                        "endpoint_id": "private-overlay-sftp",
                         "sha256": "SHA256:" + ("B" * 43),
                     }
                 ],
@@ -281,8 +284,8 @@ class TestRegistryValidation(TrustedPeerPathFixture):
         with self.assertRaisesRegex(TrustedPeerPathError, "opaque secret"):
             self.runtime().validate("HOST-A")
 
-    def test_direct_and_tailscale_are_labels_not_provider_selection(self):
-        for network in ("direct", "tailscale"):
+    def test_routes_are_provider_neutral_labels_not_provider_selection(self):
+        for network in ("direct", "private-overlay"):
             with self.subTest(network=network):
                 self.write_registry(self.registry(network_label=network))
                 validated = self.runtime().validate("HOST-A")
@@ -303,6 +306,71 @@ class TestRegistryValidation(TrustedPeerPathFixture):
 
 
 class TestPullPreparation(TrustedPeerPathFixture):
+    def test_network_and_device_namespaces_fail_before_filesystem_access(self):
+        for value in (
+            r"\\attacker.invalid\share\destination.json",
+            r"\\?\C:\destination.json",
+            r"\\.\C:\destination.json",
+            "//attacker.invalid/share/destination.json",
+        ):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesRegex(TrustedPeerPathError, "host-local.*namespaces"),
+            ):
+                _lexical_absolute(value, "destination")
+
+    def test_invalid_windows_components_and_device_aliases_fail_closed(self):
+        self.write_registry()
+        runtime = self.runtime()
+        for name in (
+            "bad?.json",
+            "bad*.json",
+            "bad|name",
+            "bad<name",
+            "bad>name",
+            'bad"name',
+            "COM¹.txt",
+            "LPT².txt",
+        ):
+            with (
+                self.subTest(name=name),
+                self.assertRaisesRegex(TrustedPeerPathError, "filesystem alias"),
+            ):
+                runtime.pull_plan(
+                    "HOST-A",
+                    "service-credential-file",
+                    self.pull_root / name,
+                )
+
+    def test_registry_replacement_between_check_and_open_fails_closed(self):
+        registry_path = self.write_registry()
+        outside = self.root / "outside-registry.json"
+        outside_registry = self.registry()
+        outside_registry["paths"][0]["description"] = "outside source"
+        outside.write_text(
+            json.dumps(self.resign(outside_registry)),
+            encoding="utf-8",
+        )
+        original_open = os.open
+        swapped = False
+
+        def swap_before_open(path, flags, *args, **kwargs):
+            nonlocal swapped
+            if Path(path) == registry_path and not swapped:
+                swapped = True
+                registry_path.unlink()
+                os.link(outside, registry_path)
+            return original_open(path, flags, *args, **kwargs)
+
+        with (
+            patch(
+                "system_gap_master.trusted_peer_paths.os.open",
+                side_effect=swap_before_open,
+            ),
+            self.assertRaisesRegex(TrustedPeerPathError, "changed identity"),
+        ):
+            self.runtime().validate("HOST-A")
+
     def test_plan_is_deterministic_read_only_and_non_executable(self):
         registry_path = self.write_registry()
         before = registry_path.read_bytes()

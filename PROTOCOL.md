@@ -148,7 +148,7 @@ file, writes the yard, enables `direct_pull` or copies bytes.
 
 For an explicitly enabled ordinary file it may emit a deterministic,
 non-executable pull-preparation receipt. Destinations must be absent,
-host-local, allowlisted and outside the yard. `direct` and `tailscale` are
+host-local, allowlisted and outside the yard. `direct` and `private-overlay` are
 provider-neutral labels only. Directory transfer needs a separate reviewed
 adapter. Live SQLite paths and `.db`, `.sqlite`, `.sqlite3`, `-wal`, `-shm`
 payloads may be advertised only as `kind=database/sqlite` with

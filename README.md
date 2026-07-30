@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-80%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-83%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -166,7 +166,7 @@ then emits a deterministic non-executable preparation receipt.
 
 It never publishes, contacts a peer, invokes SSH/SFTP, reads referenced
 credentials/keys/signatures/known-hosts files, copies bytes, creates a
-destination or enables `direct_pull`. `direct` and `tailscale` are validated
+destination or enables `direct_pull`. `direct` and `private-overlay` are validated
 network labels only; no provider is selected. Secret/content fields fail
 closed, while approved exact credential *paths* remain metadata.
 

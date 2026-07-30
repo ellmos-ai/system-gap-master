@@ -37,7 +37,7 @@ The local policy stays outside the yard. It contains only trust metadata:
 - exact trusted host ID and minimum revision;
 - pinned signature algorithm, key ID and signature-reference URN;
 - exact remote-path allowlist;
-- allowed `direct` and/or `tailscale` network labels;
+- allowed `direct` and/or `private-overlay` network labels;
 - endpoint-to-known-host SHA-256 pin mapping;
 - host-local destination roots and registry age/TTL limits.
 
@@ -51,13 +51,13 @@ Validation fails closed unless all of these hold:
 1. strict UTF-8 JSON, no duplicate keys or non-finite numbers;
 2. exact v2 schema fields and canonical IDs;
 3. path is the derived host-owned slot, with no symlink/junction/reparse
-   traversal;
+   traversal, and the opened handle retains the checked file identity;
 4. `host_id`, minimum revision, publication age and expiry/TTL are valid;
 5. the signature algorithm, key ID and signature-reference URN equal the
    out-of-band local pins;
 6. `payload_sha256` matches canonical JSON excluding
    `signature_reference`;
-7. every endpoint is read-only SFTP with a `direct` or `tailscale` label;
+7. every endpoint is read-only SFTP with a `direct` or `private-overlay` label;
 8. every endpoint pin exactly matches the local known-host pin;
 9. every published remote path exactly matches the local allowlist;
 10. metadata contains no secret/content fields or recognizable secret
@@ -139,7 +139,7 @@ the following, with evidence from both hosts:
    verify it in the chosen SSH client;
 3. create a dedicated server-side account restricted to read-only access to
    the exact approved paths, and test that writes and other reads fail;
-4. choose and authorize either the direct or Tailscale route, then verify
+4. choose and authorize either the direct or private-overlay route, then verify
    reachability without changing this provider-neutral registry;
 5. provision authentication material outside the yard and outside this
    module; this preflight must never read it;

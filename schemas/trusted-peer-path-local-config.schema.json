@@ -97,7 +97,7 @@
           "items": {
             "enum": [
               "direct",
-              "tailscale"
+              "private-overlay"
             ]
           }
         },
