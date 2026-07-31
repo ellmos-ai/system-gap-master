@@ -23,6 +23,25 @@
 ## HIGH PRIORITY
 
 - [x] Add a small regression test for `scripts/system_gap_daily_check.py` using a temporary yard.
+- [ ] **Port the user-neutral OneDrive tree reconciler after the private
+  two-system pilot.** Source candidate:
+  `.SYNC/central-skills/onedrive-tree-reconciler/`. Preserve its paired
+  metadata-scan contract, fail-closed `PARTIAL` handling, source-local
+  availability gate, cloud-only no-hydration/no-transfer invariant,
+  no-overwrite staging import, SHA-256 bundles, and bidirectional roles.
+  Before adding it to this public repo, remove deployment-specific roots and
+  transport assumptions behind configuration, keep all host/user names out of
+  the release surface, add cross-platform or clearly Windows-scoped tests, and
+  require the private pilot receipts as promotion evidence. *Noted
+  2026-07-28 [C].*
+- [ ] **Evaluate `fast-track-sync` as the urgent delivery layer.** The private
+  pilot separates transport (verified SSH or Tailscale Taildrop), target-local
+  lifecycle execution (COMA), and signed result return. Any public promotion
+  must preserve HMAC authentication, TTL and nonce replay protection,
+  receiver-side source/adapter/CWD/write allowlists, COMA dry-run before
+  launch, and the explicit rule that Taildrop delivery alone is not remote
+  execution. Keep key material and deployment-specific receiver policies out
+  of the repository. *Noted 2026-07-28 [C].*
 - [ ] Document one concrete setup example per agent family once the public repo wiring is stable.
 - [ ] Decide whether the daily gate should optionally write JSON output for hook integrations.
 - [x] **Finish the rename to `system-gap-master`.** User decision received
