@@ -72,6 +72,52 @@ Trusted-Peer-Aufbau WORKSTATION-LG ↔ ASUS-GEI, 2026-07-31
   Teil des Designs; Dringendes gehört in `agent-beam` (siehe unten).
 - Aufträge mit Schreibrechten im fremden Slot statt als Datei im Fremdslot.
 
+### Taktsteuerung: Aktivierungs- und Cooldown-Mechanik (v2, 2026-07-31)
+
+Ping-Pong-Takte sind **nicht statisch**. Zwei komplementäre Mechaniken —
+gegenseitige Anweisung und Selbstanpassung — halten Matches schnell und
+Ruhephasen billig.
+
+**Mechanik A — gegenseitige Anweisung (match/pause).**
+
+- **Match-Start erkennbar** (viele Hin- und Herläufe absehbar, z. B. ein
+  Zwei-Host-Pilot oder eine Fehlersuche beginnt): Der Partner erhält im
+  Auftrag/Delta die Anweisung, seinen Scan-Takt zu schärfen
+  (z. B. auf 15 Minuten). Format: `CADENCE: match 15m` im Auftragstext.
+- **Einzelarbeit absehbar** (eine Seite arbeitet länger lokal): Der Partner
+  bekommt die Pausen-Anweisung: Takt auf 1 Stunde; bleiben 3 Läufe
+  nacheinander leer, auf 2 Stunden; danach nur noch schauen
+  (`CADENCE: pause 1h → 2h after 3 empty`).
+- Wer eine Cadence-Anweisung ändert, bestätigt im nächsten Delta den
+  neuen Takt (Readback-Prinzip gilt auch für Uhren).
+
+**Mechanik B — Selbstanpassung (aktivierung/cooldown ohne Anweisung).**
+
+- **Aktivierung:** Fängt ein Ping-Pong-Cron einen neuen Auftrag ab, stellt
+  er sein Fenster **sofort auf 15 Minuten** scharf.
+- **Cooldown-Leiter:** 4 leere Läufe → 30 Minuten; 2 weitere leere Läufe →
+  1 Stunde; danach Verdopplung je Leerlaufserie (2 h, 4 h, 8 h) bis zur
+  **Kappe 24 Stunden** (nie höher).
+- **Zustand:** Der leere-Lauf-Zähler liegt in einer kleinen Zustandsdatei
+  beim Worker (z. B. `pingpong-cron-state.json`); jeder Lauf schreibt ihn
+  fort. Cadence-Wechsel = alter Job weg, neuer Job mit neuer Periode,
+  Zählerstand bleibt.
+- **Wahrheit bleibt die Yard:** Der Takt ändert nur die Reaktionszeit,
+  nie die Regeln (Slot-Disziplin, Receipt-Pflicht, No-Secrets).
+
+**Kanal 2 — „Bleib-wach"-Nachrichten (mutual wake).**
+
+Unabhängig vom Takt darf jede Seite jederzeit eine leichte Wake-Nachricht
+in den Slot des anderen legen (`WAKE: <grund>`), die den Partner zum
+**sofortigen** Scan anstößt (sein nächster Lauf startet die Arbeit ohne
+auf den Takt zu warten). Wake ist ein Hinweis, keine Autorität: Inhalt,
+Umfang und Grenzen bleiben die des Auftrags selbst. Wake-Nachrichten sind
+nach dem Lesen zu löschen.
+
+**Fail-safe:** Verlieren sich die Takt-Partner (keine Antwort über mehrere
+geschärfte Perioden), gilt die normale Vakanz-Regel des Sync-Systems
+(48 h), nicht eine eskalierende Wake-Flut.
+
 ## Unterkapitel 2: agent-beam (Entwurf, noch nicht aktiv)
 
 **Idee.** Für dringende Aufträge: Statt nur einer Textdatei wird ein Paket
