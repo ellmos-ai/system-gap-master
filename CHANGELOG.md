@@ -11,6 +11,15 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Documented Republica (the sqlite-transit-sync showcase fallback) as a
+  permanent second operating mode alongside direct tunnel sync, not a
+  stopgap: a bilingual README section with a failure-scenario table, and
+  `system_gap_master/republica_transit.py` — a dependency-free helper that
+  resolves the R9 tool-owned `db-transit/<namespace>` transit zone for a
+  namespace and validates that a `republica_root` import destination stays
+  outside the yard. Registered as the `republica-transit` console script;
+  never imports `sqlite_transit_sync`, so it works with or without the
+  companion package installed.
 - Synchronized the maintained German README with the canonical English
   structure, protocol rules, companion-tool, stack-family, security and
   provenance sections while preserving code blocks byte-for-byte.

@@ -37,6 +37,7 @@ dependencies = []
 [project.scripts]
 conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"
 trusted-peer-paths = "system_gap_master.trusted_peer_paths:main"
+republica-transit = "system_gap_master.republica_transit:main"
 
 [project.urls]
 Homepage = "https://github.com/dev-bricks/system-gap-master"

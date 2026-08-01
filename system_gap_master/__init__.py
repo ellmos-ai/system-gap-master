@@ -5,6 +5,8 @@ from typing import Any
 __all__ = [
     "ConflictCopyReconciler",
     "ReconcilerError",
+    "RepublicaTransitError",
+    "RepublicaTransitPaths",
     "TrustedPeerPathError",
     "TrustedPeerPathRegistry",
 ]
@@ -16,6 +18,10 @@ def __getattr__(name: str) -> Any:
             ConflictCopyReconciler,
             ReconcilerError,
         )
+        from .republica_transit import (
+            RepublicaTransitError,
+            RepublicaTransitPaths,
+        )
         from .trusted_peer_paths import (
             TrustedPeerPathError,
             TrustedPeerPathRegistry,
@@ -24,6 +30,8 @@ def __getattr__(name: str) -> Any:
         return {
             "ConflictCopyReconciler": ConflictCopyReconciler,
             "ReconcilerError": ReconcilerError,
+            "RepublicaTransitError": RepublicaTransitError,
+            "RepublicaTransitPaths": RepublicaTransitPaths,
             "TrustedPeerPathError": TrustedPeerPathError,
             "TrustedPeerPathRegistry": TrustedPeerPathRegistry,
         }[name]

@@ -1,6 +1,6 @@
 # system-gap-master
 
-## Last-checked: 2026-07-29
+## Last-checked: 2026-08-01
 
 ## Canonical repository
 
@@ -29,6 +29,10 @@ separate state silos.
   validation and deterministic, non-executable pull-preparation CLI/API.
 - `docs/trusted-peer-path-registry.md` — trusted-peer threat model, setup,
   direct-pull boundary and SQLite adapter rule.
+- `system_gap_master/republica_transit.py` — resolves the R9 tool-owned
+  `db-transit/<namespace>` zone for the Republica showcase fallback and
+  validates that a `republica_root` destination stays outside the yard; pure
+  path arithmetic, no hard dependency on sqlite-transit-sync.
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.
@@ -54,6 +58,12 @@ separate state silos.
   non-executable receipt. Signature verification, SSH setup and transfer
   remain activation gates. SQLite and WAL/SHM paths are discovery-only and
   use `sqlite-transit-sync` through R9 `db-transit/<namespace>`.
+- Republica (the sqlite-transit-sync showcase mode) is a permanent fallback
+  layer, not a stopgap: a direct SSH/Tailscale tunnel and a Republica
+  showcase over the yard are meant to run side by side, so a failure in one
+  does not stop the other. `republica_transit.py` only resolves where the
+  R9 zone lives inside a given yard; encryption, publish/list/import and the
+  sealed-envelope courier remain sqlite-transit-sync's responsibility.
 
 ## Search phrases
 
@@ -69,4 +79,6 @@ cross host slot isolation
 trusted peer path metadata registry
 read only SFTP pull preparation receipt
 semi trusted yard registry authenticity
+republica showcase fallback database sync
+serverless database sync without a tunnel
 ```
