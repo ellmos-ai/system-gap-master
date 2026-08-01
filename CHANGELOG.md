@@ -29,6 +29,30 @@ All notable changes to system-gap-master are documented here.
   filesystem probe, bind registry reads to one checked file identity, and use
   provider-neutral `direct`/`private-overlay` route labels.
 
+### Added — conflict reconciler: keep the review queue worth reading
+
+- **Machine-regenerable artefacts are no longer surfaced.** `__pycache__`,
+  `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and bytecode extensions
+  (`.pyc`, `.pyo`, `.pyd`, `.class`, `.o`, `.obj`) are skipped during
+  candidate iteration. A conflict copy of a bytecode cache carries no
+  information — the file is rebuilt on the next run, so neither merging nor
+  human review is worth anyone's time. Observed on a real repository: thirteen
+  of thirteen "undecidable" candidates were bytecode and VCS internals. A queue
+  like that trains reviewers to ignore it, which is worse than no queue at all.
+  (`.git` was already excluded.)
+- **`host_specific_markers()`** reports evidence that a file legitimately
+  differs per host (absolute user paths, known host names in content). Such a
+  pair is not a conflict to merge: either both sides are kept under explicit
+  per-host names, or — better — the file is made path-neutral so the split
+  disappears. Merging them silently destroys one host's configuration.
+- **`excerpt()`** returns beginning, middle and end of a text. Before comparing
+  two versions line by line, a reviewer needs the cheaper answer first: is
+  merging this worth doing at all? That matters when one run surfaces dozens of
+  candidates.
+- Six regression tests covering all three additions, including an end-to-end
+  check that a bytecode conflict copy never reaches the queue while a README
+  in the same run still does.
+
 ## 1.4.0 - 2026-07-29
 
 - Added the user- and host-neutral `trusted-peer-paths` API/CLI with atomic
