@@ -71,6 +71,11 @@ Trusted-Peer-Aufbau WORKSTATION-LG ↔ ASUS-GEI, 2026-07-31
 - Sofort-Antworten erwarten: Die Yard-Latenz (Cloud-Sync + Cron-Takt) ist
   Teil des Designs; Dringendes gehört in `agent-beam` (siehe unten).
 - Aufträge mit Schreibrechten im fremden Slot statt als Datei im Fremdslot.
+- **Scan-Patterns nach Datum im Dateinamen** (z. B. `*2026-08*`): Neuheiten
+  werden nur über Typ-Prefix (`AUFTRAG_*`, `DELTA_*`) und **Änderungsdatum**
+  erkannt, nie über Datumsbestandteile des Namens — sonst übersehen Scans
+  nach Tages-/Monatswechsel gültige Aufträge (Lehrfall 2026-08-01: ~85 min
+  Verspätung, weil ein `2026-07-31`-Auftrag dem `2026-08`-Filter entfiel).
 
 ### Taktsteuerung: Aktivierungs- und Cooldown-Mechanik (v2, 2026-07-31)
 
