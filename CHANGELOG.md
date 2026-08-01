@@ -11,6 +11,9 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Synchronized the maintained German README with the canonical English
+  structure, protocol rules, companion-tool, stack-family, security and
+  provenance sections while preserving code blocks byte-for-byte.
 - Replaced live trusted-peer publishing and `pull --apply` with a read-only
   V4 preparation boundary. The stable CLI now validates, lists, resolves and
   emits deterministic non-executable pull receipts without network contact,

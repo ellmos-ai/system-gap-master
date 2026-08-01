@@ -29,14 +29,14 @@ flowchart TD
         SlotB["hosts/laptop/"]
     end
     subgraph SyncYard["Transfer Yard (OneDrive / Syncthing / NAS)"]
-        SlotA -->|Host A schreibt nur in Slot A| YardStorage["system-gap-master yard"]
-        SlotB -->|Host B schreibt nur in Slot B| YardStorage
-        YardStorage --> GateScript["scripts/system_gap_daily_check.py (Tages-Gate)"]
-        GateScript --> MsgChannel["messages/ (Lesen-und-Löschen)"]
+        SlotA -->|Host A writes only Slot A| YardStorage["system-gap-master yard"]
+        SlotB -->|Host B writes only Slot B| YardStorage
+        YardStorage --> GateScript["scripts/system_gap_daily_check.py (Daily Gate)"]
+        GateScript --> MsgChannel["messages/ (Delete-after-read)"]
     end
 ```
 
-## Companion tool: sqlite-transit-sync
+## Begleitwerkzeug: sqlite-transit-sync
 
 Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Das Schwester-Tool [sqlite-transit-sync](https://github.com/ellmos-ai/sqlite-transit-sync) bietet eine spezialisierte Lösung für die Replikation von SQLite-Zuständen. Statt gefährlichem Byte-Kopieren laufender Datenbankdateien über Cloud-Sync nutzt es die native SQLite Backup-API für sichere Transport-Snapshots und deterministische Merges zwischen Hosts.
 
@@ -47,64 +47,66 @@ Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Da
 | agentsync & ähnliche Tools | Eine Konfigurationsquelle → viele KI-Tools auf demselben Rechner | Wissen & Status zwischen **verschiedenen Rechnern** |
 | Shared-Memory-Layers für Agenten | Agenten-Kommunikation auf einem Rechner in einer Session | Dauerhafte Speicherung über Geräte und Tage hinweg |
 | Dotfiles-Repositories | System-Konfigurationsdateien | Agenten-Wissen, Nachrichten, Runbooks und Rituale |
-| Cloud-Memory MCPs | Speicher eines einzelnen KI-Providers | Anbieterneutral, dateibasiert, transparent und auditiermbar |
+| Cloud-Memory MCPs | Speicher eines einzelnen KI-Providers | Anbieterneutral, dateibasiert, transparent und auditierbar |
 
 Die Nische von **system-gap-master**: **Multi-Machine + Multi-Agent + Serverless + Plain Files.** Alle Daten liegen als lesbares Markdown vor, das jederzeit inspiziert, durchsucht und mit jedem gewählten Tool synchronisiert werden kann.
 
 ## Inhalt des Repositories
 
-```text
-PROTOCOL.md          Vollständiges Protokoll (10 Regeln) + Design-Entscheidungen
-SKILL.md             Das tägliche Sync-Ritual als agentenneutraler Skill
-CHANGELOG.md         Änderungsprotokoll und Release-Notizen
-llms.txt             Maschinenlesbarer Index für KI-Agenten
-ellmos-module.v2.json  Ökosystem-Modul-Metadaten
-template/            Kopierfähiges Yard-Skelett:
-  SYNC_PROTOCOL.md     Yard-lokales Protokoll + Slot-Tabelle
-  BOOTSTRAP.md         Setup- & Disaster-Recovery-Handbuch für neue Geräte
-  DAILY_SYNC_LOG.md    Einmal-pro-Tag-per-Host Gate
-  CONFLICT_REVIEW_LOG.md  Tägliche Prüfung von Konfliktkopien
-  agents/  messages/  hosts/  _archive/   (jeweils mit README-Regeln)
-scripts/system_gap_daily_check.py   Das Tages-Gate (check|mark), zero dependencies
+```
+PROTOCOL.md          the full protocol (10 rules) + design notes
+SKILL.md             the daily ritual as an agent-neutral skill
+CHANGELOG.md         notable public maintenance changes
+llms.txt             machine-readable summary for agents and search tools
+ellmos-module.v2.json  ecosystem module metadata
+template/            copy-ready yard skeleton:
+  SYNC_PROTOCOL.md     yard-local protocol summary + slot table
+  BOOTSTRAP.md         new-device / disaster-recovery runbook
+  DAILY_SYNC_LOG.md    once-per-day-per-host gate
+  CONFLICT_REVIEW_LOG.md  daily conflict-copy sweep gate
+  agents/  messages/  hosts/  _archive/   (each with its rules README)
+scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
 system_gap_master/conflict_copy_reconciler.py
-                      sichere Scan/Plan/Apply/Verify/Rollback-Engine
+                      safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
-                      read-only Validate/List/Resolve/Pull-Plan-CLI
-docs/adapting-your-agents.md  Anbindung an CLAUDE.md/AGENTS.md/GEMINI.md
-docs/trusted-peer-path-registry_de.md  read-only Pull-Vorbereitungsvertrag
+                      read-only validate/list/resolve/pull-plan CLI
+docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
+docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
 
 ## Schnellstart
 
 ```bash
-# 1) Skelett im synchronisierten Ordner erstellen
-cp -r template/ /pfad/zu/deinem/sync/speicher/SYNC/
+# 1) Create the yard inside your synced storage and copy the skeleton
+cp -r template/ /path/to/your/synced/storage/SYNC/
 
-# 2) SYNC_PROTOCOL.md anpassen (Slot-Tabelle) und eigenen Host-Slot anlegen
-mkdir /pfad/zu/.../SYNC/hosts/<DEIN-HOST-NAME>
+# 2) Fill in SYNC_PROTOCOL.md (slot table) and create your first slot
+mkdir /path/to/.../SYNC/hosts/<YOUR-HOST>
 
-# 3) Umgebungsvariable setzen (siehe docs/adapting-your-agents.md)
-setx SYSTEM_GAP_MASTER_DIR "C:\pfad\zu\SYNC"     # Windows
-export SYSTEM_GAP_MASTER_DIR=/pfad/zu/SYNC       # macOS/Linux
+# 3) Point your agents at it (see docs/adapting-your-agents.md)
+setx SYSTEM_GAP_MASTER_DIR "C:\path\to\SYNC"     # Windows
+export SYSTEM_GAP_MASTER_DIR=/path/to/SYNC       # macOS/Linux
 
-# 4) Täglich pro Rechner ausführen (wird vom KI-Agenten via SKILL.md ausgeführt):
-python scripts/system_gap_daily_check.py check   # Gate-Prüfung: Heute fällig?
-# ... Ritual ausführen (Posteingang lesen, Status schreiben) ...
-python scripts/system_gap_daily_check.py mark    # Ausführung stempeln
+# 4) Daily, per machine (your agent does this via SKILL.md):
+python scripts/system_gap_daily_check.py check   # gate: due today?
+# ... run the ritual (read inbound, write outbound) ...
+python scripts/system_gap_daily_check.py mark
 ```
 
 ## Die zehn Kernregeln (Kurzübersicht)
 
-1. **Slot-Regel** — Jeder Rechner schreibt nur in seinen eigenen Host-Slot (`hosts/<hostname>/`); fremde Slots werden niemals editiert.
-2. **Standard-Pfade** — Übergabeordner wird über die Umgebungsvariable `SYSTEM_GAP_MASTER_DIR` adressiert.
-3. **Nachrichtenkanäle** — Inter-Agenten-Nachrichten werden nach dem Verarbeiten archiviert oder gelöscht.
-4. **Tägliches Ritual (Daily Gate)** — Max. 1x pro Tag pro Host ausführen (`scripts/system_gap_daily_check.py`).
-5. **Keine Secrets** — Keine Passwörter, API-Keys oder sensible Daten im Sync Yard speichern.
-6. **Snapshot-Transite** — Datenbanken (z. B. SQLite) werden via Snapshot-Tools übertragen, nicht im Hot-Sync.
-7. **Konflikt-Bereinigung** — Automatisch erzeugte Konfliktkopien werden beim täglichen Ritual konsolidiert.
-8. **Bootstrap-Runbook** — Jedes neue Gerät wird anhand von `BOOTSTRAP.md` in das Netz integriert.
+1. **Slot-Regel** — Schreibe nur in den eigenen Slot; fremde Slots werden nie editiert.
+2. **Tägliches Ritual mit Gate** — Einmal pro Tag und Host, in zwei bis fünf Minuten.
+3. **Transferbereich, kein Dauerspeicher** — Integrierte Inhalte wandern nach `_archive/`.
+4. **Nachrichten** — `messages/to-<recipient>.md`; Empfänger löschen sie nach dem Lesen.
+5. **Agenten-Snapshots** — Auf dem Ziel mergen, lokale Regeln niemals überschreiben.
+6. **Keine Secrets im Transferbereich** — Nur lokale Speicherorte referenzieren.
+7. **Konfliktkopien täglich prüfen** — Anbieterneutral und ohne blindes Mergen.
+8. **`BOOTSTRAP.md` aktuell halten** — Ein neuer Rechner muss sich damit vollständig einrichten lassen.
 9. **Strukturierte Payloads nutzen Adapter** — Live-SQLite-/WAL-Dateien werden niemals direkt synchronisiert.
 10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die host-eigene Registry und erzeugen einen nicht ausführbaren Beleg; der Transfer bleibt separat.
+
+Die vollständige Begründung steht in [PROTOCOL.md](PROTOCOL.md).
 
 ## Sichere Konfliktkopien-Abstimmung
 
@@ -127,6 +129,20 @@ und lokale Backups; danach folgen Verify, recoverable Archiv und Rollback.
 Vertrag und Beispiele:
 [`docs/conflict-copy-reconciler.md`](docs/conflict-copy-reconciler.md) und
 [`examples/conflict-reconciler.config.example.json`](examples/conflict-reconciler.config.example.json).
+
+```bash
+conflict-copy-reconciler scan --config conflict-reconciler.config.json
+conflict-copy-reconciler plan --config conflict-reconciler.config.json \
+  --output plan.json
+conflict-copy-reconciler apply --config conflict-reconciler.config.json \
+  --plan plan.json
+conflict-copy-reconciler reconcile --config conflict-reconciler.config.json
+conflict-copy-reconciler verify --config conflict-reconciler.config.json \
+  --operation-id <OPERATION_ID>
+conflict-copy-reconciler rollback --config conflict-reconciler.config.json \
+  --operation-id <OPERATION_ID>
+conflict-copy-reconciler canary
+```
 
 ## Trusted-Peer-Pull-Vorbereitung
 
@@ -154,6 +170,29 @@ Details:
 [`schemas/`](schemas/) und
 [`examples/trusted-peer-paths.local-config.example.json`](examples/trusted-peer-paths.local-config.example.json).
 
+## Begleitwerkzeuge
+
+Der Transferbereich transportiert Dokumente; laufende Datenbanken transportiert
+er absichtlich nicht. Regel 9 schützt vor beschädigten SQLite-/WAL-Dateien durch
+Datei-Sync-Anbieter. Für Anwendungszustände wird der Transferbereich mit einem
+Snapshot-Werkzeug kombiniert, das einen eigenen Bereich
+`db-transit/<namespace>/` verwaltet: [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync)
+für lokale SQLite-Synchronisierung über verifizierte Snapshots, SHA-256-Manifeste
+und austauschbare Merge-Policies. Der Transferbereich übernimmt den Transport;
+das Transit-Werkzeug besitzt Integrität und Merge-Logik.
+
+## Teil der ellmos-Stack-Familie
+
+system-gap-master ist beides: ein eigenständig nutzbares Entwicklungswerkzeug
+für beliebige Projekte und ein Kernmodul der ellmos-Stack-Familie.
+
+Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack)
+(Rolle `file-sync`); Familie/Katalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks);
+Organisationsübersicht: [ellmos-ai](https://github.com/ellmos-ai). Begleitmodul
+für Live-SQLite-Zustände (Rolle `sync.database`):
+[sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) — siehe
+[Begleitwerkzeuge](#begleitwerkzeuge).
+
 ## Bundles und Partner
 
 `system-gap-master` bleibt ein eigenständig nutzbares, serverloses
@@ -172,6 +211,24 @@ Das verbindliche Bundle-Manifest definiert Mitgliedschaft, Versionen, Profile
 und private Zusammensetzungsrezepte. Dieser öffentliche Abschnitt beschreibt
 nur sichere, eigenständig nutzbare Discovery-Beziehungen.
 
-## Lizenz
+## Hinweise zu Sicherheit und Datenschutz
+
+- Der Transferbereich läuft über den gewählten Sync-Anbieter und ist daher als
+  **halb vertrauenswürdig** zu behandeln. Zugangsdaten, Tokens sowie Personen-
+  oder Falldaten gehören nicht hinein. Templates und Skill wiederholen diese
+  Regel an jedem Schreibpunkt.
+- Exakte Credential-*Pfade* dürfen in einer host-eigenen Trusted-Peer-Registry
+  stehen; Werte, Schlüssel und Dateiinhalte bleiben verboten. Das Modul prüft
+  Referenzen und Pins, verifiziert derzeit aber keine abgesetzte Signatur und
+  führt kein SFTP aus. Beides bleibt ein Aktivierungs-Gate.
+- Alle übertragenen Inhalte sind normale Dateien. Vorhandene Verschlüsselung,
+  Zugriffskontrolle und Backup-Verfahren gelten unverändert weiter.
+
+## Herkunft und Lizenz
+
+2026 aus einem produktiven, geräteübergreifenden Synchronisationsordner
+abgeleitet, der seit dem Frühjahr mehrere Rechner und Agenten (Claude, Codex,
+Gemini) koordiniert. Diese Fassung ist nutzerneutral neu aufgebaut und enthält
+keine Produktionsdaten.
 
 MIT License — Copyright (c) dev-bricks / Lukas Geiger
