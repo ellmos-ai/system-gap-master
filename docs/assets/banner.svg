@@ -1,0 +1,311 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0d1a" />
+      <stop offset="50%" stop-color="#12182b" />
+      <stop offset="100%" stop-color="#080b15" />
+    </linearGradient>
+
+    <linearGradient id="abyssGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.15" />
+      <stop offset="40%" stop-color="#0b1021" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#04060d" stop-opacity="1" />
+    </linearGradient>
+
+    <!-- Cliff Gradients -->
+    <linearGradient id="cliffLeftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+
+    <linearGradient id="cliffRightGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+
+    <!-- Robot Gradients -->
+    <linearGradient id="robotCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff" />
+      <stop offset="50%" stop-color="#0088cc" />
+      <stop offset="100%" stop-color="#004466" />
+    </linearGradient>
+
+    <linearGradient id="robotAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffb700" />
+      <stop offset="50%" stop-color="#ff6600" />
+      <stop offset="100%" stop-color="#992200" />
+    </linearGradient>
+
+    <!-- Glowing Arc & Ball Gradients -->
+    <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f3ff" />
+      <stop offset="50%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#ffb700" />
+    </linearGradient>
+
+    <radialGradient id="ballGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="25%" stop-color="#70f3ff" />
+      <stop offset="60%" stop-color="#00b8ff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#0055ff" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="amberCoreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#ffb700" />
+      <stop offset="100%" stop-color="#ff4500" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Filters for Neon Glow -->
+    <filter id="glowCyanFilter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="glowAmberFilter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="glowBallFilter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+
+  <!-- Background Tech Grid Lines -->
+  <g stroke="#1e293b" stroke-width="1" opacity="0.35">
+    <path d="M 0,100 L 1200,100 M 0,200 L 1200,200 M 0,300 L 1200,300 M 0,400 L 1200,400 M 0,500 L 1200,500" />
+    <path d="M 150,0 L 150,630 M 300,0 L 300,630 M 450,0 L 450,630 M 600,0 L 600,630 M 750,0 L 750,630 M 900,0 L 900,630 M 1050,0 L 1050,630" />
+  </g>
+
+  <!-- Stars / Glowing Background Data Dots -->
+  <g fill="#00f3ff" opacity="0.4">
+    <circle cx="120" cy="80" r="1.5" />
+    <circle cx="280" cy="140" r="2" />
+    <circle cx="420" cy="70" r="1" />
+    <circle cx="780" cy="90" r="1.5" />
+    <circle cx="950" cy="130" r="2" />
+    <circle cx="1080" cy="75" r="1.5" />
+  </g>
+  <g fill="#ffb700" opacity="0.4">
+    <circle cx="200" cy="180" r="1" />
+    <circle cx="520" cy="110" r="1.5" />
+    <circle cx="680" cy="60" r="2" />
+    <circle cx="860" cy="160" r="1" />
+    <circle cx="1020" cy="210" r="1.5" />
+  </g>
+
+  <!-- TITLE & SUBTITLE -->
+  <g text-anchor="middle">
+    <!-- Outer Glow Shadow for Title -->
+    <text x="600" y="82" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#00f3ff" opacity="0.3" filter="url(#glowCyanFilter)" letter-spacing="1.5">system-gap-master</text>
+    <!-- Main White Title -->
+    <text x="600" y="82" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="1.5">system-gap-master</text>
+    <!-- Subtitle -->
+    <text x="600" y="118" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#94a3b8" letter-spacing="0.5">keeping hosts in sync across the gaps</text>
+  </g>
+
+  <!-- THE ABYSS / GULCH (CENTER GAP) -->
+  <rect x="420" y="380" width="360" height="250" fill="url(#abyssGrad)" />
+  <!-- Depth Grid Lines in Ravine -->
+  <g stroke="#00f3ff" stroke-width="1" opacity="0.15">
+    <line x1="600" y1="380" x2="600" y2="630" />
+    <line x1="520" y1="380" x2="490" y2="630" />
+    <line x1="450" y1="380" x2="380" y2="630" />
+    <line x1="680" y1="380" x2="710" y2="630" />
+    <line x1="750" y1="380" x2="820" y2="630" />
+  </g>
+
+  <!-- BOTTOM GAP METAPHOR BADGE -->
+  <g transform="translate(600, 575)">
+    <rect x="-110" y="-18" width="220" height="36" rx="18" fill="#0b1329" stroke="#334155" stroke-width="2" />
+    <text x="0" y="5" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#38bdf8" letter-spacing="1">HOST-BOUNDARY GAP</text>
+  </g>
+
+  <!-- LEFT CLIFF (HOST A) -->
+  <!-- Main Cliff Geometry -->
+  <path d="M -20,650 L -20,380 L 390,380 L 440,430 L 370,520 L 450,650 Z" fill="url(#cliffLeftGrad)" stroke="#0f172a" stroke-width="3" />
+  <!-- Cliff Edge Rim Light (Neon Cyan) -->
+  <path d="M -20,380 L 390,380 L 440,430 L 370,520 L 450,650" fill="none" stroke="#00f3ff" stroke-width="3" filter="url(#glowCyanFilter)" opacity="0.8" />
+  <!-- Cliff Texture/Details -->
+  <path d="M 50,440 L 180,440 M 100,500 L 260,500 M 30,560 L 200,560" stroke="#334155" stroke-width="2" opacity="0.5" stroke-dasharray="8 6" />
+
+  <!-- RIGHT CLIFF (HOST B) -->
+  <!-- Main Cliff Geometry -->
+  <path d="M 1220,650 L 1220,380 L 810,380 L 760,430 L 830,520 L 750,650 Z" fill="url(#cliffRightGrad)" stroke="#0f172a" stroke-width="3" />
+  <!-- Cliff Edge Rim Light (Neon Amber) -->
+  <path d="M 1220,380 L 810,380 L 760,430 L 830,520 L 750,650" fill="none" stroke="#ffb700" stroke-width="3" filter="url(#glowAmberFilter)" opacity="0.8" />
+  <!-- Cliff Texture/Details -->
+  <path d="M 1020,440 L 1150,440 M 940,500 L 1100,500 M 1000,560 L 1170,560" stroke="#334155" stroke-width="2" opacity="0.5" stroke-dasharray="8 6" />
+
+  <!-- HOST A PLATFORM LABEL -->
+  <g transform="translate(180, 345)">
+    <rect x="-100" y="-18" width="200" height="36" rx="18" fill="#0f172a" stroke="#00f3ff" stroke-width="2" filter="url(#glowCyanFilter)" />
+    <circle cx="-75" cy="0" r="6" fill="#00f3ff" />
+    <text x="5" y="5" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#ffffff" letter-spacing="0.5">HOST A (Workstation)</text>
+  </g>
+
+  <!-- HOST B PLATFORM LABEL -->
+  <g transform="translate(1020, 345)">
+    <rect x="-90" y="-18" width="180" height="36" rx="18" fill="#0f172a" stroke="#ffb700" stroke-width="2" filter="url(#glowAmberFilter)" />
+    <circle cx="-65" cy="0" r="6" fill="#ffb700" />
+    <text x="10" y="5" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#ffffff" letter-spacing="0.5">HOST B (Laptop)</text>
+  </g>
+
+  <!-- TRAJECTORY ARC / GLOWING BALL PATH -->
+  <!-- Arc line between Host A and Host B -->
+  <path d="M 320,250 Q 600,120 880,250" fill="none" stroke="url(#arcGrad)" stroke-width="4" stroke-dasharray="10 8" filter="url(#glowCyanFilter)" />
+
+  <!-- Flying Data Packets on Arc -->
+  <circle cx="430" cy="202" r="5" fill="#00f3ff" filter="url(#glowCyanFilter)" />
+  <circle cx="490" cy="180" r="4" fill="#38bdf8" />
+  <circle cx="710" cy="180" r="4" fill="#fbbf24" />
+  <circle cx="770" cy="202" r="5" fill="#ffb700" filter="url(#glowAmberFilter)" />
+
+  <!-- THE GLOWING BALL (METAPHOR: SYNC DATA ORB) IN MID-AIR -->
+  <g transform="translate(600, 160)" filter="url(#glowBallFilter)">
+    <!-- Outer Translucent Glow Aura -->
+    <circle cx="0" cy="0" r="50" fill="url(#ballGlow)" opacity="0.6" />
+    <circle cx="0" cy="0" r="32" fill="url(#ballGlow)" opacity="0.9" />
+    <!-- Bright White/Cyan Core -->
+    <circle cx="0" cy="0" r="18" fill="#ffffff" />
+    <circle cx="0" cy="0" r="14" fill="#70f3ff" />
+    <!-- Vector Comic Energy Rings -->
+    <ellipse cx="0" cy="0" rx="38" ry="12" fill="none" stroke="#00f3ff" stroke-width="3" transform="rotate(-20)" />
+    <ellipse cx="0" cy="0" rx="38" ry="12" fill="none" stroke="#ffb700" stroke-width="2" transform="rotate(35)" />
+    <!-- Center Sync Arrows Icon -->
+    <path d="M -6,-4 L 0,-10 L 6,-4 M 0,-10 L 0,4 M 6,4 L 0,10 L -6,4 M 0,10 L 0,-4" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- ROBOT 1: CYAN AI FIGURE (LEFT - HOST A) -->
+  <!-- Positioned around x=310, standing on cliff top (y=380) -->
+  <g transform="translate(310, 230)">
+    <!-- Shadow on Ground -->
+    <ellipse cx="0" cy="148" rx="35" ry="8" fill="#000000" opacity="0.5" />
+
+    <!-- Legs -->
+    <rect x="-22" y="90" width="14" height="55" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="2.5" />
+    <rect x="8" y="90" width="14" height="55" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="2.5" />
+    <!-- Feet -->
+    <path d="M -26,140 L -6,140 L -4,148 L -28,148 Z" fill="#0088cc" stroke="#0f172a" stroke-width="2" />
+    <path d="M 4,140 L 24,140 L 26,148 L 2,148 Z" fill="#0088cc" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Left Arm (Resting on Hip) -->
+    <path d="M -30,35 Q -45,55 -30,75" fill="none" stroke="#00f3ff" stroke-width="6" stroke-linecap="round" />
+    <circle cx="-30" cy="75" r="6" fill="#004466" stroke="#00f3ff" stroke-width="2" />
+
+    <!-- Right Arm (Extended throwing ball upwards right) -->
+    <path d="M 30,35 Q 55,20 70,5" fill="none" stroke="#00f3ff" stroke-width="7" stroke-linecap="round" filter="url(#glowCyanFilter)" />
+    <!-- Hand throwing orb -->
+    <circle cx="72" cy="3" r="8" fill="#ffffff" stroke="#00f3ff" stroke-width="2.5" />
+    <!-- Energy spark from hand -->
+    <path d="M 75,0 L 90,-10 M 80,8 L 98,5 M 70,-8 L 82,-20" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Torso / Body -->
+    <rect x="-30" y="30" width="60" height="65" rx="12" fill="url(#robotCyanGrad)" stroke="#0f172a" stroke-width="3" />
+    <!-- Chest Plate & Power Core -->
+    <rect x="-20" y="40" width="40" height="45" rx="8" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5" />
+    <circle cx="0" cy="62" r="12" fill="#00f3ff" filter="url(#glowCyanFilter)" />
+    <circle cx="0" cy="62" r="6" fill="#ffffff" />
+
+    <!-- Neck -->
+    <rect x="-8" y="18" width="16" height="14" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Head / Helmet -->
+    <rect x="-26" y="-22" width="52" height="42" rx="10" fill="#0f172a" stroke="#00f3ff" stroke-width="3" />
+    <!-- Cyan Glowing Visor -->
+    <rect x="-18" y="-12" width="36" height="18" rx="6" fill="#00f3ff" filter="url(#glowCyanFilter)" />
+    <!-- Eye Highlights -->
+    <circle cx="-8" cy="-3" r="3" fill="#ffffff" />
+    <circle cx="8" cy="-3" r="3" fill="#ffffff" />
+    <!-- Antenna -->
+    <line x1="0" y1="-22" x2="0" y2="-36" stroke="#00f3ff" stroke-width="3" />
+    <circle cx="0" cy="-38" r="5" fill="#00f3ff" filter="url(#glowCyanFilter)" />
+
+    <!-- Robot Label Chip -->
+    <rect x="-35" y="105" width="70" height="18" rx="4" fill="#042f2e" stroke="#14b8a6" stroke-width="1" />
+    <text x="0" y="118" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="10" font-weight="800" fill="#2dd4bf">SLOT A</text>
+  </g>
+
+
+  <!-- ROBOT 2: AMBER/GOLD AI FIGURE (RIGHT - HOST B) -->
+  <!-- Positioned around x=890, standing on cliff top (y=380) -->
+  <g transform="translate(890, 230)">
+    <!-- Shadow on Ground -->
+    <ellipse cx="0" cy="148" rx="35" ry="8" fill="#000000" opacity="0.5" />
+
+    <!-- Legs -->
+    <rect x="-22" y="90" width="14" height="55" rx="6" fill="#0f172a" stroke="#ffb700" stroke-width="2.5" />
+    <rect x="8" y="90" width="14" height="55" rx="6" fill="#0f172a" stroke="#ffb700" stroke-width="2.5" />
+    <!-- Feet -->
+    <path d="M -26,140 L -6,140 L -4,148 L -28,148 Z" fill="#cc6600" stroke="#0f172a" stroke-width="2" />
+    <path d="M 4,140 L 24,140 L 26,148 L 2,148 Z" fill="#cc6600" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Left Arm (Outstretched left catching ball) -->
+    <path d="M -30,35 Q -55,20 -70,8" fill="none" stroke="#ffb700" stroke-width="7" stroke-linecap="round" filter="url(#glowAmberFilter)" />
+    <!-- Hand reaching for orb -->
+    <circle cx="-72" cy="6" r="8" fill="#ffffff" stroke="#ffb700" stroke-width="2.5" />
+    <!-- Energy catch aura -->
+    <path d="M -75,3 L -90,-5 M -80,11 L -95,15 M -70,-5 L -82,-15" stroke="#ffb700" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Right Arm (Balancing outwards) -->
+    <path d="M 30,35 Q 45,55 35,75" fill="none" stroke="#ffb700" stroke-width="6" stroke-linecap="round" />
+    <circle cx="35" cy="75" r="6" fill="#662200" stroke="#ffb700" stroke-width="2" />
+
+    <!-- Torso / Body -->
+    <rect x="-30" y="30" width="60" height="65" rx="12" fill="url(#robotAmberGrad)" stroke="#0f172a" stroke-width="3" />
+    <!-- Chest Plate & Power Core -->
+    <rect x="-20" y="40" width="40" height="45" rx="8" fill="#0f172a" stroke="#ffb700" stroke-width="1.5" />
+    <circle cx="0" cy="62" r="12" fill="#ffb700" filter="url(#glowAmberFilter)" />
+    <circle cx="0" cy="62" r="6" fill="#ffffff" />
+
+    <!-- Neck -->
+    <rect x="-8" y="18" width="16" height="14" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Head / Helmet -->
+    <rect x="-26" y="-22" width="52" height="42" rx="10" fill="#0f172a" stroke="#ffb700" stroke-width="3" />
+    <!-- Amber Glowing Visor -->
+    <rect x="-18" y="-12" width="36" height="18" rx="6" fill="#ffb700" filter="url(#glowAmberFilter)" />
+    <!-- Eye Highlights -->
+    <circle cx="-8" cy="-3" r="3" fill="#ffffff" />
+    <circle cx="8" cy="-3" r="3" fill="#ffffff" />
+    <!-- Twin Antennas -->
+    <line x1="-12" y1="-22" x2="-16" y2="-36" stroke="#ffb700" stroke-width="2.5" />
+    <circle cx="-17" cy="-38" r="4" fill="#ffb700" filter="url(#glowAmberFilter)" />
+    <line x1="12" y1="-22" x2="16" y2="-36" stroke="#ffb700" stroke-width="2.5" />
+    <circle cx="17" cy="-38" r="4" fill="#ffb700" filter="url(#glowAmberFilter)" />
+
+    <!-- Robot Label Chip -->
+    <rect x="-35" y="105" width="70" height="18" rx="4" fill="#451a03" stroke="#f59e0b" stroke-width="1" />
+    <text x="0" y="118" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="10" font-weight="800" fill="#fbbf24">SLOT B</text>
+  </g>
+
+  <!-- COMIC SPEECH / STATUS CHIPS -->
+  <!-- Left Status Chip -->
+  <g transform="translate(200, 160)">
+    <rect x="-60" y="-14" width="120" height="28" rx="14" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5" />
+    <text x="0" y="4" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#38bdf8">DAILY RITUAL</text>
+  </g>
+
+  <!-- Right Status Chip -->
+  <g transform="translate(1000, 160)">
+    <rect x="-70" y="-14" width="140" height="28" rx="14" fill="#0f172a" stroke="#ffb700" stroke-width="1.5" />
+    <text x="0" y="4" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#fbbf24">NO MERGE CONFLICTS</text>
+  </g>
+</svg>

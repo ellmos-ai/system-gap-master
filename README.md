@@ -1,3 +1,5 @@
+![system-gap-master](docs/assets/banner.svg)
+
 # system-gap-master
 
 [English](README.md) | [Deutsch](README_de.md)
@@ -46,6 +48,10 @@ flowchart TD
 > ohne Server, über einen beliebigen Datei-Sync. Slot-Regel gegen Konflikte,
 > tägliches Ritual mit Einmal-pro-Tag-Gate, Nachrichtenkanäle zwischen
 > Agenten, Bootstrap-Runbook für neue Geräte.
+
+## Companion tool: sqlite-transit-sync
+
+Need to synchronize live SQLite database state across your hosts without risk of corruption? Check out [sqlite-transit-sync](https://github.com/ellmos-ai/sqlite-transit-sync), the sister tool designed for safe SQLite state replication. Instead of hazardous raw byte-copying of active database files over cloud sync, it relies on SQLite's native backup API to create verified transport snapshots and deterministic manifest merges between machines.
 
 ## Why not X?
 

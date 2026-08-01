@@ -1,3 +1,5 @@
+![system-gap-master](docs/assets/banner.svg)
+
 # system-gap-master
 
 [English](README.md) | [Deutsch](README_de.md)
@@ -33,6 +35,10 @@ flowchart TD
         GateScript --> MsgChannel["messages/ (Lesen-und-Löschen)"]
     end
 ```
+
+## Companion tool: sqlite-transit-sync
+
+Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Das Schwester-Tool [sqlite-transit-sync](https://github.com/ellmos-ai/sqlite-transit-sync) bietet eine spezialisierte Lösung für die Replikation von SQLite-Zuständen. Statt gefährlichem Byte-Kopieren laufender Datenbankdateien über Cloud-Sync nutzt es die native SQLite Backup-API für sichere Transport-Snapshots und deterministische Merges zwischen Hosts.
 
 ## Warum system-gap-master?
 
