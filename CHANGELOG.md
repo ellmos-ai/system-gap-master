@@ -11,6 +11,8 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Corrected canonical repository URLs from the former `dev-bricks` owner to
+  `ellmos-ai` in package metadata, schemas, templates and the LLM index.
 - Documented Republica (the sqlite-transit-sync showcase fallback) as a
   permanent second operating mode alongside direct tunnel sync, not a
   stopgap: a bilingual README section with a failure-scenario table, and

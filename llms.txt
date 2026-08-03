@@ -4,7 +4,7 @@
 
 ## Canonical repository
 
-https://github.com/dev-bricks/system-gap-master
+https://github.com/ellmos-ai/system-gap-master
 
 ## Summary
 

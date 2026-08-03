@@ -2,7 +2,7 @@
 
 **Audit Date:** 2026-07-21
 **Auditor:** Antigravity / Gemini githubbot-one-repo-cleaner
-**Target Repo:** `dev-bricks/system-gap-master`
+**Target Repo:** `ellmos-ai/system-gap-master`
 
 ---
 

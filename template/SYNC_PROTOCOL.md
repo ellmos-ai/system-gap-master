@@ -1,6 +1,6 @@
 # Cross-machine sync yard — local protocol summary
 
-> Instantiated from system-gap-master (https://github.com/dev-bricks/system-gap-master).
+> Instantiated from system-gap-master (https://github.com/ellmos-ai/system-gap-master).
 > Full rules and reasoning: PROTOCOL.md in the repo. This file is the
 > yard-local summary — extend the artifact table below as your yard grows.
 

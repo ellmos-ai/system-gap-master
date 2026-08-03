@@ -40,10 +40,10 @@ trusted-peer-paths = "system_gap_master.trusted_peer_paths:main"
 republica-transit = "system_gap_master.republica_transit:main"
 
 [project.urls]
-Homepage = "https://github.com/dev-bricks/system-gap-master"
-Documentation = "https://github.com/dev-bricks/system-gap-master/blob/main/PROTOCOL.md"
-Repository = "https://github.com/dev-bricks/system-gap-master"
-"Bug Tracker" = "https://github.com/dev-bricks/system-gap-master/issues"
+Homepage = "https://github.com/ellmos-ai/system-gap-master"
+Documentation = "https://github.com/ellmos-ai/system-gap-master/blob/main/PROTOCOL.md"
+Repository = "https://github.com/ellmos-ai/system-gap-master"
+"Bug Tracker" = "https://github.com/ellmos-ai/system-gap-master/issues"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

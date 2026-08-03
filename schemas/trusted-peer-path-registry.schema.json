@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/dev-bricks/system-gap-master/schemas/trusted-peer-path-registry.schema.json",
+  "$id": "https://github.com/ellmos-ai/system-gap-master/schemas/trusted-peer-path-registry.schema.json",
   "title": "Read-only trusted-peer path metadata registry",
   "type": "object",
   "additionalProperties": false,

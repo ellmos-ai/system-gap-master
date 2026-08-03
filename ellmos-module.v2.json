@@ -40,7 +40,7 @@
   "source_of_truth": {
     "type": "git-repository",
     "path": ".",
-    "repository": "https://github.com/dev-bricks/system-gap-master"
+    "repository": "https://github.com/ellmos-ai/system-gap-master"
   },
   "adapters": [
     {
