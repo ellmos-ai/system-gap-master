@@ -406,8 +406,9 @@ def _safe_relative(root: Path, raw: str) -> tuple[Path, str]:
     candidate = Path(os.path.abspath(root / relative))
     if not _is_relative_to(candidate, root):
         raise ReconcilerError(f"path escapes allowlisted root: {raw!r}")
+    resolved_root = root.resolve(strict=False)
     resolved = candidate.resolve(strict=False)
-    if not _is_relative_to(resolved, root):
+    if not _is_relative_to(resolved, resolved_root):
         raise ReconcilerError(f"path resolves outside allowlisted root: {raw!r}")
     normalized = relative.as_posix()
     return candidate, normalized
