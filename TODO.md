@@ -66,7 +66,8 @@
 
 ## MEDIUM PRIORITY
 
-- [ ] Add `SECURITY.md` before wider public promotion.
+- [x] Add `SECURITY.md` before wider public promotion. Verified present in the
+  2026-08-04 MAINTAINER check.
 - [ ] Add `CONTRIBUTING.md` if external contributions become expected.
 - [x] Add a GitHub Actions smoke workflow for the zero-dependency gate script.
 

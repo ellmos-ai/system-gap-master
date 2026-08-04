@@ -11,6 +11,9 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Maintainer verification on 2026-08-04: 83 tests passed and 1 Windows
+  symlink-platform test was skipped due to missing account privilege; Ruff and
+  both public CLI help surfaces passed.
 - Maintainer verification on 2026-08-01: 83 tests passed and 1 Windows
   symlink-platform test was skipped due to missing account privilege; Ruff and
   the daily-gate, trusted-peer and conflict-reconciler CLI help surfaces passed.
