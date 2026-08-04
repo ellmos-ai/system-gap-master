@@ -5,7 +5,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -126,12 +125,14 @@ class ExecutorFixture(unittest.TestCase):
         self.registry_signature = self.credential_root / "registry.sig"
         self.grant_signature = self.credential_root / "grant.sig"
         self.allowed_signers = self.credential_root / "allowed_signers"
+        self.verifier_tool = self.credential_root / "ssh-keygen-fixture"
         for path in (
             self.identity,
             self.known_hosts,
             self.registry_signature,
             self.grant_signature,
             self.allowed_signers,
+            self.verifier_tool,
         ):
             path.write_text("fixture", encoding="utf-8")
             self.harden(path)
@@ -200,7 +201,7 @@ class ExecutorFixture(unittest.TestCase):
             "max_registry_age_seconds": 3600,
             "max_registry_ttl_seconds": 7200,
         }
-        executable = Path(sys.executable)
+        executable = self.verifier_tool
         self.executor_config = {
             "schema": EXECUTOR_CONFIG_SCHEMA,
             "state_root": str(self.state_root),
