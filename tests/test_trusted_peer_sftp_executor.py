@@ -95,7 +95,13 @@ class ExecutorFixture(unittest.TestCase):
                     + result.stderr.decode(errors="replace")
                 )
         owner, allowed = _windows_acl(path)
-        if owner != sid or not allowed or not allowed.issubset(trusted):
+        # GitHub-hosted Windows runners may create the temporary tree with the
+        # built-in Administrators group as owner.  Production validation
+        # deliberately accepts that owner too; keep the fixture aligned while
+        # still requiring an exact trusted-only allow-list.
+        if owner not in {sid, "S-1-5-32-544"} or not allowed or not allowed.issubset(
+            trusted
+        ):
             raise RuntimeError(
                 f"private Windows ACL fixture validation failed: {owner}, {allowed}"
             )

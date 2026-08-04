@@ -106,7 +106,11 @@ class ConfigFragmentTests(RepublicaTransitFixture):
 class AssertRepublicaRootOutsideYardTests(RepublicaTransitFixture):
     def test_accepts_a_sibling_directory(self):
         validated = assert_republica_root_outside_yard(self.outside, self.yard)
-        self.assertEqual(validated, self.outside.resolve())
+        # Windows CI may expose the temporary root through its equivalent 8.3
+        # alias (RUNNER~1) while Path.resolve() expands the long user name.
+        # The contract is the validated filesystem location, not one spelling
+        # of that location.
+        self.assertTrue(validated.samefile(self.outside))
 
     def test_rejects_root_nested_inside_the_yard(self):
         nested = self.yard / "republica"
