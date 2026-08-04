@@ -86,6 +86,7 @@ OPAQUE_METADATA_FIELDS = {
     "known_host_pin",
     "payload_sha256",
     "plan_id",
+    "registry_sha256",
     "sha256",
 }
 

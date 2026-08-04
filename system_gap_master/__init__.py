@@ -9,6 +9,8 @@ __all__ = [
     "RepublicaTransitPaths",
     "TrustedPeerPathError",
     "TrustedPeerPathRegistry",
+    "TrustedPeerSftpError",
+    "TrustedPeerSftpExecutor",
 ]
 
 
@@ -26,6 +28,10 @@ def __getattr__(name: str) -> Any:
             TrustedPeerPathError,
             TrustedPeerPathRegistry,
         )
+        from .trusted_peer_sftp_executor import (
+            TrustedPeerSftpError,
+            TrustedPeerSftpExecutor,
+        )
 
         return {
             "ConflictCopyReconciler": ConflictCopyReconciler,
@@ -34,5 +40,7 @@ def __getattr__(name: str) -> Any:
             "RepublicaTransitPaths": RepublicaTransitPaths,
             "TrustedPeerPathError": TrustedPeerPathError,
             "TrustedPeerPathRegistry": TrustedPeerPathRegistry,
+            "TrustedPeerSftpError": TrustedPeerSftpError,
+            "TrustedPeerSftpExecutor": TrustedPeerSftpExecutor,
         }[name]
     raise AttributeError(name)

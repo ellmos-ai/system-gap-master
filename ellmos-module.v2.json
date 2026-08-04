@@ -12,7 +12,8 @@
     "sync.messages",
     "sync.conflict-copy-reconciliation",
     "sync.trusted-peer-path-registry",
-    "sync.trusted-peer-pull-preparation"
+    "sync.trusted-peer-pull-preparation",
+    "sync.trusted-peer-single-file-pull"
   ],
   "requires": [],
   "optional": [
@@ -29,8 +30,8 @@
     "location": "project"
   },
   "boundaries": {
-    "network": "none",
-    "data": "path-metadata-only",
+    "network": "none-by-default; optional signed one-shot sftp",
+    "data": "path-metadata by default; one approved regular file through executor",
     "platforms": [
       "windows",
       "macos",
@@ -50,6 +51,15 @@
         "direct",
         "private-overlay"
       ]
+    },
+    {
+      "id": "sftp-executor",
+      "role": "signed-one-shot-no-overwrite-single-file-pull",
+      "networks": [
+        "direct",
+        "private-overlay"
+      ],
+      "optional_dependency": "paramiko"
     },
     {
       "id": "sqlite-transit-sync",

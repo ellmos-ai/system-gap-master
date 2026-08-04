@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-114%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -70,6 +70,8 @@ system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
                       read-only validate/list/resolve/pull-plan CLI
+system_gap_master/trusted_peer_sftp_executor.py
+                      separat autorisierter Einmal-SFTP-Executor
 system_gap_master/republica_transit.py
                       resolves the R9 db-transit/<namespace> zone for the
                       Republica showcase fallback (see below); path arithmetic
@@ -108,7 +110,10 @@ python scripts/system_gap_daily_check.py mark
 7. **Konfliktkopien täglich prüfen** — Anbieterneutral und ohne blindes Mergen.
 8. **`BOOTSTRAP.md` aktuell halten** — Ein neuer Rechner muss sich damit vollständig einrichten lassen.
 9. **Strukturierte Payloads nutzen Adapter** — Live-SQLite-/WAL-Dateien werden niemals direkt synchronisiert.
-10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die host-eigene Registry und erzeugen einen nicht ausführbaren Beleg; der Transfer bleibt separat.
+10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die
+    host-eigene Registry und erzeugen einen nicht ausführbaren Beleg. Ein
+    separater Executor darf erst nach abgesetzten Signaturen und Einmalfreigabe
+    genau eine Datei übertragen.
 
 Die vollständige Begründung steht in [PROTOCOL.md](PROTOCOL.md).
 
@@ -173,6 +178,35 @@ Details:
 [`docs/trusted-peer-path-registry_de.md`](docs/trusted-peer-path-registry_de.md),
 [`schemas/`](schemas/) und
 [`examples/trusted-peer-paths.local-config.example.json`](examples/trusted-peer-paths.local-config.example.json).
+
+## Optionale Trusted-Peer-SFTP-Ausführung
+
+`trusted-peer-sftp-executor` bleibt bewusst vom rein lesenden Planer getrennt.
+Er berechnet `pull-plan` erneut, verifiziert die abgesetzte Registry-Signatur
+und eine kurzlebige, exakt gebundene Einmalfreigabe kryptografisch, löst
+SSH-Dateien ausschließlich aus einer hostlokalen Konfiguration auf und prüft
+den Server-Schlüssel vor dem Login. Danach liest er ohne Shell genau eine
+reguläre Datei per SFTP. Die Bytes landen zunächst in einer exklusiven privaten
+Staging-Datei; der finale Commit ersetzt niemals eine vorhandene Datei.
+
+Der Sync-Yard enthält nur Pfadmetadaten und Signaturreferenzen. Identity-,
+Known-Hosts-, Signatur- und Allowed-Signers-Dateien bleiben in ausdrücklich
+erlaubten lokalen Credential-Roots. Auch Einmal-Ledger und redigierte Receipts
+bleiben lokal. SQLite-Dateien, Verzeichnisse, Überschreiben, Uploads, entfernte
+Mutationen, Accept-new-Hostkeys und wiederverwendbare Freigaben bleiben gesperrt.
+
+```bash
+python -m pip install 'system-gap-master[trusted-peer-sftp]'
+trusted-peer-sftp-executor execute \
+  --registry-config /host-local/trusted-peer-paths.json \
+  --executor-config /host-local/trusted-peer-sftp-executor.json \
+  --host-id HOST-A --path-id approved-file \
+  --destination /host-local/imports/approved-file \
+  --authorization /host-local/grants/grant.json
+```
+
+Einrichtung, Signatur-Namespaces und Fehlergrenzen stehen in
+[`docs/trusted-peer-sftp-executor_de.md`](docs/trusted-peer-sftp-executor_de.md).
 
 ## Begleitwerkzeuge
 
@@ -310,9 +344,9 @@ nur sichere, eigenständig nutzbare Discovery-Beziehungen.
   oder Falldaten gehören nicht hinein. Templates und Skill wiederholen diese
   Regel an jedem Schreibpunkt.
 - Exakte Credential-*Pfade* dürfen in einer host-eigenen Trusted-Peer-Registry
-  stehen; Werte, Schlüssel und Dateiinhalte bleiben verboten. Das Modul prüft
-  Referenzen und Pins, verifiziert derzeit aber keine abgesetzte Signatur und
-  führt kein SFTP aus. Beides bleibt ein Aktivierungs-Gate.
+  stehen; Werte, Schlüssel und Dateiinhalte bleiben verboten. Der Planer prüft
+  nur Referenzen und Pins. Der optionale Executor verifiziert abgesetzte
+  Signaturen und liest grant-gebunden genau eine Datei mit lokalen SSH-Dateien.
 - Alle übertragenen Inhalte sind normale Dateien. Vorhandene Verschlüsselung,
   Zugriffskontrolle und Backup-Verfahren gelten unverändert weiter.
 

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ellmos-ai/system-gap-master/schemas/trusted-peer-transfer-grant.schema.json",
+  "title": "Short-lived one-shot trusted-peer transfer grant",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "grant_id", "host_id", "peer_id", "endpoint_id", "path_id",
+    "destination", "network_label", "registry_sha256", "registry_revision",
+    "plan_id", "not_before", "expires_at", "one_shot_id", "max_bytes",
+    "signature_reference"
+  ],
+  "properties": {
+    "schema": {"const": "system-gap.trusted-peer-transfer-grant.v1"},
+    "grant_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "host_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"},
+    "peer_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"},
+    "endpoint_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "path_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "destination": {"type": "string", "minLength": 1},
+    "network_label": {"enum": ["direct", "private-overlay"]},
+    "registry_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "registry_revision": {"type": "integer", "minimum": 1},
+    "plan_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "not_before": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "one_shot_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "max_bytes": {"type": "integer", "minimum": 1},
+    "signature_reference": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/signatureReference"}
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ellmos-ai/system-gap-master/schemas/trusted-peer-transfer-receipt.schema.json",
+  "title": "Redacted host-local trusted-peer transfer receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "status", "grant_id", "one_shot_id", "plan_id",
+    "registry_sha256", "registry_revision", "host_id", "peer_id",
+    "endpoint_id", "host_key_pin", "network_label", "path_id", "destination",
+    "started_at", "finished_at",
+    "credential_paths_included", "content_included"
+  ],
+  "properties": {
+    "schema": {"const": "system-gap.trusted-peer-transfer-receipt.v1"},
+    "status": {"enum": ["succeeded", "failed"]},
+    "error_code": {"const": "transfer-failed"},
+    "grant_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "one_shot_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "plan_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "registry_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "registry_revision": {"type": "integer", "minimum": 1},
+    "host_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"},
+    "peer_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/hostId"},
+    "endpoint_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "host_key_pin": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/pin"},
+    "network_label": {"enum": ["direct", "private-overlay"]},
+    "path_id": {"$ref": "trusted-peer-path-registry.schema.json#/$defs/id"},
+    "destination": {"type": "string", "minLength": 1},
+    "bytes": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "credential_paths_included": {"const": false},
+    "content_included": {"const": false}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "succeeded"}}, "required": ["status"]},
+      "then": {"required": ["bytes", "sha256"]}
+    },
+    {
+      "if": {"properties": {"status": {"const": "failed"}}, "required": ["status"]},
+      "then": {"required": ["error_code"]}
+    }
+  ]
+}

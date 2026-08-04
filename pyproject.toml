@@ -34,9 +34,13 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+trusted-peer-sftp = ["paramiko>=5,<6"]
+
 [project.scripts]
 conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"
 trusted-peer-paths = "system_gap_master.trusted_peer_paths:main"
+trusted-peer-sftp-executor = "system_gap_master.trusted_peer_sftp_executor:main"
 republica-transit = "system_gap_master.republica_transit:main"
 
 [project.urls]

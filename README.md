@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-114%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -88,6 +88,8 @@ system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
                       read-only validate/list/resolve/pull-plan CLI
+system_gap_master/trusted_peer_sftp_executor.py
+                      separately authorized one-shot SFTP executor
 system_gap_master/republica_transit.py
                       resolves the R9 db-transit/<namespace> zone for the
                       Republica showcase fallback (see below); path arithmetic
@@ -127,7 +129,8 @@ python scripts/system_gap_daily_check.py mark
 8. **BOOTSTRAP.md stays current** — it must always bring up a fresh machine.
 9. **Structured payloads use adapters** — never sync live SQLite/WAL files.
 10. **Trusted peer paths are gated metadata** — peers validate the host-owned
-    registry and prepare a non-executable receipt; transfer stays separate.
+    registry and prepare a non-executable receipt. A separate executor may
+    transfer one file only after detached signatures and a one-shot grant pass.
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
@@ -190,6 +193,35 @@ the verified `db-transit/<namespace>` snapshot flow.
 See the [trusted peer registry contract](docs/trusted-peer-path-registry.md),
 the [JSON schemas](schemas/) and the
 [host-local examples](examples/trusted-peer-paths.local-config.example.json).
+
+## Optional trusted-peer SFTP execution
+
+`trusted-peer-sftp-executor` is deliberately separate from the read-only
+planner. It re-runs `pull-plan`, cryptographically verifies both the detached
+registry signature and a short-lived exact one-shot grant, resolves SSH files
+only from a host-local configuration, pins the server key before login, and
+performs one shell-free SFTP `lstat`/read of one regular file. It streams into
+an exclusive private staging file and commits relative to a pinned destination
+directory with a platform-specific no-replace primitive.
+
+The sync yard carries only path metadata and signature references. Identity,
+known-hosts, signature and allowed-signers files stay under explicitly allowed
+host-local credential roots. Attempt state and redacted receipts are also
+host-local. SQLite files, directories, overwrite, upload, remote mutation,
+accept-new host keys and reusable grants remain unavailable.
+
+```bash
+python -m pip install 'system-gap-master[trusted-peer-sftp]'
+trusted-peer-sftp-executor execute \
+  --registry-config /host-local/trusted-peer-paths.json \
+  --executor-config /host-local/trusted-peer-sftp-executor.json \
+  --host-id HOST-A --path-id approved-file \
+  --destination /host-local/imports/approved-file \
+  --authorization /host-local/grants/grant.json
+```
+
+Setup, signature namespaces and failure boundaries are documented in
+[`docs/trusted-peer-sftp-executor.md`](docs/trusted-peer-sftp-executor.md).
 
 ## Companion tools
 
@@ -316,9 +348,9 @@ standalone discovery relationships.
   Never put credentials, tokens or personal/case data in it (rule 6) — the
   templates and the skill repeat this at every write point.
 - Exact credential *paths* may appear in a host-owned trusted-peer registry;
-  referenced values, keys and file content remain forbidden. The current
-  module validates references and pins but deliberately does not verify a
-  detached signature or perform SFTP; those remain activation gates.
+  referenced values, keys and file content remain forbidden. The planner only
+  validates references and pins. The optional executor verifies detached
+  signatures and performs one grant-bound SFTP read using host-local files.
 - Everything is plain files: your existing backup, encryption and access
   control apply unchanged.
 
