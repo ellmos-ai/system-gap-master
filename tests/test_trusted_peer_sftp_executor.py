@@ -20,6 +20,7 @@ from system_gap_master.trusted_peer_sftp_executor import (
     TrustedPeerSftpError,
     TrustedPeerSftpExecutor,
     _openssh_verify,
+    _windows_acl,
     _windows_current_user_sid,
 )
 
@@ -57,19 +58,10 @@ class ExecutorFixture(unittest.TestCase):
         sid = _windows_current_user_sid()
         inheritance = "(OI)(CI)" if path.is_dir() else ""
         commands = (
-            ["icacls", str(path), "/inheritance:r"],
             [
                 "icacls",
                 str(path),
-                "/remove:g",
-                "*S-1-1-0",
-                "*S-1-5-4",
-                "*S-1-5-11",
-                "*S-1-5-32-545",
-            ],
-            [
-                "icacls",
-                str(path),
+                "/inheritance:r",
                 "/grant:r",
                 f"*{sid}:{inheritance}F",
                 f"*S-1-5-18:{inheritance}F",
@@ -88,6 +80,25 @@ class ExecutorFixture(unittest.TestCase):
                     "cannot create a private Windows ACL fixture: "
                     + result.stderr.decode(errors="replace")
                 )
+        trusted = {sid, "S-1-5-18", "S-1-5-32-544"}
+        _, allowed = _windows_acl(path)
+        for extra_sid in allowed - trusted:
+            result = subprocess.run(
+                ["icacls", str(path), "/remove:g", f"*{extra_sid}"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(
+                    "cannot remove a broad Windows ACL fixture entry: "
+                    + result.stderr.decode(errors="replace")
+                )
+        owner, allowed = _windows_acl(path)
+        if owner != sid or not allowed or not allowed.issubset(trusted):
+            raise RuntimeError(
+                f"private Windows ACL fixture validation failed: {owner}, {allowed}"
+            )
 
     @staticmethod
     def loosen(path):
