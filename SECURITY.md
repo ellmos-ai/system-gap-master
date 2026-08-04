@@ -56,16 +56,21 @@ Security reports concerning path validation, file access boundaries, or unexpect
   reference, canonical payload digest, known-host pin, peer permission and
   exact remote-path allowlists fail closed.
 - A signature reference and digest are not publisher authentication. The
-  receipt says `cryptographic_signature_verified=false`; a detached-signature
-  verifier and anti-replay state remain activation gates.
+  planner receipt therefore says `cryptographic_signature_verified=false`.
 - `pull-plan` is deterministic but non-executable. It never opens a network
   connection, invokes SSH/SFTP, reads referenced credentials/keys/signatures
   or known-hosts files, writes the yard, creates a destination, enables
   `direct_pull` or transfers bytes.
+- The optional executor re-runs that plan and additionally verifies detached
+  registry and one-shot-grant signatures, resolves authentication only from
+  local allowlisted credential roots, matches the presented host key, reserves
+  a durable one-shot attempt, streams one bounded regular file, and commits
+  without replacement. The auth profile also binds an exact literal remote IP,
+  local source IP and source/remote CIDRs, so route labels are enforced before
+  the socket opens. Its receipts are local and redacted.
 - Destinations must be absent, allowlisted, host-local, outside the yard and
   free of symlink/junction/reparse traversal. Server-side read-only ACLs,
-  authentication, route selection, real host-key installation and a reviewed
-  no-overwrite executor remain separate activation gates.
+  account/key provisioning and route authorization remain separate host gates.
 - Directories require a separate reviewed adapter. SQLite `.db`, `.sqlite`,
   `.sqlite3`, `-wal` and `-shm` paths require
   `kind=database/sqlite`, `direct_pull=false` and

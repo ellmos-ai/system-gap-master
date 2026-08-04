@@ -1,0 +1,53 @@
+{
+  "schema": "system-gap.trusted-peer-sftp-executor.config.v1",
+  "state_root": "/absolute/host-local/system-gap/state",
+  "receipt_root": "/absolute/host-local/system-gap/receipts",
+  "credential_roots": [
+    "/absolute/host-local/credentials"
+  ],
+  "ssh_keygen": {
+    "path": "/absolute/pinned/bin/ssh-keygen",
+    "sha256": "REPLACE_WITH_SHA256_OF_SSH_KEYGEN"
+  },
+  "required_paramiko_version": "5.0.0",
+  "auth_profiles": [
+    {
+      "host_id": "HOST-A",
+      "endpoint_id": "trusted-sftp",
+      "username": "registry-reader",
+      "identity_file": "/absolute/host-local/credentials/id_trusted_peer",
+      "known_hosts_file": "/absolute/host-local/credentials/known_hosts",
+      "remote_account_mode": "read-only",
+      "network_label": "private-overlay",
+      "remote_host": "100.64.0.10",
+      "source_address": "100.64.0.11",
+      "allowed_remote_cidrs": ["100.64.0.0/10"],
+      "allowed_source_cidrs": ["100.64.0.0/10"]
+    }
+  ],
+  "signature_verifiers": [
+    {
+      "purpose": "registry",
+      "algorithm": "external-ssh-signature",
+      "key_id": "host-a-v1",
+      "reference": "urn:example:host-a-registry-signature",
+      "signer_identity": "host-a",
+      "namespace": "system-gap-registry",
+      "signature_file": "/absolute/host-local/credentials/registry.sig",
+      "allowed_signers_file": "/absolute/host-local/credentials/allowed_signers"
+    },
+    {
+      "purpose": "grant",
+      "algorithm": "external-ssh-signature",
+      "key_id": "operator-v1",
+      "reference": "urn:example:transfer-grant-signature",
+      "signer_identity": "operator",
+      "namespace": "system-gap-transfer-grant",
+      "signature_file": "/absolute/host-local/credentials/grant.sig",
+      "allowed_signers_file": "/absolute/host-local/credentials/allowed_signers"
+    }
+  ],
+  "max_transfer_bytes": 1048576,
+  "max_grant_ttl_seconds": 900,
+  "connect_timeout_seconds": 15
+}

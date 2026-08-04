@@ -1,0 +1,23 @@
+{
+  "schema": "system-gap.trusted-peer-transfer-grant.v1",
+  "grant_id": "grant-001",
+  "host_id": "HOST-A",
+  "peer_id": "PEER-B",
+  "endpoint_id": "trusted-sftp",
+  "path_id": "service-credential-file",
+  "destination": "/absolute/host-local/imports/credentials.json",
+  "network_label": "private-overlay",
+  "registry_sha256": "REPLACE_WITH_VALIDATED_REGISTRY_SHA256",
+  "registry_revision": 1,
+  "plan_id": "sha256:REPLACE_WITH_PULL_PLAN_SHA256",
+  "not_before": "REPLACE_WITH_RFC3339_NOT_BEFORE",
+  "expires_at": "REPLACE_WITH_SHORT_RFC3339_EXPIRY",
+  "one_shot_id": "once-001",
+  "max_bytes": 1048576,
+  "signature_reference": {
+    "algorithm": "external-ssh-signature",
+    "key_id": "operator-v1",
+    "ref": "urn:example:transfer-grant-signature",
+    "payload_sha256": "REPLACE_WITH_SHA256_OF_UNSIGNED_GRANT"
+  }
+}

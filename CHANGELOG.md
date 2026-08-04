@@ -11,6 +11,13 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Added the separate `trusted-peer-sftp-executor` execution boundary. It
+  re-runs the network-free planner, verifies OpenSSH detached signatures for
+  registry and short-lived one-shot grant, resolves credentials from local
+  allowlisted roots, pins the presented host key, streams one regular file
+  with a size cap, and commits atomically without replacement. Durable replay
+  state and redacted receipts remain outside the sync yard; SQLite, directory,
+  upload and remote-mutation paths remain blocked.
 - Corrected canonical repository URLs from the former `dev-bricks` owner to
   `ellmos-ai` in package metadata, schemas, templates and the LLM index.
 - Documented Republica (the sqlite-transit-sync showcase fallback) as a

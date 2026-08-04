@@ -107,7 +107,14 @@ Die Beispiele enthalten bewusst `REPLACE_WITH_...`-Platzhalter. Sie erfinden
 keine operativen Pins oder Keys und scheitern zur Laufzeit, bis unabhängig
 verifizierte Werte eingesetzt wurden.
 
-## Restgates für die echte Zwei-Host-Aktivierung
+## Separate Ausführungsgrenze
+
+Der optionale `trusted-peer-sftp-executor` implementiert jetzt die getrennt
+prüfbare clientseitige Ausführungsgrenze, ohne diesen Planer zu verändern.
+Siehe [`trusted-peer-sftp-executor.md`](trusted-peer-sftp-executor.md). Seine
+bloße Installation provisioniert, plant oder autorisiert keinen Host.
+
+## Verbleibende Host-Gates für die echte Zwei-Host-Aktivierung
 
 1. Publisher-Key provisionieren und Detached-Signatur mit einem separat
    geprüften Verifier prüfen.
@@ -120,12 +127,14 @@ verifizierte Werte eingesetzt wurden.
 5. Authentisierungsmaterial außerhalb des Yards und dieses Moduls
    provisionieren; der Preflight darf es nie lesen.
 6. Separaten shell-freien, Strict-Host-Key-, No-Overwrite- und
-   Download-beschränkten Executor reviewen.
+   Download-beschränkten Executor samt exakter Hostkonfiguration installieren
+   und reviewen.
 7. Unmittelbar vor jedem Transfer Registry-Frische, Signatur, Pin,
    Peer-Allowlist und Zielberechtigungen erneut prüfen.
 8. Auditierbaren Anti-Replay-State und Transferbelege ergänzen, ohne fremde
    Slots zu schreiben oder sensible Inhalte in den Yard zu legen.
 9. Zwei-Host-Negativtests für falschen Pin, stale Registry, gesperrten Pfad,
    gesperrten Peer, Schreib-/Overwrite-Versuch und Routenausfall bestehen.
-10. Explizite Aktivierungsfreigabe einholen. Diese Vorbereitung aktiviert
-    weder `direct_pull` noch einen Transfer.
+10. Explizite Aktivierungsfreigabe einholen. Der Planer aktiviert weder
+    `direct_pull` noch einen Transfer; der Executor verlangt für jeden Versuch
+    eine signierte Einmalfreigabe.
