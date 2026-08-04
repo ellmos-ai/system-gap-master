@@ -56,31 +56,38 @@ class ExecutorFixture(unittest.TestCase):
             return
         sid = _windows_current_user_sid()
         inheritance = "(OI)(CI)" if path.is_dir() else ""
-        subprocess.run(
-            ["icacls", str(path), "/remove:g", "*S-1-1-0"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        result = subprocess.run(
+        commands = (
+            ["icacls", str(path), "/inheritance:r"],
             [
                 "icacls",
                 str(path),
-                "/inheritance:r",
+                "/remove:g",
+                "*S-1-1-0",
+                "*S-1-5-4",
+                "*S-1-5-11",
+                "*S-1-5-32-545",
+            ],
+            [
+                "icacls",
+                str(path),
                 "/grant:r",
                 f"*{sid}:{inheritance}F",
                 f"*S-1-5-18:{inheritance}F",
                 f"*S-1-5-32-544:{inheritance}F",
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
         )
-        if result.returncode != 0:
-            raise RuntimeError(
-                "cannot create a private Windows ACL fixture: "
-                + result.stderr.decode(errors="replace")
+        for command in commands:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
             )
+            if result.returncode != 0:
+                raise RuntimeError(
+                    "cannot create a private Windows ACL fixture: "
+                    + result.stderr.decode(errors="replace")
+                )
 
     @staticmethod
     def loosen(path):
