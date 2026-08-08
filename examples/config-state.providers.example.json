@@ -1,0 +1,39 @@
+{
+  "_schema": "system-gap-master/config-state-providers.v1",
+  "providers": {
+    "agent-one": {
+      "files": [
+        {
+          "id": "settings",
+          "path": "${HOME}/.agent-one/settings.json",
+          "format": "json",
+          "allowlist": {
+            "model": "model",
+            "language": "language",
+            "effort": "effort",
+            "profile_count": {
+              "path": "profiles",
+              "mode": "count"
+            }
+          }
+        }
+      ],
+      "environment": {
+        "region": "AGENT_ONE_REGION"
+      }
+    },
+    "agent-two": {
+      "files": [
+        {
+          "id": "config",
+          "path": "${HOME}/.agent-two/config.toml",
+          "format": "toml",
+          "allowlist": [
+            "model",
+            "reasoning_effort"
+          ]
+        }
+      ]
+    }
+  }
+}

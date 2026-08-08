@@ -52,7 +52,7 @@
   2026-07-27. Repository metadata, documentation, the daily gate script and
   GitHub remote now use the new name. The old script name and
   `SYNC_MASTER_DIR` remain temporary compatibility aliases.
-- [ ] **Port the config-state pattern from the private instance** (bidirectional-improvement rule,
+- [x] **Port the config-state pattern from the private instance** (bidirectional-improvement rule,
   `~/CLAUDE.md` → "Verbesserungen beidseitig rückangleichen"). The private yard gained a
   **configuration showroom** on 2026-07-26: every machine drops an allowlist-filtered snapshot of
   how its AI agents are actually configured (Claude Code, Claude Desktop, Codex, Antigravity) into
@@ -63,8 +63,11 @@
   stdlib only — fits this repo's zero-dependency rule). For the public version, generalise the
   provider list (do not hardcode Anthropic/OpenAI/Google paths — make them a config table) and keep
   the two hard-won safety properties: **allowlist instead of blocklist**, and **`<HOME>` path
-  normalisation** so Windows and macOS snapshots stay comparable.
-  *Noted 2026-07-26 [C].*
+  normalisation** so Windows and macOS snapshots stay comparable. Public
+  implementation: `scripts/config_snapshot.py`, the neutral example table,
+  and the `_config-state/DEVIATIONS.md` template. Generated snapshots remain
+  derived and ignored.
+  *Completed 2026-08-08 [C].*
 
 ---
 

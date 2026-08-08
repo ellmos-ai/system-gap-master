@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-152%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -84,6 +84,7 @@ template/            copy-ready yard skeleton:
   CONFLICT_REVIEW_LOG.md  daily conflict-copy sweep gate
   agents/  messages/  hosts/  _archive/   (each with its rules README)
 scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
+scripts/config_snapshot.py           allowlisted, home-normalised config-state snapshots and diff report
 system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
@@ -116,6 +117,28 @@ python scripts/system_gap_daily_check.py check   # gate: due today?
 # ... run the ritual (read inbound, write outbound) ...
 python scripts/system_gap_daily_check.py mark
 ```
+
+### Configuration-state showroom
+
+The optional configuration-state pattern makes machine drift visible without
+copying provider secrets into the yard. Copy
+[`examples/config-state.providers.example.json`](examples/config-state.providers.example.json)
+to `_config-state/providers.json`, replace its placeholder paths and keys with
+an explicit allowlist, and keep the rationale in
+[`template/_config-state/DEVIATIONS.md`](template/_config-state/DEVIATIONS.md).
+The script reads only configured JSON/TOML files and keys, normalises paths
+under `<HOME>`, and collapses or redacts values that should not be compared.
+
+```bash
+python scripts/config_snapshot.py all \
+  --state-dir /path/to/SYNC/_config-state \
+  --config /path/to/SYNC/_config-state/providers.json \
+  --slot YOUR-HOST
+```
+
+Use `--check` for a read-only preview. `snapshots/` and `CONFIG-STATE.md` are
+derived output; document intentional differences with headings such as
+`### \`agent-one.model\`` in `DEVIATIONS.md`.
 
 ## The ten rules (short)
 

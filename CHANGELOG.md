@@ -11,6 +11,12 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- Added the provider-neutral `scripts/config_snapshot.py` showroom. It reads
+  only an explicit JSON/TOML allowlist, normalises home paths, redacts secret
+  values, and produces comparable `CONFIG-STATE.md` output with documented
+  versus unexplained deviations. The example table and hand-maintained
+  `DEVIATIONS.md` template keep generated state out of version control.
+
 - **Conflict reconciler: `json_schema_mismatch()` stops a `json-object` merge
   between two independent documents that merely share a filename pattern.**
   Ticket T-20260729-04 turned up a real pair while working the SS4b case:

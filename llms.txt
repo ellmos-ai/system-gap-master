@@ -4,12 +4,11 @@
 
 ## Verification
 
-143 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
+152 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
 skipped because the current account lacks the required symlink privilege;
 Ruff and `compileall` passed locally on 2026-08-08, after adding the
-conflict-reconciler `exempt_name_patterns` and `json_schema_mismatch()`
-changes (ticket T-20260729-04) on top of the 2026-08-08 merge with
-origin/main (trusted-peer-sftp-executor, republica-transit).
+provider-neutral `config_snapshot.py` showroom on top of the 2026-08-08
+merge with origin/main (trusted-peer-sftp-executor, republica-transit).
 
 ## Canonical repository
 
@@ -30,6 +29,8 @@ separate state silos.
 - `PROTOCOL.md` — full protocol and design rationale.
 - `SKILL.md` — daily sync ritual for agents.
 - `scripts/system_gap_daily_check.py` — zero-dependency daily gate script.
+- `scripts/config_snapshot.py` — provider-neutral, allowlisted configuration
+  snapshots and a comparable deviation report; generated state is derived.
 - `system_gap_master/conflict_copy_reconciler.py` — policy-driven safe
   conflict-copy scan/plan/apply/verify/rollback API and CLI.
 - `docs/conflict-copy-reconciler.md` — merge classes, safety gates, owner
@@ -49,6 +50,8 @@ separate state silos.
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.
+- `examples/config-state.providers.example.json` — neutral provider-table
+  example for the configuration-state showroom.
 - `docs/adapting-your-agents.md` — integration notes for agent rule files and
   session-start hooks.
 

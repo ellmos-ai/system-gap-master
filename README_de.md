@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-152%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -66,6 +66,7 @@ template/            copy-ready yard skeleton:
   CONFLICT_REVIEW_LOG.md  daily conflict-copy sweep gate
   agents/  messages/  hosts/  _archive/   (each with its rules README)
 scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
+scripts/config_snapshot.py           Allowlistete, home-normalisierte Konfigurations-Snapshots und Diff-Bericht
 system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
@@ -98,6 +99,30 @@ python scripts/system_gap_daily_check.py check   # gate: due today?
 # ... run the ritual (read inbound, write outbound) ...
 python scripts/system_gap_daily_check.py mark
 ```
+
+### Konfigurationszustand anzeigen
+
+Das optionale Konfigurations-Schaufenster macht Maschinen-Drift sichtbar,
+ohne Anbieter-Secrets in den Transferbereich zu kopieren. Kopiere
+[`examples/config-state.providers.example.json`](examples/config-state.providers.example.json)
+nach `_config-state/providers.json`, ersetze die Platzhalterpfade und -keys
+durch eine ausdrückliche Allowlist und pflege die Begründungen in
+[`template/_config-state/DEVIATIONS.md`](template/_config-state/DEVIATIONS.md).
+Das Skript liest nur konfigurierte JSON-/TOML-Dateien und Keys, normalisiert
+Pfade unter `<HOME>` und redigiert oder verkürzt Werte, die nicht verglichen
+werden sollen.
+
+```bash
+python scripts/config_snapshot.py all \
+  --state-dir /path/to/SYNC/_config-state \
+  --config /path/to/SYNC/_config-state/providers.json \
+  --slot YOUR-HOST
+```
+
+Mit `--check` bleibt der Lauf schreibgeschützt. `snapshots/` und
+`CONFIG-STATE.md` sind abgeleitete Ausgaben; begründe absichtliche
+Unterschiede mit Überschriften wie `### \`agent-one.model\`` in
+`DEVIATIONS.md`.
 
 ## Die zehn Kernregeln (Kurzübersicht)
 

@@ -20,6 +20,11 @@ dist/
 *.sqlite3
 data/
 
+# Derived configuration-state showroom output
+_config-state/snapshots/
+_config-state/CONFIG-STATE.md
+_config-state/providers.local.json
+
 # OS/editor
 Thumbs.db
 .DS_Store
