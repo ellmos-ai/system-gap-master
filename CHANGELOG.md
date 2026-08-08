@@ -34,6 +34,24 @@ All notable changes to system-gap-master are documented here.
 - Maintainer verification on 2026-08-01: 83 tests passed and 1 Windows
   symlink-platform test was skipped due to missing account privilege; Ruff and
   the daily-gate, trusted-peer and conflict-reconciler CLI help surfaces passed.
+- Added the separate `trusted-peer-sftp-executor` execution boundary. It
+  re-runs the network-free planner, verifies OpenSSH detached signatures for
+  registry and short-lived one-shot grant, resolves credentials from local
+  allowlisted roots, pins the presented host key, streams one regular file
+  with a size cap, and commits atomically without replacement. Durable replay
+  state and redacted receipts remain outside the sync yard; SQLite, directory,
+  upload and remote-mutation paths remain blocked.
+- Corrected canonical repository URLs from the former `dev-bricks` owner to
+  `ellmos-ai` in package metadata, schemas, templates and the LLM index.
+- Documented Republica (the sqlite-transit-sync showcase fallback) as a
+  permanent second operating mode alongside direct tunnel sync, not a
+  stopgap: a bilingual README section with a failure-scenario table, and
+  `system_gap_master/republica_transit.py` — a dependency-free helper that
+  resolves the R9 tool-owned `db-transit/<namespace>` transit zone for a
+  namespace and validates that a `republica_root` import destination stays
+  outside the yard. Registered as the `republica-transit` console script;
+  never imports `sqlite_transit_sync`, so it works with or without the
+  companion package installed.
 - Synchronized the maintained German README with the canonical English
   structure, protocol rules, companion-tool, stack-family, security and
   provenance sections while preserving code blocks byte-for-byte.
@@ -51,6 +69,30 @@ All notable changes to system-gap-master are documented here.
 - Reject UNC/device namespaces and non-portable Windows aliases before any
   filesystem probe, bind registry reads to one checked file identity, and use
   provider-neutral `direct`/`private-overlay` route labels.
+
+### Added — conflict reconciler: keep the review queue worth reading
+
+- **Machine-regenerable artefacts are no longer surfaced.** `__pycache__`,
+  `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and bytecode extensions
+  (`.pyc`, `.pyo`, `.pyd`, `.class`, `.o`, `.obj`) are skipped during
+  candidate iteration. A conflict copy of a bytecode cache carries no
+  information — the file is rebuilt on the next run, so neither merging nor
+  human review is worth anyone's time. Observed on a real repository: thirteen
+  of thirteen "undecidable" candidates were bytecode and VCS internals. A queue
+  like that trains reviewers to ignore it, which is worse than no queue at all.
+  (`.git` was already excluded.)
+- **`host_specific_markers()`** reports evidence that a file legitimately
+  differs per host (absolute user paths, known host names in content). Such a
+  pair is not a conflict to merge: either both sides are kept under explicit
+  per-host names, or — better — the file is made path-neutral so the split
+  disappears. Merging them silently destroys one host's configuration.
+- **`excerpt()`** returns beginning, middle and end of a text. Before comparing
+  two versions line by line, a reviewer needs the cheaper answer first: is
+  merging this worth doing at all? That matters when one run surfaces dozens of
+  candidates.
+- Six regression tests covering all three additions, including an end-to-end
+  check that a bytecode conflict copy never reaches the queue while a README
+  in the same run still does.
 
 ## 1.4.0 - 2026-07-29
 

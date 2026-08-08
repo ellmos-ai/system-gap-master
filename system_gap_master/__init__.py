@@ -5,8 +5,12 @@ from typing import Any
 __all__ = [
     "ConflictCopyReconciler",
     "ReconcilerError",
+    "RepublicaTransitError",
+    "RepublicaTransitPaths",
     "TrustedPeerPathError",
     "TrustedPeerPathRegistry",
+    "TrustedPeerSftpError",
+    "TrustedPeerSftpExecutor",
 ]
 
 
@@ -16,15 +20,27 @@ def __getattr__(name: str) -> Any:
             ConflictCopyReconciler,
             ReconcilerError,
         )
+        from .republica_transit import (
+            RepublicaTransitError,
+            RepublicaTransitPaths,
+        )
         from .trusted_peer_paths import (
             TrustedPeerPathError,
             TrustedPeerPathRegistry,
+        )
+        from .trusted_peer_sftp_executor import (
+            TrustedPeerSftpError,
+            TrustedPeerSftpExecutor,
         )
 
         return {
             "ConflictCopyReconciler": ConflictCopyReconciler,
             "ReconcilerError": ReconcilerError,
+            "RepublicaTransitError": RepublicaTransitError,
+            "RepublicaTransitPaths": RepublicaTransitPaths,
             "TrustedPeerPathError": TrustedPeerPathError,
             "TrustedPeerPathRegistry": TrustedPeerPathRegistry,
+            "TrustedPeerSftpError": TrustedPeerSftpError,
+            "TrustedPeerSftpExecutor": TrustedPeerSftpExecutor,
         }[name]
     raise AttributeError(name)

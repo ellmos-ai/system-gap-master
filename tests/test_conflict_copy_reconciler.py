@@ -944,3 +944,82 @@ def shutil_which(command):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RegenerableAndHostSpecificTests(unittest.TestCase):
+    """Guards added 2026-08-01 after a review queue filled up with pure noise.
+
+    Thirteen of thirteen "undecidable" candidates in a real run were bytecode
+    caches and VCS internals. A queue like that trains reviewers to ignore it,
+    which is worse than having no queue at all.
+    """
+
+    def test_bytecode_and_cache_dirs_are_regenerable(self):
+        from system_gap_master.conflict_copy_reconciler import is_regenerable
+
+        for name in (
+            "pkg/__pycache__/mod.cpython-312-HOSTNAME.pyc",
+            "mod-HOSTNAME.pyc",
+            ".pytest_cache/v/cache/nodeids-HOSTNAME",
+            "build/Main-HOSTNAME.class",
+        ):
+            self.assertTrue(is_regenerable(Path(name)), name)
+
+    def test_source_and_documents_are_not_regenerable(self):
+        from system_gap_master.conflict_copy_reconciler import is_regenerable
+
+        for name in ("src/mod-HOSTNAME.py", "README-HOSTNAME.md", "data-HOSTNAME.json"):
+            self.assertFalse(is_regenerable(Path(name)), name)
+
+    def test_regenerable_candidates_are_not_surfaced(self):
+        """End-to-end: a bytecode conflict copy must never reach the queue."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cache = root / "__pycache__"
+            cache.mkdir()
+            (cache / "mod.cpython-312.pyc").write_bytes(b"canonical")
+            (cache / "mod.cpython-312-BOX.pyc").write_bytes(b"copy")
+            (root / "README.md").write_text("canonical\n", encoding="utf-8")
+            (root / "README-BOX.md").write_text("copy\n", encoding="utf-8")
+
+            policy = reconciler_module.RootPolicy(
+                root_id="r1", path=root, known_hosts=("BOX",), mappings={},
+                archive_dir="_archive", cloud_ready=True,
+            )
+            engine = ConflictCopyReconciler.__new__(ConflictCopyReconciler)
+            engine.max_files = 1000
+            found = [rel for _, rel, _ in engine._iter_candidates(policy)]
+
+            self.assertIn("README-BOX.md", found)
+            self.assertFalse(
+                [f for f in found if f.endswith(".pyc")],
+                f"bytecode must be filtered, got {found}",
+            )
+
+    def test_host_specific_content_is_reported(self):
+        from system_gap_master.conflict_copy_reconciler import host_specific_markers
+
+        self.assertTrue(host_specific_markers(r"path = C:\Users\alice\data"))
+        self.assertTrue(host_specific_markers("home = /Users/bob/cfg"))
+        self.assertTrue(host_specific_markers("runs on BOX-01", known_hosts=("BOX-01",)))
+        # Portable references must NOT be flagged -- they are the desired form.
+        self.assertEqual(host_specific_markers("path = %USERPROFILE%/data"), [])
+        self.assertEqual(host_specific_markers("path = ~/data"), [])
+
+    def test_excerpt_reports_start_middle_end(self):
+        from system_gap_master.conflict_copy_reconciler import excerpt
+
+        text = "\n".join(f"line {i}." for i in range(1, 21))
+        lines = excerpt(text)
+        self.assertEqual(len(lines), 5)
+        self.assertTrue(lines[0].startswith("START:"))
+        self.assertTrue(lines[2].startswith("MIDDLE:"))
+        self.assertTrue(lines[-1].startswith("END:"))
+        self.assertIn("line 1.", lines[0])
+        self.assertIn("line 20.", lines[-1])
+
+    def test_excerpt_handles_short_and_empty_input(self):
+        from system_gap_master.conflict_copy_reconciler import excerpt
+
+        self.assertEqual(excerpt(""), ["(empty)"])
+        self.assertEqual(excerpt("only one line"), ["only one line"])

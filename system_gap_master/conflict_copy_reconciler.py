@@ -136,6 +136,76 @@ SECRET_CONTENT = re.compile(
     rb"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----|"
     rb"\bAKIA[0-9A-Z]{16}\b"
 )
+# Machine-regenerable artefacts. A conflict copy of a bytecode cache carries no
+# information: the file is rebuilt on the next run, so neither merging nor human
+# review is worth anyone's time. Observed 2026-08-01: a review queue of thirteen
+# "undecidable" cases turned out to be entirely bytecode and VCS internals --
+# noise that trains reviewers to ignore the queue.
+REGENERABLE_DIR_NAMES = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+REGENERABLE_EXTENSIONS = {".pyc", ".pyo", ".pyd", ".class", ".o", ".obj"}
+
+# Markers that a file legitimately differs per host. Such a pair is not a
+# conflict to be merged: either both sides are kept under explicit per-host
+# names, or -- better -- the file is made path-neutral so the split disappears.
+# Merging them silently destroys one host's configuration.
+HOST_SPECIFIC_MARKERS = (
+    re.compile(r"[A-Za-z]:\\Users\\[^\\\s\"']+"),
+    re.compile(r"/Users/[^/\s\"']+"),
+    re.compile(r"/home/[^/\s\"']+"),
+)
+
+
+def is_regenerable(path: Path) -> bool:
+    """Whether a path is a machine-regenerable build artefact."""
+    if path.suffix.lower() in REGENERABLE_EXTENSIONS:
+        return True
+    return any(part in REGENERABLE_DIR_NAMES for part in path.parts)
+
+
+def host_specific_markers(text: str, known_hosts: Sequence[str] = ()) -> list[str]:
+    """Report evidence that a file's content is host-specific.
+
+    Returns short human-readable reasons, empty if none found. Callers should
+    treat a non-empty result as a reason NOT to merge automatically: the two
+    sides may both be correct, each for its own machine.
+    """
+    reasons: list[str] = []
+    for host in known_hosts:
+        if host and host in text:
+            reasons.append(f"host name {host!r} in content")
+            break
+    for pattern in HOST_SPECIFIC_MARKERS:
+        match = pattern.search(text)
+        if match:
+            reasons.append(f"absolute user path {match.group(0)!r}")
+            break
+    return reasons
+
+
+def excerpt(text: str, edge: int = 2, width: int = 160) -> list[str]:
+    """Beginning, middle and end of a text -- what is this file about?
+
+    Before comparing two versions line by line, a reviewer needs the cheaper
+    answer first: is merging this worth doing at all? A handful of opening
+    sentences, one from the middle and the closing ones answer that in seconds,
+    which matters when a single run surfaces dozens of candidates.
+    """
+    segments = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n{2,}|\n", text) if s.strip()]
+    if not segments:
+        return ["(empty)"]
+
+    def clip(value: str) -> str:
+        value = " ".join(value.split())
+        return value if len(value) <= width else value[: width - 1] + "…"
+
+    if len(segments) <= edge * 2 + 1:
+        return [clip(s) for s in segments]
+    lines = [f"START:  {clip(s)}" for s in segments[:edge]]
+    lines.append(f"MIDDLE: {clip(segments[len(segments) // 2])}")
+    lines += [f"END:    {clip(s)}" for s in segments[-edge:]]
+    return lines
+
+
 DEFAULT_DETECTORS = (
     re.compile(
         r"^(?P<stem>.+?) \((?P<tag>[^)]*(?:conflicted copy|conflict copy|conflict)[^)]*)\)"
@@ -342,8 +412,9 @@ def _safe_relative(root: Path, raw: str) -> tuple[Path, str]:
     candidate = Path(os.path.abspath(root / relative))
     if not _is_relative_to(candidate, root):
         raise ReconcilerError(f"path escapes allowlisted root: {raw!r}")
+    resolved_root = root.resolve(strict=False)
     resolved = candidate.resolve(strict=False)
-    if not _is_relative_to(resolved, root):
+    if not _is_relative_to(resolved, resolved_root):
         raise ReconcilerError(f"path resolves outside allowlisted root: {raw!r}")
     normalized = relative.as_posix()
     return candidate, normalized
@@ -1102,6 +1173,8 @@ class ConflictCopyReconciler:
                 candidate_dir = current / value
                 if value.lower() in {".git", "_archive"}:
                     continue
+                if value in REGENERABLE_DIR_NAMES:
+                    continue
                 try:
                     _assert_plain_path(root.path, candidate_dir, require_dir=True)
                 except ReconcilerError:
@@ -1117,6 +1190,8 @@ class ConflictCopyReconciler:
                         f"root {root.root_id} exceeds max_files={self.max_files}"
                     )
                 path = current / filename
+                if is_regenerable(path):
+                    continue
                 relative = path.relative_to(root.path).as_posix()
                 if any(
                     pattern.search(relative) for pattern in root.exempt_name_patterns

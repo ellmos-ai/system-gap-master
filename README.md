@@ -2,13 +2,16 @@
 
 # system-gap-master
 
+<img src="assets/banner.png" width="100%" alt="System Gap Master banner">
+
+
 [English](README.md) | [Deutsch](README_de.md)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-83%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -85,6 +88,12 @@ system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
                       read-only validate/list/resolve/pull-plan CLI
+system_gap_master/trusted_peer_sftp_executor.py
+                      separately authorized one-shot SFTP executor
+system_gap_master/republica_transit.py
+                      resolves the R9 db-transit/<namespace> zone for the
+                      Republica showcase fallback (see below); path arithmetic
+                      only, no hard dependency on sqlite-transit-sync
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
 docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
@@ -120,7 +129,8 @@ python scripts/system_gap_daily_check.py mark
 8. **BOOTSTRAP.md stays current** — it must always bring up a fresh machine.
 9. **Structured payloads use adapters** — never sync live SQLite/WAL files.
 10. **Trusted peer paths are gated metadata** — peers validate the host-owned
-    registry and prepare a non-executable receipt; transfer stays separate.
+    registry and prepare a non-executable receipt. A separate executor may
+    transfer one file only after detached signatures and a one-shot grant pass.
 
 Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
@@ -184,6 +194,35 @@ See the [trusted peer registry contract](docs/trusted-peer-path-registry.md),
 the [JSON schemas](schemas/) and the
 [host-local examples](examples/trusted-peer-paths.local-config.example.json).
 
+## Optional trusted-peer SFTP execution
+
+`trusted-peer-sftp-executor` is deliberately separate from the read-only
+planner. It re-runs `pull-plan`, cryptographically verifies both the detached
+registry signature and a short-lived exact one-shot grant, resolves SSH files
+only from a host-local configuration, pins the server key before login, and
+performs one shell-free SFTP `lstat`/read of one regular file. It streams into
+an exclusive private staging file and commits relative to a pinned destination
+directory with a platform-specific no-replace primitive.
+
+The sync yard carries only path metadata and signature references. Identity,
+known-hosts, signature and allowed-signers files stay under explicitly allowed
+host-local credential roots. Attempt state and redacted receipts are also
+host-local. SQLite files, directories, overwrite, upload, remote mutation,
+accept-new host keys and reusable grants remain unavailable.
+
+```bash
+python -m pip install 'system-gap-master[trusted-peer-sftp]'
+trusted-peer-sftp-executor execute \
+  --registry-config /host-local/trusted-peer-paths.json \
+  --executor-config /host-local/trusted-peer-sftp-executor.json \
+  --host-id HOST-A --path-id approved-file \
+  --destination /host-local/imports/approved-file \
+  --authorization /host-local/grants/grant.json
+```
+
+Setup, signature namespaces and failure boundaries are documented in
+[`docs/trusted-peer-sftp-executor.md`](docs/trusted-peer-sftp-executor.md).
+
 ## Companion tools
 
 The yard carries documents; it deliberately does NOT carry live databases
@@ -193,6 +232,87 @@ transit tool in a tool-owned `db-transit/<namespace>/` zone — from the same
 module family: [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) (local-first SQLite sync through
 verified snapshots, SHA-256 manifests and pluggable merge policies). The yard is the transport; the
 transit tool owns integrity and merging.
+
+Need a serverless fallback that works even without a tunnel, trust setup or
+open ports? See [Republica showcase fallback](#republica-showcase-fallback)
+below.
+
+## Republica showcase fallback
+
+**When to reach for it:** no server, no trust setup, no open ports — only a
+file exchange area exists between the machines. That is exactly the situation
+this repo exists for, and exactly the situation sqlite-transit-sync's
+`push`/`pull` convergence mode assumes away (it needs both hosts reachable and
+a merge policy agreed up front).
+
+**The doctrine: Republica is not a stopgap until a tunnel exists.** It is the
+permanent fallback half of two operating modes meant to run side by side:
+
+1. **Advanced** — direct database sync over an SSH/Tailscale tunnel
+   (`sqlite-transit-sync push`/`pull` with merge policies): fast, converging,
+   needs both hosts reachable and a trust setup.
+2. **Fallback / low-effort** — Republica showcases over any shared file area
+   (`sqlite-transit-sync republica-publish`/`republica-list`/`republica-import`):
+   slow, one-way, needs almost nothing.
+
+**Whichever one fails, the other still carries:**
+
+| Failure scenario | Direct sync (`push`/`pull`) | Republica (`republica-*`) |
+|---|---|---|
+| A machine is asleep or offline | stalls — no peer to talk to | keeps working — publish/import whenever the machine wakes |
+| VPN/SSH tunnel is down | stalls | keeps working over the plain file area |
+| Key rotation or trust setup pending | stalls | keeps working with the already-shared Republica key |
+| Shared folder (the yard) is broken, full or desynced | keeps working | stalls |
+| No merge policy has been agreed for a dataset | not applicable — a policy is required to converge at all | keeps working — nothing is ever merged, only read |
+
+Set it up once and exercise it occasionally even while the direct path is
+healthy — a fallback that only gets tried on the day it is needed is a
+fallback that does not work on that day.
+
+**Setup cost:** one key transfer, out-of-band (an existing tunnel, a password
+manager, a USB stick, reading it out over the phone) — never through the yard
+itself. After that, a plain shared folder is enough, forever, even one you do
+not otherwise trust.
+
+**What travels:** not a raw database file, but a curated SQL dump (SQLite
+backup API → curated dump → gzip → Fernet-encrypted). Measured on a real
+53.6 MB database: 11.0 MB in transit.
+
+**What it materialises:** the import side writes a *separate*, read-only
+database per source host under `republica_root/<source-host>/<namespace>.sqlite`
+— never merged into the local database, which is not even opened during
+import. That is deliberate: Fernet authenticates the *key*, not the *sender*,
+so an imported showcase has to stay a read-only copy someone can compare
+against, never a source that silently changes local rows.
+
+**Sealed envelope:** the same key and the same file area can carry a single
+encrypted file (`envelope-send`/`envelope-receive`) instead of a database —
+for the bootstrap case where two machines share no secure channel *yet*, and
+that is exactly why a credential has to cross once. The plaintext lands on
+the receiving side **as a file** (mode `0600`) inside the local credentials
+directory — never inside a database, where a backup, index or sync job would
+copy it onward forever.
+
+**This module does not implement any of it.** Snapshotting, encryption,
+publish/list/import and the envelope courier live exclusively in
+[sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) —
+see its README section
+["Republica — the showcase method"](https://github.com/dev-bricks/sqlite-transit-sync#republica--the-showcase-method).
+What this repo adds is one thing: `republica-transit resolve` locates the
+correct R9 tool-owned transit zone (`db-transit/<namespace>/`) inside *this*
+yard, so a user does not have to invent or guess where `--transit` should
+point.
+
+```bash
+republica-transit resolve --yard-root /path/to/your/yard --namespace my-app
+republica-transit check-root --yard-root /path/to/your/yard --republica-root ~/.republica
+```
+
+`sqlite-transit-sync` is never a hard dependency of this repo: `republica_transit`
+is plain path arithmetic and works whether or not the companion package is
+installed. The `resolve` output includes a `sqlite_transit_sync_available`
+flag so an agent can tell the user to install the companion package before
+suggesting the next command.
 
 ## Part of the ellmos stack family
 
@@ -228,9 +348,9 @@ standalone discovery relationships.
   Never put credentials, tokens or personal/case data in it (rule 6) — the
   templates and the skill repeat this at every write point.
 - Exact credential *paths* may appear in a host-owned trusted-peer registry;
-  referenced values, keys and file content remain forbidden. The current
-  module validates references and pins but deliberately does not verify a
-  detached signature or perform SFTP; those remain activation gates.
+  referenced values, keys and file content remain forbidden. The planner only
+  validates references and pins. The optional executor verifies detached
+  signatures and performs one grant-bound SFTP read using host-local files.
 - Everything is plain files: your existing backup, encryption and access
   control apply unchanged.
 

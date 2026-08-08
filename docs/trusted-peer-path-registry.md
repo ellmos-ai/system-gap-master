@@ -128,7 +128,14 @@ signature references and digests. They are JSON templates, not invented
 operational trust material, and runtime validation rejects them until an
 operator inserts independently verified values.
 
-## Remaining gates for real two-host activation
+## Separate execution boundary
+
+The optional `trusted-peer-sftp-executor` now implements the separately
+reviewable client-side executor described below without changing this planner.
+See [`trusted-peer-sftp-executor.md`](trusted-peer-sftp-executor.md). Its
+presence alone does not provision, schedule or authorize a host.
+
+## Remaining host gates for real two-host activation
 
 Preparation is not authorization to transfer. A real activation needs all of
 the following, with evidence from both hosts:
@@ -143,13 +150,14 @@ the following, with evidence from both hosts:
    reachability without changing this provider-neutral registry;
 5. provision authentication material outside the yard and outside this
    module; this preflight must never read it;
-6. review a separate shell-free, strict-host-key, no-overwrite,
-   bounded-download executor;
+6. install and review the separate shell-free, strict-host-key, no-overwrite,
+   bounded-download executor and its exact host-local configuration;
 7. revalidate registry freshness, signature, pin, peer allowlist and
    destination ownership/permissions immediately before each transfer;
 8. add auditable anti-replay state and transfer receipts without writing a
    foreign slot or placing sensitive content in the yard;
 9. run two-host negative tests for wrong pin, stale registry, denied path,
    denied peer, write attempts, overwrite attempts and route failure;
-10. obtain explicit activation approval. This preparation neither enables
-    `direct_pull` nor performs that approval.
+10. obtain explicit activation approval. The planner neither enables
+    `direct_pull` nor performs that approval; the executor requires a signed
+    one-shot grant for each attempt.

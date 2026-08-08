@@ -34,15 +34,20 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+trusted-peer-sftp = ["paramiko>=5,<6"]
+
 [project.scripts]
 conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"
 trusted-peer-paths = "system_gap_master.trusted_peer_paths:main"
+trusted-peer-sftp-executor = "system_gap_master.trusted_peer_sftp_executor:main"
+republica-transit = "system_gap_master.republica_transit:main"
 
 [project.urls]
-Homepage = "https://github.com/dev-bricks/system-gap-master"
-Documentation = "https://github.com/dev-bricks/system-gap-master/blob/main/PROTOCOL.md"
-Repository = "https://github.com/dev-bricks/system-gap-master"
-"Bug Tracker" = "https://github.com/dev-bricks/system-gap-master/issues"
+Homepage = "https://github.com/ellmos-ai/system-gap-master"
+Documentation = "https://github.com/ellmos-ai/system-gap-master/blob/main/PROTOCOL.md"
+Repository = "https://github.com/ellmos-ai/system-gap-master"
+"Bug Tracker" = "https://github.com/ellmos-ai/system-gap-master/issues"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

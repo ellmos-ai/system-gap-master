@@ -138,7 +138,7 @@ known-host pin and `allowed_peer_ids`. Every path explicitly declares
 `metadata_type=path-location` and `content_included=false`; credential values,
 file content, private keys, tokens and passwords are forbidden.
 
-The module in this repository is a read-only preflight. It derives the
+The `trusted-peer-paths` planner is a read-only preflight. It derives the
 foreign registry path from the trusted host ID, validates owner slot,
 schema/version, revision, freshness/expiry, an out-of-band pinned signature
 reference, canonical payload digest, known-host pin, peer permission and an
@@ -155,12 +155,16 @@ payloads may be advertised only as `kind=database/sqlite` with
 `direct_pull=false` and `adapter=sqlite-transit-sync`; their bytes still use
 the R9 `db-transit/<namespace>` snapshot workflow.
 
-Detached-signature verification, anti-replay state, real host-key
-installation, authentication, route selection, server-side read-only ACLs
-and a no-overwrite transfer executor remain explicit activation gates.
+The separate optional `trusted-peer-sftp-executor` implements the client-side
+execution gates: detached registry and one-shot-grant verification, local
+credential binding, presented host-key matching, durable anti-replay state,
+bounded single-file SFTP read, no-replace commit and local redacted receipts.
+It remains inactive until a host separately provisions its keys, signatures,
+route and server-side read-only ACL and supplies an exact local configuration.
 
 The preparation contract and threat model are in
-`docs/trusted-peer-path-registry.md`; schemas are in `schemas/`.
+`docs/trusted-peer-path-registry.md`; the execution contract is in
+`docs/trusted-peer-sftp-executor.md`; schemas are in `schemas/`.
 
 ## Artifact naming conventions
 
@@ -192,6 +196,7 @@ convention that a convention EXISTS is the load-bearing part.
   timestamp or provider suffix can identify a candidate, but only a manifest,
   pointer, registry or documented writer policy may authorize mutation.
 - **Prepared discovery is not transport authority.** A pinned signature
-  reference and digest are not cryptographic verification. SSH host keys,
-  authentication, server-side read ACLs and a reviewed executor remain
-  separate activation gates.
+  reference and digest are not cryptographic verification. The optional
+  executor additionally requires signed registry and one-shot grant plus
+  host-local SSH material; server-side ACL and route provisioning remain
+  separate host activation gates.

@@ -1,16 +1,19 @@
 # system-gap-master
 
-## Last-checked: 2026-08-04
+## Last-checked: 2026-08-08
 
 ## Verification
 
-83 tests passed and 1 Windows symlink-platform test was skipped because the
-current account lacks the required symlink privilege; Ruff and both public CLI
-help surfaces passed locally on 2026-08-04.
+133 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
+skipped because the current account lacks the required symlink privilege;
+Ruff, `compileall` and the conflict-reconciler CLI help surface passed locally
+on 2026-08-08, after merging origin/main (trusted-peer-sftp-executor,
+republica-transit) with the conflict-reconciler `exempt_name_patterns` change
+(ticket T-20260729-04).
 
 ## Canonical repository
 
-https://github.com/dev-bricks/system-gap-master
+https://github.com/ellmos-ai/system-gap-master
 
 ## Summary
 
@@ -33,8 +36,16 @@ separate state silos.
   lease and desktop/macOS adapter contract.
 - `system_gap_master/trusted_peer_paths.py` — read-only host-owned registry
   validation and deterministic, non-executable pull-preparation CLI/API.
+- `system_gap_master/trusted_peer_sftp_executor.py` — separately authorized,
+  signature-verified, one-shot and no-overwrite SFTP single-file executor.
+- `docs/trusted-peer-sftp-executor.md` — signature namespaces, host-local
+  credential binding, replay ledger, transfer and receipt boundaries.
 - `docs/trusted-peer-path-registry.md` — trusted-peer threat model, setup,
   direct-pull boundary and SQLite adapter rule.
+- `system_gap_master/republica_transit.py` — resolves the R9 tool-owned
+  `db-transit/<namespace>` zone for the Republica showcase fallback and
+  validates that a `republica_root` destination stays outside the yard; pure
+  path arithmetic, no hard dependency on sqlite-transit-sync.
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.
@@ -53,13 +64,22 @@ separate state silos.
   an allowlisted root, authoritative mapping, safe deterministic merge class,
   one explicit mutating owner, a shared local lease, HMAC-bound plan/manifest,
   no symlink/reparse traversal, backup, verification and rollback.
-- The trusted-peer module is read-only: it validates owner slot, expiry,
+- The trusted-peer planner is read-only: it validates owner slot, expiry,
   pinned signature reference, digest, known-host pin, peer and exact path
   allowlists. It never reads referenced files or contacts a peer.
 - `pull-plan` requires `direct_pull=true` but produces only a deterministic,
-  non-executable receipt. Signature verification, SSH setup and transfer
-  remain activation gates. SQLite and WAL/SHM paths are discovery-only and
-  use `sqlite-transit-sync` through R9 `db-transit/<namespace>`.
+  non-executable receipt. The optional executor re-runs it and additionally
+  requires detached registry/grant signatures, an exact short-lived one-shot
+  grant, host-local credentials, a presented host-key match, a regular remote
+  file, size bounds, private staging and atomic no-replace commit. SQLite and
+  WAL/SHM paths remain discovery-only and use `sqlite-transit-sync` through R9
+  `db-transit/<namespace>`.
+- Republica (the sqlite-transit-sync showcase mode) is a permanent fallback
+  layer, not a stopgap: a direct SSH/Tailscale tunnel and a Republica
+  showcase over the yard are meant to run side by side, so a failure in one
+  does not stop the other. `republica_transit.py` only resolves where the
+  R9 zone lives inside a given yard; encryption, publish/list/import and the
+  sealed-envelope courier remain sqlite-transit-sync's responsibility.
 
 ## Search phrases
 
@@ -74,5 +94,8 @@ multi agent state persistence
 cross host slot isolation
 trusted peer path metadata registry
 read only SFTP pull preparation receipt
+signed one shot SFTP pull executor
 semi trusted yard registry authenticity
+republica showcase fallback database sync
+serverless database sync without a tunnel
 ```

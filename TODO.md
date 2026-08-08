@@ -2,7 +2,7 @@
 
 **Audit Date:** 2026-07-21
 **Auditor:** Antigravity / Gemini githubbot-one-repo-cleaner
-**Target Repo:** `dev-bricks/system-gap-master`
+**Target Repo:** `ellmos-ai/system-gap-master`
 
 ---
 
@@ -22,6 +22,10 @@
 
 ## HIGH PRIORITY
 
+- [x] Add a user- and system-neutral trusted-peer direct-pull executor without
+  weakening the read-only planner: detached registry/grant signatures,
+  host-local credential binding, host-key pinning, one-shot replay ledger,
+  bounded single-file SFTP read, no-replace commit and redacted local receipt.
 - [x] Add a small regression test for `scripts/system_gap_daily_check.py` using a temporary yard.
 - [ ] **Port the user-neutral OneDrive tree reconciler after the private
   two-system pilot.** Source candidate:

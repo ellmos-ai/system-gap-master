@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-83%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-130%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -70,6 +70,12 @@ system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
                       read-only validate/list/resolve/pull-plan CLI
+system_gap_master/trusted_peer_sftp_executor.py
+                      separat autorisierter Einmal-SFTP-Executor
+system_gap_master/republica_transit.py
+                      resolves the R9 db-transit/<namespace> zone for the
+                      Republica showcase fallback (see below); path arithmetic
+                      only, no hard dependency on sqlite-transit-sync
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
 docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
@@ -104,7 +110,10 @@ python scripts/system_gap_daily_check.py mark
 7. **Konfliktkopien täglich prüfen** — Anbieterneutral und ohne blindes Mergen.
 8. **`BOOTSTRAP.md` aktuell halten** — Ein neuer Rechner muss sich damit vollständig einrichten lassen.
 9. **Strukturierte Payloads nutzen Adapter** — Live-SQLite-/WAL-Dateien werden niemals direkt synchronisiert.
-10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die host-eigene Registry und erzeugen einen nicht ausführbaren Beleg; der Transfer bleibt separat.
+10. **Trusted-Peer-Pfade sind gegatete Metadaten** — Peers validieren die
+    host-eigene Registry und erzeugen einen nicht ausführbaren Beleg. Ein
+    separater Executor darf erst nach abgesetzten Signaturen und Einmalfreigabe
+    genau eine Datei übertragen.
 
 Die vollständige Begründung steht in [PROTOCOL.md](PROTOCOL.md).
 
@@ -170,6 +179,35 @@ Details:
 [`schemas/`](schemas/) und
 [`examples/trusted-peer-paths.local-config.example.json`](examples/trusted-peer-paths.local-config.example.json).
 
+## Optionale Trusted-Peer-SFTP-Ausführung
+
+`trusted-peer-sftp-executor` bleibt bewusst vom rein lesenden Planer getrennt.
+Er berechnet `pull-plan` erneut, verifiziert die abgesetzte Registry-Signatur
+und eine kurzlebige, exakt gebundene Einmalfreigabe kryptografisch, löst
+SSH-Dateien ausschließlich aus einer hostlokalen Konfiguration auf und prüft
+den Server-Schlüssel vor dem Login. Danach liest er ohne Shell genau eine
+reguläre Datei per SFTP. Die Bytes landen zunächst in einer exklusiven privaten
+Staging-Datei; der finale Commit ersetzt niemals eine vorhandene Datei.
+
+Der Sync-Yard enthält nur Pfadmetadaten und Signaturreferenzen. Identity-,
+Known-Hosts-, Signatur- und Allowed-Signers-Dateien bleiben in ausdrücklich
+erlaubten lokalen Credential-Roots. Auch Einmal-Ledger und redigierte Receipts
+bleiben lokal. SQLite-Dateien, Verzeichnisse, Überschreiben, Uploads, entfernte
+Mutationen, Accept-new-Hostkeys und wiederverwendbare Freigaben bleiben gesperrt.
+
+```bash
+python -m pip install 'system-gap-master[trusted-peer-sftp]'
+trusted-peer-sftp-executor execute \
+  --registry-config /host-local/trusted-peer-paths.json \
+  --executor-config /host-local/trusted-peer-sftp-executor.json \
+  --host-id HOST-A --path-id approved-file \
+  --destination /host-local/imports/approved-file \
+  --authorization /host-local/grants/grant.json
+```
+
+Einrichtung, Signatur-Namespaces und Fehlergrenzen stehen in
+[`docs/trusted-peer-sftp-executor_de.md`](docs/trusted-peer-sftp-executor_de.md).
+
 ## Begleitwerkzeuge
 
 Der Transferbereich transportiert Dokumente; laufende Datenbanken transportiert
@@ -180,6 +218,94 @@ Snapshot-Werkzeug kombiniert, das einen eigenen Bereich
 für lokale SQLite-Synchronisierung über verifizierte Snapshots, SHA-256-Manifeste
 und austauschbare Merge-Policies. Der Transferbereich übernimmt den Transport;
 das Transit-Werkzeug besitzt Integrität und Merge-Logik.
+
+Wird ein serverloser Fallback gebraucht, der auch ohne Tunnel, Trust-Setup
+oder offene Ports funktioniert? Siehe
+[Republica-Schaufenster-Fallback](#republica-schaufenster-fallback)
+unten.
+
+## Republica-Schaufenster-Fallback
+
+**Wann nutzen:** kein Server, kein Trust-Setup, keine offenen Ports — nur eine
+Datei-Austauschfläche existiert zwischen den Rechnern. Genau für diese Lage
+gibt es dieses Repository, und genau diese Lage setzt sich der
+`push`/`pull`-Konvergenzmodus von sqlite-transit-sync als gegeben voraus (er
+braucht beide Hosts erreichbar und eine im Voraus vereinbarte Merge-Policy).
+
+**Die Doktrin: Republica ist keine Übergangslösung, bis ein Tunnel steht.**
+Es ist die dauerhafte Fallback-Hälfte von zwei Betriebsarten, die nebeneinander
+laufen sollen:
+
+1. **Fortgeschritten** — direkte Datenbank-Synchronisation über einen
+   SSH-/Tailscale-Tunnel (`sqlite-transit-sync push`/`pull` mit
+   Merge-Policies): schnell, konvergierend, braucht beide Hosts erreichbar und
+   ein Trust-Setup.
+2. **Fallback / niederschwellig** — Republica-Schaufenster über eine beliebige
+   geteilte Datei-Austauschfläche
+   (`sqlite-transit-sync republica-publish`/`republica-list`/`republica-import`):
+   langsam, einseitig, braucht fast nichts.
+
+**Fällt eine aus, trägt die andere:**
+
+| Ausfallszenario | Direkter Abgleich (`push`/`pull`) | Republica (`republica-*`) |
+|---|---|---|
+| Ein Rechner schläft oder ist offline | blockiert — kein Peer zum Reden | läuft weiter — publish/import, sobald der Rechner aufwacht |
+| VPN-/SSH-Tunnel ist tot | blockiert | läuft weiter über die reine Datei-Austauschfläche |
+| Schlüsselrotation oder Trust-Setup offen | blockiert | läuft weiter mit dem bereits geteilten Republica-Schlüssel |
+| Geteilter Ordner (der Yard) ist kaputt, voll oder desynchron | läuft weiter | blockiert |
+| Für einen Datensatz ist keine Merge-Regel vereinbart | nicht anwendbar — eine Regel ist für Konvergenz zwingend nötig | läuft weiter — es wird nie gemergt, nur gelesen |
+
+Einmal einrichten und gelegentlich üben, auch während der direkte Weg
+problemlos läuft — ein Fallback, der erst am Tag der Not ausprobiert wird, ist
+genau an diesem Tag wertlos.
+
+**Einrichtungskosten:** ein einziger Schlüsseltransfer, out-of-band (ein
+bestehender Tunnel, ein Passwortmanager, ein USB-Stick, ein vorgelesener
+Code) — niemals über den Yard selbst. Danach genügt ein einfacher geteilter
+Ordner, dauerhaft, selbst einer, dem sonst nicht vertraut wird.
+
+**Was transportiert wird:** keine rohe Datenbankdatei, sondern ein
+kuratierter SQL-Dump (SQLite-Backup-API → kuratierter Dump → gzip →
+Fernet-verschlüsselt). Gemessen an einer realen 53,6-MB-Datenbank: 11,0 MB im
+Transit.
+
+**Was dabei entsteht:** die Import-Seite schreibt je Quell-Host eine
+*separate*, schreibgeschützte Datenbank unter
+`republica_root/<quell-host>/<namespace>.sqlite` — nie in die lokale
+Datenbank gemergt, die beim Import nicht einmal geöffnet wird. Das ist
+Absicht: Fernet authentifiziert den *Schlüssel*, nicht den *Absender* —
+deshalb muss ein importiertes Schaufenster eine schreibgeschützte Kopie zum
+Vergleichen bleiben, niemals eine Quelle, die lokale Zeilen still verändert.
+
+**Sealed Envelope:** derselbe Schlüssel und dieselbe Austauschfläche können
+statt einer Datenbank eine einzelne verschlüsselte Datei transportieren
+(`envelope-send`/`envelope-receive`) — für den Bootstrap-Fall, in dem zwei
+Maschinen noch keinen sicheren Kanal teilen und genau deshalb einmal ein
+Zugangsdatum hinüber muss. Der Klartext landet beim Empfänger **als Datei**
+(Rechte `0600`) im lokalen Zugangsdaten-Ordner — niemals in einer Datenbank,
+aus der ihn jedes Backup, jeder Index und jeder Sync-Lauf weiterkopieren
+würde.
+
+**Dieses Modul implementiert davon nichts.** Snapshotting, Verschlüsselung,
+publish/list/import und der Envelope-Kurier leben ausschließlich in
+[sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) —
+siehe dessen README-Abschnitt
+["Republica — the showcase method"](https://github.com/dev-bricks/sqlite-transit-sync#republica--the-showcase-method).
+Was dieses Repository ergänzt, ist genau eine Sache: `republica-transit resolve`
+findet die korrekte, R9-konforme, werkzeugeigene Transit-Zone
+(`db-transit/<namespace>/`) innerhalb *dieses* Yards, damit niemand erraten
+muss, wohin `--transit` zeigen soll.
+
+```bash
+republica-transit resolve --yard-root /path/to/your/yard --namespace my-app
+republica-transit check-root --yard-root /path/to/your/yard --republica-root ~/.republica
+```
+
+`sqlite-transit-sync` ist niemals eine harte Abhängigkeit dieses Repositories:
+`republica_transit` ist reine Pfadarithmetik und funktioniert unabhängig
+davon, ob das Begleitpaket installiert ist. Die Ausgabe von `resolve` enthält
+ein Feld `sqlite_transit_sync_available`, damit ein Agent dem Nutzer vor dem
+nächsten Befehl die Installation des Begleitpakets vorschlagen kann.
 
 ## Teil der ellmos-Stack-Familie
 
@@ -218,9 +344,9 @@ nur sichere, eigenständig nutzbare Discovery-Beziehungen.
   oder Falldaten gehören nicht hinein. Templates und Skill wiederholen diese
   Regel an jedem Schreibpunkt.
 - Exakte Credential-*Pfade* dürfen in einer host-eigenen Trusted-Peer-Registry
-  stehen; Werte, Schlüssel und Dateiinhalte bleiben verboten. Das Modul prüft
-  Referenzen und Pins, verifiziert derzeit aber keine abgesetzte Signatur und
-  führt kein SFTP aus. Beides bleibt ein Aktivierungs-Gate.
+  stehen; Werte, Schlüssel und Dateiinhalte bleiben verboten. Der Planer prüft
+  nur Referenzen und Pins. Der optionale Executor verifiziert abgesetzte
+  Signaturen und liest grant-gebunden genau eine Datei mit lokalen SSH-Dateien.
 - Alle übertragenen Inhalte sind normale Dateien. Vorhandene Verschlüsselung,
   Zugriffskontrolle und Backup-Verfahren gelten unverändert weiter.
 
