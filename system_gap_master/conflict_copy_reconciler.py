@@ -206,6 +206,38 @@ def excerpt(text: str, edge: int = 2, width: int = 160) -> list[str]:
     return lines
 
 
+# Fields that mark a JSON document as claiming a specific kind/version. A
+# filename pattern (e.g. a shared "-HOST" suffix) is not evidence that two
+# files are the same document -- ticket T-20260729-04 found a real pair,
+# components.json (schema_version "public-catalog-v1") and
+# components-<HOST>.json (schema_version "skill-v1"), that are independent
+# generators' outputs, not a conflict copy of one another. When one of these
+# fields is present on BOTH sides with different values, the pair fails
+# closed before any key-level merge is attempted -- regardless of whether
+# their other top-level keys would otherwise merge cleanly. A field present
+# on only one side is not a mismatch by this rule: that is the ordinary case
+# of a genuine conflict copy where one side has not yet picked up a newer
+# generator's added metadata field.
+JSON_SCHEMA_MARKER_FIELDS = ("schema_version", "generated_by")
+
+
+def json_schema_mismatch(left: Any, right: Any) -> str | None:
+    """Whether two JSON objects declare themselves different kinds of document.
+
+    Returns a short reason if a schema/generator marker is present on both
+    sides with different values, else ``None``. This is deliberately narrower
+    than "top-level keys differ" -- disjoint keys are the adapter's documented
+    safe case (e.g. two hosts each adding their own settings section) and
+    must keep merging cleanly.
+    """
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return None
+    for field in JSON_SCHEMA_MARKER_FIELDS:
+        if field in left and field in right and left[field] != right[field]:
+            return f"structural-schema-mismatch:{field}"
+    return None
+
+
 DEFAULT_DETECTORS = (
     re.compile(
         r"^(?P<stem>.+?) \((?P<tag>[^)]*(?:conflicted copy|conflict copy|conflict)[^)]*)\)"
@@ -1354,6 +1386,9 @@ class ConflictCopyReconciler:
             if merge_class is None and requested == "json-object":
                 left = json.loads(canonical.decode("utf-8"))
                 right = json.loads(conflict.decode("utf-8"))
+                mismatch = json_schema_mismatch(left, right)
+                if mismatch:
+                    raise ReconcilerError(mismatch)
                 merged = _json_object_merge(left, right)
                 result = (
                     json.dumps(merged, ensure_ascii=False, indent=2, sort_keys=True)
@@ -1378,7 +1413,13 @@ class ConflictCopyReconciler:
             elif result is not None:
                 _validate_result(canonical_path, result)
         except (UnicodeDecodeError, json.JSONDecodeError, ReconcilerError) as exc:
-            blockers.append(f"merge-validation:{type(exc).__name__}")
+            # The message is kept: every ReconcilerError raised in this method
+            # is a structural reason (a JSON pointer, a fixed phrase), never
+            # file content, and an opaque "ReconcilerError" is exactly the
+            # kind of unexplained blocker that invites a reviewer to force a
+            # merge they shouldn't. Length-capped in case a future exception
+            # message is unbounded.
+            blockers.append(f"merge-validation:{type(exc).__name__}:{str(exc)[:200]}")
             merge_class, result = None, None
         return merge_class, result, sorted(set(blockers)), base_fingerprint
 

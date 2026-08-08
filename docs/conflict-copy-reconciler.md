@@ -42,6 +42,22 @@ YAML, TOML on runtimes without `tomllib`, arbitrary code, opaque binary
 formats and databases have no generic merge adapter. Add a domain adapter
 with fixtures and consumer validation instead of weakening the generic gate.
 
+A filename pattern is not evidence that two files are the same document.
+Before a `json-object` merge is attempted, `json_schema_mismatch()` checks
+`schema_version` and `generated_by`: if either field is present on both
+sides with a different value, the pair fails closed with
+`structural-schema-mismatch:<field>`, even though disjoint top-level keys
+would otherwise merge cleanly. A field present on only one side is not a
+mismatch — that is the ordinary case of a genuine conflict copy where one
+side has not yet picked up a newer generator's added field. This check is
+intentionally narrower than "top-level keys differ": two independent
+generators' outputs that share no key at all (no shared `schema_version` or
+`generated_by` either) still merge under the documented disjoint-keys rule,
+because the adapter cannot tell them apart from two hosts' legitimately
+disjoint settings additions. Whether `json-object` should instead require a
+matching schema marker unconditionally is an open question for whoever owns
+a given root's configuration, not a decision this engine makes for them.
+
 ## Configuration
 
 Use [`examples/conflict-reconciler.config.example.json`](../examples/conflict-reconciler.config.example.json).
