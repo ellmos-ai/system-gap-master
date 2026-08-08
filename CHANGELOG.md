@@ -11,6 +11,23 @@ All notable changes to system-gap-master are documented here.
 
 ## Unreleased
 
+- **Conflict reconciler: `exempt_name_patterns` keeps by-design host-suffixed
+  artefacts out of the scan entirely.** Ticket T-20260729-04 (SS4b) requires
+  that files a yard maintains per host on purpose — a per-host status log, a
+  per-host registry snapshot, a per-host scan manifest that itself carries a
+  trailing host token — are never reported as conflict-copy candidates. The
+  existing `known_hosts` suffix detector matches any `-HOST` filename
+  regardless of intent, so without an exclusion these files reach the scan
+  queue as `canonical-authority-missing` noise. A root may now declare
+  `exempt_name_patterns` (regexes matched against the root-relative POSIX
+  path); matches are skipped before detection runs, not merely left unmapped,
+  and are reported back under `scan()["exempted_by_policy"]` so a fail-open
+  regex mistake stays auditable. Directories literally named `_archive`
+  (case-insensitive) are skipped unconditionally, independent of
+  configuration. Five regression tests, including negative cases for each
+  SS4b category and a check that a genuine host-suffixed conflict copy is
+  still detected alongside the exemptions. No production root config exists
+  yet for any real yard, so this is a capability, not an active exclusion.
 - Maintainer verification on 2026-08-04: 83 tests passed and 1 Windows
   symlink-platform test was skipped due to missing account privilege; Ruff and
   both public CLI help surfaces passed.

@@ -57,6 +57,17 @@ Mappings are deliberately explicit. A filename detector can find additional
 candidates, but without a mapping they are reported as
 `canonical-authority-missing`.
 
+Some yards keep by-design, per-host artifacts whose names happen to end in a
+host token (a per-host status log, a per-host registry snapshot, a per-host
+scan manifest that itself carries a trailing host suffix). A bare `-HOST`
+suffix detector would otherwise report these as conflict-copy candidates,
+which pollutes review even though they can never pass the canonical-mapping
+gate. Configure `exempt_name_patterns` (a list of regexes matched against the
+root-relative POSIX path) so the yard's own naming convention is excluded
+from the scan entirely, not merely left unmapped. Directories literally named
+`_archive` (case-insensitive) are always skipped, independent of
+configuration.
+
 `max_files` and `max_file_bytes` bound each run. Oversized candidates are
 hashed for identification but never loaded into the merge engine.
 

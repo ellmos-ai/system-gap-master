@@ -47,6 +47,7 @@ class ReconcilerFixture(unittest.TestCase):
         cloud_ready=True,
         known_hosts=None,
         base=None,
+        exempt_name_patterns=None,
     ):
         mapping = {
             "conflict": conflict,
@@ -73,6 +74,7 @@ class ReconcilerFixture(unittest.TestCase):
                     "cloud_ready": cloud_ready,
                     "known_hosts": known_hosts or [],
                     "canonical_mappings": [mapping],
+                    "exempt_name_patterns": exempt_name_patterns or [],
                 }
             ],
         }
@@ -822,6 +824,75 @@ class TestSafetyLifecycle(ReconcilerFixture):
             "notes.md",
         ).plan()["items"][0]
         self.assertTrue(item["detection"].startswith("provider-pattern:"))
+
+    def test_host_suffixed_by_design_artifacts_are_never_reported(self):
+        # These filenames are the kind of by-design, per-host artifact that a
+        # bare "-HOST" suffix detector would otherwise flag as a conflict
+        # copy (ticket T-20260729-04, SS4b): a per-host status log, a
+        # per-host registry snapshot and a per-host scan manifest that itself
+        # carries a trailing host token. A yard's ``exempt_name_patterns``
+        # must keep them out of the scan entirely -- reporting them as
+        # candidates is the failure mode, independent of whether they would
+        # ever pass the (separate) canonical-mapping gate.
+        self.write("notes.md", "same\n")
+        self.write("notes-HOST-A.md", "same\n")
+        self.write("CROSS_SYSTEM_SYNC_STATUS-HOST-A.md", "status\n")
+        self.write("repos-HOST-A.json", "{}\n")
+        self.write(
+            "konflikt-wartung/scan_HOST-A_manifest-HOST-A.txt", "manifest\n"
+        )
+        reconciler = self.reconciler(
+            "notes-HOST-A.md",
+            "notes.md",
+            known_hosts=["HOST-A"],
+            exempt_name_patterns=[
+                r"(?:^|/)CROSS_SYSTEM_SYNC_STATUS-[^/]+$",
+                r"(?:^|/)repos-[^/]+\.json$",
+                r"(?:^|/)konflikt-wartung/scan_[^/]+$",
+            ],
+        )
+        scan = reconciler.scan()
+        reported = {item["conflict"] for item in scan["candidates"]}
+        self.assertIn("notes-HOST-A.md", reported)
+        self.assertNotIn("CROSS_SYSTEM_SYNC_STATUS-HOST-A.md", reported)
+        self.assertNotIn("repos-HOST-A.json", reported)
+        self.assertNotIn(
+            "konflikt-wartung/scan_HOST-A_manifest-HOST-A.txt", reported
+        )
+        # Suppression must stay auditable: the scan reports what it excluded,
+        # not just what it kept, so a fail-open regex mistake is discoverable.
+        exempted = set(scan["exempted_by_policy"]["test-root"])
+        self.assertEqual(
+            exempted,
+            {
+                "CROSS_SYSTEM_SYNC_STATUS-HOST-A.md",
+                "repos-HOST-A.json",
+                "konflikt-wartung/scan_HOST-A_manifest-HOST-A.txt",
+            },
+        )
+
+    def test_archive_directory_is_never_walked(self):
+        self.write("notes.md", "same\n")
+        self.write("notes-HOST-A.md", "same\n")
+        self.write("_archive/old-notes-HOST-A.md", "same\n")
+        self.write("_Archive/other-notes-HOST-A.md", "same\n")
+        reconciler = self.reconciler(
+            "notes-HOST-A.md", "notes.md", known_hosts=["HOST-A"]
+        )
+        scan = reconciler.scan()
+        reported = {item["conflict"] for item in scan["candidates"]}
+        self.assertIn("notes-HOST-A.md", reported)
+        self.assertNotIn("_archive/old-notes-HOST-A.md", reported)
+        self.assertNotIn("_Archive/other-notes-HOST-A.md", reported)
+
+    def test_invalid_exempt_name_pattern_fails_closed(self):
+        with self.assertRaises(ReconcilerError):
+            self.reconciler(
+                "notes-HOST-A.md",
+                "notes.md",
+                known_hosts=["HOST-A"],
+                exempt_name_patterns=["("],
+            )
 
     def test_temporary_canary(self):
         result = run_canary()

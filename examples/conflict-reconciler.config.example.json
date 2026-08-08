@@ -24,6 +24,11 @@
         "HOST-A",
         "HOST-B"
       ],
+      "exempt_name_patterns": [
+        "(?:^|/)CROSS_SYSTEM_SYNC_STATUS-[^/]+$",
+        "(?:^|/)repos-[^/]+\\.json$",
+        "(?:^|/)konflikt-wartung/scan_[^/]+$"
+      ],
       "canonical_mappings": [
         {
           "conflict": "docs/guide (HOST-A conflicted copy).md",

@@ -7,7 +7,12 @@ The reconciler is deliberately policy-driven:
 * only exact copies, append-only text supersets, non-overlapping three-way
   text merges, and an explicit JSON-object adapter can be automatic;
 * leases, fingerprints, local backups, atomic replacement, verification and
-  rollback protect the mutation boundary.
+  rollback protect the mutation boundary;
+* directories literally named ``_archive`` are never walked, and a root may
+  declare ``exempt_name_patterns`` (regexes matched against the root-relative
+  path) so filenames that are by-design host-suffixed artifacts of the yard's
+  own naming convention are never reported as conflict-copy candidates in the
+  first place, not merely left unmapped.
 
 Operational manifests remain in a local state directory.  Exported receipts
 contain only root identifiers and salted path hashes, never absolute paths or
@@ -174,6 +179,7 @@ class RootPolicy:
     cloud_ready: bool
     known_hosts: tuple[str, ...]
     mappings: dict[str, dict[str, Any]]
+    exempt_name_patterns: tuple[re.Pattern[str], ...] = ()
 
 
 def _utc_now() -> str:
@@ -1035,6 +1041,18 @@ class ConflictCopyReconciler:
                         raise ReconcilerError("base mapping overlaps archive_dir")
                     _assert_plain_path(path, base_path, allow_missing=True)
                 mappings[conflict] = item
+            exempt_patterns: list[re.Pattern[str]] = []
+            for raw_pattern in raw.get("exempt_name_patterns", []):
+                if not isinstance(raw_pattern, str) or not raw_pattern:
+                    raise ReconcilerError(
+                        "exempt_name_patterns entries must be non-empty strings"
+                    )
+                try:
+                    exempt_patterns.append(re.compile(raw_pattern))
+                except re.error as exc:
+                    raise ReconcilerError(
+                        f"exempt_name_patterns entry is not a valid regex: {raw_pattern!r}"
+                    ) from exc
             result[root_id] = RootPolicy(
                 root_id=root_id,
                 path=path,
@@ -1042,6 +1060,7 @@ class ConflictCopyReconciler:
                 cloud_ready=bool(raw.get("cloud_ready", False)),
                 known_hosts=tuple(str(value) for value in raw.get("known_hosts", [])),
                 mappings=mappings,
+                exempt_name_patterns=tuple(exempt_patterns),
             )
         policies = list(result.values())
         for index, left in enumerate(policies):
@@ -1067,7 +1086,9 @@ class ConflictCopyReconciler:
             return "explicit-policy"
         return None
 
-    def _iter_candidates(self, root: RootPolicy) -> Iterator[tuple[Path, str, str]]:
+    def _iter_candidates(
+        self, root: RootPolicy, exempted: list[str] | None = None
+    ) -> Iterator[tuple[Path, str, str]]:
         if not root.path.is_dir():
             return
         _assert_plain_path(root.path, root.path, require_dir=True)
@@ -1079,7 +1100,7 @@ class ConflictCopyReconciler:
             safe_dirnames: list[str] = []
             for value in dirnames:
                 candidate_dir = current / value
-                if value.lower() == ".git":
+                if value.lower() in {".git", "_archive"}:
                     continue
                 try:
                     _assert_plain_path(root.path, candidate_dir, require_dir=True)
@@ -1097,6 +1118,12 @@ class ConflictCopyReconciler:
                     )
                 path = current / filename
                 relative = path.relative_to(root.path).as_posix()
+                if any(
+                    pattern.search(relative) for pattern in root.exempt_name_patterns
+                ):
+                    if exempted is not None:
+                        exempted.append(relative)
+                    continue
                 reason = self._detect_name(root, relative)
                 if reason:
                     yield path, relative, reason
@@ -1282,8 +1309,12 @@ class ConflictCopyReconciler:
 
     def scan(self) -> dict[str, Any]:
         candidates: list[dict[str, Any]] = []
+        exempted_by_policy: dict[str, list[str]] = {}
         for root in self.roots.values():
-            for conflict_path, conflict_relative, reason in self._iter_candidates(root):
+            root_exempted: list[str] = []
+            for conflict_path, conflict_relative, reason in self._iter_candidates(
+                root, root_exempted
+            ):
                 mapping = root.mappings.get(conflict_relative)
                 item: dict[str, Any] = {
                     "root_id": root.root_id,
@@ -1371,11 +1402,14 @@ class ConflictCopyReconciler:
                 item["blockers"] = sorted(set(blockers))
                 item["status"] = "ready" if not item["blockers"] else "blocked"
                 candidates.append(item)
+            if root_exempted:
+                exempted_by_policy[root.root_id] = sorted(root_exempted)
         return {
             "schema": SCAN_SCHEMA,
             "created_at": _utc_now(),
             "actor": self.actor,
             "candidates": candidates,
+            "exempted_by_policy": exempted_by_policy,
         }
 
     def plan(self, scan: Mapping[str, Any] | None = None) -> dict[str, Any]:
