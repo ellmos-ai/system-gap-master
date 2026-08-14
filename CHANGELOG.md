@@ -13,7 +13,8 @@ All notable changes to system-gap-master are documented here.
 
 - Version bump to 1.4.1 with package metadata and `__version__` export.
 - Standardized Shields.io badges (Ecosystem: `ellmos-ai`, Umbrella: `open-bricks`) and verified bilingual README parity.
-- Synchronized `llms.txt` AI discovery index to 2026-08-14 (152 passed, 42 subtests passed, 1 skipped).
+- Restored Python 3.10 TOML snapshot support through the conditional `tomli` backport and made the CI matrix install project dependencies before testing.
+- Synchronized README badges and `llms.txt` to the full 2026-08-14 suite (153 passed, 42 subtests passed, 1 skipped).
 - Added the provider-neutral `scripts/config_snapshot.py` showroom. It reads
   only an explicit JSON/TOML allowlist, normalises home paths, redacts secret
   values, and produces comparable `CONFIG-STATE.md` output with documented

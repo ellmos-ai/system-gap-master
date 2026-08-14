@@ -32,7 +32,9 @@ classifiers = [
     "Topic :: System :: Networking",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-dependencies = []
+dependencies = [
+    'tomli>=2.0.1; python_version < "3.11"',
+]
 
 [project.optional-dependencies]
 trusted-peer-sftp = ["paramiko>=5,<6"]

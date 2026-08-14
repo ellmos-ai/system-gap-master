@@ -35,8 +35,11 @@ from typing import Any, Mapping
 
 try:  # Python 3.11+
     import tomllib
-except ImportError:  # pragma: no cover - supported Python starts at 3.10.
-    tomllib = None
+except ImportError:  # pragma: no cover - exercised by the Python 3.10 CI job.
+    try:
+        import tomli as tomllib
+    except ImportError:  # pragma: no cover - defensive for uninstalled source trees.
+        tomllib = None
 
 
 SCHEMA = "system-gap-master/config-snapshot.v2"
