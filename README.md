@@ -2,16 +2,15 @@
 
 # system-gap-master
 
-<img src="assets/banner.png" width="100%" alt="System Gap Master banner">
-
-
 [English](README.md) | [Deutsch](README_de.md)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-152%20passed%20%2B%201%20platform%20skip-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-152%20passed-brightgreen.svg)](tests/)
+[![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
+[![Umbrella](https://img.shields.io/badge/Umbrella-open--bricks-indigo)](https://github.com/open-bricks)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,

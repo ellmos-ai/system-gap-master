@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "system-gap-master"
-version = "1.4.0"
+version = "1.4.1"
 description = "Serverless cross-machine sync protocol and transfer yard for multi-machine AI agent operations"
 readme = "README.md"
 authors = [

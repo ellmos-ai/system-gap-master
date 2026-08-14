@@ -2,7 +2,10 @@
 
 from typing import Any
 
+__version__ = "1.4.1"
+
 __all__ = [
+    "__version__",
     "ConflictCopyReconciler",
     "ReconcilerError",
     "RepublicaTransitError",

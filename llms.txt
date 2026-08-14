@@ -1,14 +1,12 @@
 # system-gap-master
 
-## Last-checked: 2026-08-08
+## Last-checked: 2026-08-14
 
 ## Verification
 
 152 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
 skipped because the current account lacks the required symlink privilege;
-Ruff and `compileall` passed locally on 2026-08-08, after adding the
-provider-neutral `config_snapshot.py` showroom on top of the 2026-08-08
-merge with origin/main (trusted-peer-sftp-executor, republica-transit).
+Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-14.
 
 ## Canonical repository
 
