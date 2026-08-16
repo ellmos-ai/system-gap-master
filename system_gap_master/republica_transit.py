@@ -37,7 +37,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-
 NAMESPACE_RE = re.compile(r"[a-z0-9][a-z0-9_.-]{0,63}")
 TRANSIT_ZONE_NAME = "db-transit"
 

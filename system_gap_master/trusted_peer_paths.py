@@ -21,7 +21,6 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Sequence
 
-
 LOCAL_CONFIG_SCHEMA = "system-gap.trusted-peer-paths.local-config.v2"
 REGISTRY_SCHEMA = "system-gap.trusted-peer-paths.registry.v2"
 RECEIPT_SCHEMA = "system-gap.trusted-peer-pull-preparation-receipt.v1"

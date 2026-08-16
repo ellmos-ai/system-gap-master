@@ -19,7 +19,6 @@ from system_gap_master.trusted_peer_paths import (
     main,
 )
 
-
 NOW = datetime(2026, 7, 30, 12, 0, tzinfo=timezone.utc)
 TEST_PIN = "SHA256:" + ("A" * 43)
 TEST_SIGNATURE_REF = "urn:system-gap:signature-key:host-a:revision-3"

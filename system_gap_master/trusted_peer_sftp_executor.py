@@ -54,7 +54,6 @@ from .trusted_peer_paths import (
     _within,
 )
 
-
 EXECUTOR_CONFIG_SCHEMA = "system-gap.trusted-peer-sftp-executor.config.v1"
 GRANT_SCHEMA = "system-gap.trusted-peer-transfer-grant.v1"
 RECEIPT_SCHEMA = "system-gap.trusted-peer-transfer-receipt.v1"
@@ -421,8 +420,8 @@ def _windows_directory_handle(path: Path) -> tuple[int, tuple[int, int]]:
 
 
 def _windows_create_stage(path: Path) -> int:
-    from ctypes import wintypes
     import msvcrt
+    from ctypes import wintypes
 
     generic_read = 0x80000000
     generic_write = 0x40000000
@@ -466,8 +465,8 @@ def _windows_create_stage(path: Path) -> int:
 def _windows_rename_handle_no_replace(
     descriptor: int, parent_handle: int, destination_name: str
 ) -> None:
-    from ctypes import wintypes
     import msvcrt
+    from ctypes import wintypes
 
     file_rename_information = 10
     error_file_exists = 80
@@ -661,8 +660,8 @@ class _PinnedDestinationDirectory:
                 raise TrustedPeerSftpError("destination directory is not pinned")
             os.unlink(staging_name, dir_fd=self.handle)
             return
-        from ctypes import wintypes
         import msvcrt
+        from ctypes import wintypes
 
         file_disposition_info = 4
 

@@ -24,7 +24,6 @@ from system_gap_master.trusted_peer_sftp_executor import (
     _windows_current_user_sid,
 )
 
-
 PIN = "SHA256:" + "A" * 43
 
 

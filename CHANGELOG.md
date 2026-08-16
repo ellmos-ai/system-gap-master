@@ -9,6 +9,13 @@
 
 All notable changes to system-gap-master are documented here.
 
+## [1.4.1] - 2026-08-16
+
+- **Discoverability & Ecosystem Matrix**: Added comprehensive sibling tools and cross-ecosystem matrix to `README.md` and `README_de.md` linking `sqlite-transit-sync`, `memoryhooker`, `workflowhooker`, `system-explorer`, `lock-master`, `ticket-master`, `coma`, `safe-start-for-codex`, `DevCenter`, and `CodeBox`.
+- **Metadata Parity Test Suite**: Added `tests/test_metadata.py` verifying package version, bilingual documentation, `ellmos-module.v2.json` schema, `SECURITY.md`, and `llms.txt` integrity (5/5 passed).
+- **Encoding Hygiene**: Patched Windows subprocess execution in `tests/test_conflict_copy_reconciler.py` to enforce UTF-8 with error replacement for robust platform testing.
+- **Linter & Test Synchronisation**: Added `[tool.ruff]` and `[tool.ruff.lint]` configuration to `pyproject.toml`; updated all badges and `llms.txt` to 158 passed tests.
+
 ## [1.4.1] - 2026-08-14
 
 - Version bump to 1.4.1 with package metadata and `__version__` export.

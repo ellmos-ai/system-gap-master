@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-153%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-158%20passed-brightgreen.svg)](tests/)
 [![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/Umbrella-open--bricks-indigo)](https://github.com/open-bricks)
 
@@ -41,6 +41,23 @@ flowchart TD
 ## Begleitwerkzeug: sqlite-transit-sync
 
 Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Das Schwester-Tool [sqlite-transit-sync](https://github.com/ellmos-ai/sqlite-transit-sync) bietet eine spezialisierte Lösung für die Replikation von SQLite-Zuständen. Statt gefährlichem Byte-Kopieren laufender Datenbankdateien über Cloud-Sync nutzt es die native SQLite Backup-API für sichere Transport-Snapshots und deterministische Merges zwischen Hosts.
+
+## Verwandte Werkzeuge & Ökosystem
+
+`system-gap-master` arbeitet nahtlos mit spezialisierten Koordinations- und Infrastrukturbausteinen innerhalb der Ökosysteme `ellmos-ai`, `dev-bricks` und `open-bricks` zusammen:
+
+| Werkzeug | Ökosystem | Zweck |
+|----------|-----------|-------|
+| [`sqlite-transit-sync`](https://github.com/ellmos-ai/sqlite-transit-sync) | `ellmos-ai` | Verifizierte SQLite-Transportsnapshots und sichere geräteübergreifende Datenbanksynchronisation |
+| [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | `ellmos-ai` | Hook-basierte Orchestrierung von Agentenlebenszyklen und Session-Gedächtnis |
+| [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | `ellmos-ai` | Deterministische Workflow-Ausführungshooks und Lebenszyklus-Trigger |
+| [`system-explorer`](https://github.com/ellmos-ai/system-explorer) | `ellmos-ai` | Agentenzentrierte Funktionserkennung, Quittungen und Systemintrospektion |
+| [`lock-master`](https://github.com/dev-bricks/lock-master) | `dev-bricks` | Dateibasiertes, verteiltes Sperr- und Lockmanagement für Multi-Agenten-Systeme |
+| [`ticket-master`](https://github.com/dev-bricks/ticket-master) | `dev-bricks` | Agentenneutrale Aufgaben- und Ticketverwaltung auf Plain-Text-Basis |
+| [`coma`](https://github.com/ellmos-ai/coma) | `ellmos-ai` | Zentrale Orchestrierung und Multi-Agenten-Koordinationsmaster |
+| [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | `dev-bricks` | Sicherer Session-Bootstrap und Preflight-Prüfungen für KI-Agenten |
+| [`DevCenter`](https://github.com/dev-bricks/DevCenter) | `dev-bricks` | Zentrales Entwickler-Cockpit und Workflow-Management-Hub |
+| [`CodeBox`](https://github.com/dev-bricks/CodeBox) | `dev-bricks` | Isolierte Sandbox-Ausführung für agentengenerierten Code |
 
 ## Warum system-gap-master?
 

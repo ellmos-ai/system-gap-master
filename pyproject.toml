@@ -59,3 +59,11 @@ pythonpath = ["."]
 
 [tool.setuptools.packages.find]
 include = ["system_gap_master*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

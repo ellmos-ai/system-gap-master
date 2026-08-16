@@ -434,6 +434,8 @@ class TestSafetyLifecycle(ReconcilerFixture):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         if created.returncode != 0:
             self.skipTest(f"junction creation unavailable: {created.stderr}")
@@ -452,6 +454,8 @@ class TestSafetyLifecycle(ReconcilerFixture):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         if created.returncode != 0:
             self.skipTest(f"junction creation unavailable: {created.stderr}")
@@ -848,6 +852,8 @@ class TestSafetyLifecycle(ReconcilerFixture):
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         if created.returncode != 0:
             self.skipTest(f"junction creation unavailable: {created.stderr}")
