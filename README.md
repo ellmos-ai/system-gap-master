@@ -4,13 +4,18 @@
 
 [English](README.md) | [Deutsch](README_de.md)
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml/badge.svg)](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml)
+[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](pyproject.toml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
+[![Privacy](https://img.shields.io/badge/privacy-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
+[![Security](https://img.shields.io/badge/security-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
+[![Tests](https://img.shields.io/badge/tests-162%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-158%20passed-brightgreen.svg)](tests/)
 [![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/Umbrella-open--bricks-indigo)](https://github.com/open-bricks)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **A serverless sync yard for people who run several machines and several AI
 agents.** One shared folder — synced by whatever you already use (OneDrive,
@@ -28,6 +33,15 @@ Part of the cross-agent infrastructure family:
 > [!NOTE]
 > **For AI Agents & RAG Crawlers:** Machine-readable protocol specs and daily sync skills are indexed in [`llms.txt`](llms.txt), [`SKILL.md`](SKILL.md), and [`PROTOCOL.md`](PROTOCOL.md).
 
+---
+
+### Quick Navigation
+[Quick Start](#quick-start) · [Architecture & Yard Structure](#the-yard-structure) · [The 10 Rules](#the-ten-rules-short) · [Daily Sync Lifecycle](#daily-sync--reconciliation-lifecycle) · [Conflict Reconciler](#safe-conflict-copy-reconciliation) · [Trusted Peer Paths](#trusted-peer-pull-preparation) · [Republica Fallback](#republica-showcase-fallback) · [Security Policy](SECURITY.md) · [LLM Context](llms.txt) · [Ecosystem Matrix](#sibling-tools--ecosystem)
+
+---
+
+### The Yard Structure
+
 ```mermaid
 flowchart TD
     subgraph HostA["Workstation (Host A)"]
@@ -44,6 +58,39 @@ flowchart TD
     end
 ```
 
+### Daily Sync & Reconciliation Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as Local Agent (Host A)
+    participant Gate as Daily Gate (system_gap_daily_check.py)
+    participant Yard as Sync Yard (hosts/ & messages/)
+    participant Reconciler as Conflict Reconciler (Reconciler Engine)
+    participant Archive as Yard Archive (_archive/)
+
+    Note over Agent,Gate: Phase 1: Preflight Gate Check
+    Agent->>Gate: Execute check (check if sync is due today)
+    Gate-->>Agent: Returns DUE (not synced today on Host A)
+
+    Note over Agent,Yard: Phase 2: Inbound Ingestion & Delete-after-Read
+    Agent->>Yard: Read inbound messages (messages/to-host-a.md)
+    Agent->>Yard: Inspect peer slot state (hosts/host-b/status.md)
+    Agent->>Yard: Remove processed message (delete-after-read invariant)
+
+    Note over Agent,Yard: Phase 3: Outbound Mutation (Slot Rule)
+    Agent->>Yard: Write state & runbook updates to own slot (hosts/host-a/)
+    Agent->>Yard: Dispatch outbound messages (messages/to-host-b.md)
+    Agent->>Gate: Mark daily gate as completed (mark)
+    Gate->>Yard: Append entry to DAILY_SYNC_LOG.md
+
+    Note over Reconciler,Archive: Phase 4: Safe Conflict-Copy Reconciliation
+    Reconciler->>Yard: Scan for provider conflict copies (*-conflicted-copy-*.md)
+    Reconciler->>Reconciler: Acquire exclusive kernel-backed OS lease
+    Reconciler->>Yard: Apply safe deterministic 3-way or append merge
+    Reconciler->>Archive: Move original conflict copies to _archive/
+```
+
 > **Deutsch:** system-gap-master ist die nutzerneutrale, offene Fassung eines seit
 > Monaten produktiv laufenden Cross-System-Sync-Ordners: mehrere Rechner,
 > mehrere KI-Agenten (Claude/Codex/Gemini), EIN gemeinsamer Übergaberaum —
@@ -57,7 +104,7 @@ Need to synchronize live SQLite database state across your hosts without risk of
 
 ## Sibling Tools & Ecosystem
 
-`system-gap-master` operates alongside specialized coordination and infrastructure components within the `ellmos-ai`, `dev-bricks`, and `open-bricks` ecosystems:
+`system-gap-master` operates alongside specialized coordination and infrastructure components within the `ellmos-ai`, `dev-bricks`, `doc-bricks`, and `open-bricks` ecosystems:
 
 | Tool | Ecosystem | Purpose |
 |------|-----------|---------|
@@ -65,12 +112,23 @@ Need to synchronize live SQLite database state across your hosts without risk of
 | [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | `ellmos-ai` | Hook-driven agent lifecycle and session memory orchestration |
 | [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | `ellmos-ai` | Deterministic workflow execution hooks and lifecycle triggers |
 | [`system-explorer`](https://github.com/ellmos-ai/system-explorer) | `ellmos-ai` | Agent-centric capability discovery, receipts, and system introspection |
+| [`policy-registry`](https://github.com/ellmos-ai/policy-registry) | `ellmos-ai` | Machine-readable security policy registry and signed delegation verification |
+| [`ellmos-delegation-authority`](https://github.com/ellmos-ai/ellmos-delegation-authority) | `ellmos-ai` | Cryptographic delegation authority and agent permission governance |
+| [`ellmos-controlcenter-mcp`](https://github.com/ellmos-ai/ellmos-controlcenter-mcp) | `ellmos-ai` | Central agent orchestration, skill routing, and MCP tool bundle management |
+| [`ellmos-filecommander-mcp`](https://github.com/ellmos-ai/ellmos-filecommander-mcp) | `ellmos-ai` | High-assurance filesystem operations and async background session manager |
+| [`ellmos-codecommander-mcp`](https://github.com/ellmos-ai/ellmos-codecommander-mcp) | `ellmos-ai` | Code intelligence, AST refactoring, and preview-safe structural editing |
+| [`n8n-manager-mcp`](https://github.com/ellmos-ai/n8n-manager-mcp) | `ellmos-ai` | Local n8n automation manager and safe workflow lifecycle controller |
 | [`lock-master`](https://github.com/dev-bricks/lock-master) | `dev-bricks` | Multi-agent distributed filesystem and resource locking |
 | [`ticket-master`](https://github.com/dev-bricks/ticket-master) | `dev-bricks` | File-based, agent-neutral issue and task tracking |
+| [`clutch`](https://github.com/dev-bricks/clutch) | `dev-bricks` | Transactional workspace state manager and staging barrier |
 | [`coma`](https://github.com/ellmos-ai/coma) | `ellmos-ai` | Central orchestration and multi-agent coordination master |
 | [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | `dev-bricks` | Safe session bootstrap and preflight verification for AI agents |
 | [`DevCenter`](https://github.com/dev-bricks/DevCenter) | `dev-bricks` | Unified developer cockpit and workflow management hub |
 | [`CodeBox`](https://github.com/dev-bricks/CodeBox) | `dev-bricks` | Isolated sandbox execution for agent-generated code |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | `dev-bricks` | Code methodology analyzer and complexity inspector |
+| [`PDFtoPDFocr`](https://github.com/doc-bricks/PDFtoPDFocr) | `doc-bricks` | High-fidelity OCR and local-first searchable PDF generation |
+| [`CleanMarkdown`](https://github.com/doc-bricks/CleanMarkdown) | `doc-bricks` | Pure Markdown formatter, linter, and document cleaner |
+| [`open-bricks`](https://github.com/open-bricks) | `open-bricks` | Umbrella organization for local-first, privacy-focused open source tools |
 
 ## Why not X?
 

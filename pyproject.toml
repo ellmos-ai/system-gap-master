@@ -29,7 +29,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: System :: Distributed Computing",
     "Topic :: System :: Networking",
+    "Topic :: System :: Recovery Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
@@ -49,6 +56,7 @@ republica-transit = "system_gap_master.republica_transit:main"
 Homepage = "https://github.com/ellmos-ai/system-gap-master"
 Documentation = "https://github.com/ellmos-ai/system-gap-master/blob/main/PROTOCOL.md"
 Repository = "https://github.com/ellmos-ai/system-gap-master"
+Changelog = "https://github.com/ellmos-ai/system-gap-master/blob/main/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/ellmos-ai/system-gap-master/issues"
 
 [tool.pytest.ini_options]

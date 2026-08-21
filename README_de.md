@@ -4,13 +4,18 @@
 
 [English](README.md) | [Deutsch](README_de.md)
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
-[![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
-[![Tests](https://img.shields.io/badge/Tests-158%20passed-brightgreen.svg)](tests/)
-[![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
-[![Umbrella](https://img.shields.io/badge/Umbrella-open--bricks-indigo)](https://github.com/open-bricks)
+[![CI](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml/badge.svg)](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml)
+[![Version](https://img.shields.io/badge/Version-1.4.1-blue.svg)](pyproject.toml)
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Plattform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
+[![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
+[![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
+[![Tests](https://img.shields.io/badge/Tests-162%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Protocol](https://img.shields.io/badge/Protokoll-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
+[![LLM Indexing](https://img.shields.io/badge/LLM%20Indexierung-llms.txt-purple.svg)](llms.txt)
+[![Ecosystem](https://img.shields.io/badge/Ökosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
+[![Umbrella](https://img.shields.io/badge/Dachorganisation-open--bricks-indigo)](https://github.com/open-bricks)
+[![License: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Ein serverloser Synchronisationsbereich (Transfer Yard) für Nutzer, die mehrere Rechner und verschiedene KI-Agenten einsetzen.** Ein gemeinsamer Ordner — synchronisiert durch einen beliebigen bestehenden Dienst (OneDrive, Dropbox, Syncthing, NAS oder Git) — kombiniert mit drei einfachen Konventionen, die verhindern, dass Laptop, Workstation und Server in Datensilos abdriften: die **Slot-Regel** (jeder Rechner schreibt ausschließlich in seinen eigenen Slot — absolut merge-konfliktfrei), ein **tägliches Ritual** mit automatischem Tages-Gate (Dauer 2–5 Minuten) und ein **Bootstrap-Runbook**, mit dem ein neues Gerät in wenigen Minuten eingerichtet werden kann.
 
@@ -22,6 +27,15 @@ Teil der geräteübergreifenden Infrastruktur-Familie:
 > [!NOTE]
 > **Für KI-Agenten & RAG-Crawler:** Maschinenlesbare Protokollspezifikationen und tägliche Sync-Skills sind in [`llms.txt`](llms.txt), [`SKILL.md`](SKILL.md) und [`PROTOCOL.md`](PROTOCOL.md) hinterlegt.
 
+---
+
+### Schnellnavigation
+[Schnellstart](#schnellstart) · [Architektur & Yard-Struktur](#die-yard-struktur) · [Die 10 Regeln](#die-zehn-regeln-kurzfassung) · [Täglicher Sync-Lebenszyklus](#t%C3%A4glicher-sync--reconciliation-lebenszyklus) · [Konfliktkopien-Reconciler](#sichere-abstimmung-von-konfliktkopien) · [Trusted-Peer-Pfade](#trusted-peer-pull-vorbereitung) · [Republica Fallback](#republica-showcase-fallback) · [Sicherheitsrichtlinie](SECURITY.md) · [LLM-Kontext](llms.txt) · [Ökosystem-Matrix](#verwandte-werkzeuge--%C3%B6kosystem)
+
+---
+
+### Die Yard-Struktur
+
 ```mermaid
 flowchart TD
     subgraph HostA["Workstation (Host A)"]
@@ -31,11 +45,44 @@ flowchart TD
         SlotB["hosts/laptop/"]
     end
     subgraph SyncYard["Transfer Yard (OneDrive / Syncthing / NAS)"]
-        SlotA -->|Host A writes only Slot A| YardStorage["system-gap-master yard"]
-        SlotB -->|Host B writes only Slot B| YardStorage
+        SlotA -->|Host A schreibt nur Slot A| YardStorage["system-gap-master yard"]
+        SlotB -->|Host B schreibt nur Slot B| YardStorage
         YardStorage --> GateScript["scripts/system_gap_daily_check.py (Daily Gate)"]
         GateScript --> MsgChannel["messages/ (Delete-after-read)"]
     end
+```
+
+### Täglicher Sync- & Reconciliation-Lebenszyklus
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as Lokaler Agent (Host A)
+    participant Gate as Daily Gate (system_gap_daily_check.py)
+    participant Yard as Sync Yard (hosts/ & messages/)
+    participant Reconciler as Konflikt-Reconciler (Reconciler Engine)
+    participant Archive as Yard Archiv (_archive/)
+
+    Note over Agent,Gate: Phase 1: Preflight-Gate-Prüfung
+    Agent->>Gate: Führe check aus (Prüfe ob Sync heute fällig ist)
+    Gate-->>Agent: Liefert DUE zurück (auf Host A heute noch nicht synchronisiert)
+
+    Note over Agent,Yard: Phase 2: Eingehende Nachrichten & Delete-after-Read
+    Agent->>Yard: Lese eingehende Nachrichten (messages/to-host-a.md)
+    Agent->>Yard: Prüfe Slot-Status der Partner-Hosts (hosts/host-b/status.md)
+    Agent->>Yard: Lösche verarbeitete Nachricht (Delete-after-Read-Invariante)
+
+    Note over Agent,Yard: Phase 3: Ausgehende Mutation (Slot-Regel)
+    Agent->>Yard: Schreibe Status- & Runbook-Updates in eigenen Slot (hosts/host-a/)
+    Agent->>Yard: Sende ausgehende Nachrichten (messages/to-host-b.md)
+    Agent->>Gate: Markiere Daily Gate als erledigt (mark)
+    Gate->>Yard: Hänge Bestätigungseintrag an DAILY_SYNC_LOG.md an
+
+    Note over Reconciler,Archive: Phase 4: Sichere Konfliktkopien-Abstimmung
+    Reconciler->>Yard: Scanne nach Provider-Konfliktkopien (*-conflicted-copy-*.md)
+    Reconciler->>Reconciler: Erwerbe exklusiven Kernel-basierten OS-Lease
+    Reconciler->>Yard: Führe deterministischen 3-Wege- oder Append-Merge aus
+    Reconciler->>Archive: Verschiebe originale Konfliktdateien nach _archive/
 ```
 
 ## Begleitwerkzeug: sqlite-transit-sync
@@ -44,7 +91,7 @@ Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Da
 
 ## Verwandte Werkzeuge & Ökosystem
 
-`system-gap-master` arbeitet nahtlos mit spezialisierten Koordinations- und Infrastrukturbausteinen innerhalb der Ökosysteme `ellmos-ai`, `dev-bricks` und `open-bricks` zusammen:
+`system-gap-master` arbeitet nahtlos mit spezialisierten Koordinations- und Infrastrukturbausteinen innerhalb der Ökosysteme `ellmos-ai`, `dev-bricks`, `doc-bricks` und `open-bricks` zusammen:
 
 | Werkzeug | Ökosystem | Zweck |
 |----------|-----------|-------|
@@ -52,12 +99,23 @@ Müssen Sie Live-SQLite-Datenbanken sicher zwischen Rechnern synchronisieren? Da
 | [`memoryhooker`](https://github.com/ellmos-ai/memoryhooker) | `ellmos-ai` | Hook-basierte Orchestrierung von Agentenlebenszyklen und Session-Gedächtnis |
 | [`workflowhooker`](https://github.com/ellmos-ai/workflowhooker) | `ellmos-ai` | Deterministische Workflow-Ausführungshooks und Lebenszyklus-Trigger |
 | [`system-explorer`](https://github.com/ellmos-ai/system-explorer) | `ellmos-ai` | Agentenzentrierte Funktionserkennung, Quittungen und Systemintrospektion |
+| [`policy-registry`](https://github.com/ellmos-ai/policy-registry) | `ellmos-ai` | Maschinenlesbare Sicherheitsrichtlinien-Registry und signierte Delegationsprüfung |
+| [`ellmos-delegation-authority`](https://github.com/ellmos-ai/ellmos-delegation-authority) | `ellmos-ai` | Kryptografische Delegationsautorität und Governance von Agentenberechtigungen |
+| [`ellmos-controlcenter-mcp`](https://github.com/ellmos-ai/ellmos-controlcenter-mcp) | `ellmos-ai` | Zentrale Agenten-Orchestrierung, Skill-Routing und MCP-Tool-Bundle-Verwaltung |
+| [`ellmos-filecommander-mcp`](https://github.com/ellmos-ai/ellmos-filecommander-mcp) | `ellmos-ai` | Hochsichere Dateisystem-Operationen und asynchroner Hintergrund-Session-Manager |
+| [`ellmos-codecommander-mcp`](https://github.com/ellmos-ai/ellmos-codecommander-mcp) | `ellmos-ai` | Code-Intelligenz, AST-Refactoring und vorschau-sichere strukturelle Code-Edits |
+| [`n8n-manager-mcp`](https://github.com/ellmos-ai/n8n-manager-mcp) | `ellmos-ai` | Lokaler n8n-Automationsmanager und sichere Workflow-Lebenszyklussteuerung |
 | [`lock-master`](https://github.com/dev-bricks/lock-master) | `dev-bricks` | Dateibasiertes, verteiltes Sperr- und Lockmanagement für Multi-Agenten-Systeme |
 | [`ticket-master`](https://github.com/dev-bricks/ticket-master) | `dev-bricks` | Agentenneutrale Aufgaben- und Ticketverwaltung auf Plain-Text-Basis |
+| [`clutch`](https://github.com/dev-bricks/clutch) | `dev-bricks` | Transaktionales Workspace-Zustandsmanagement und Staging-Barriere |
 | [`coma`](https://github.com/ellmos-ai/coma) | `ellmos-ai` | Zentrale Orchestrierung und Multi-Agenten-Koordinationsmaster |
 | [`safe-start-for-codex`](https://github.com/dev-bricks/safe-start-for-codex) | `dev-bricks` | Sicherer Session-Bootstrap und Preflight-Prüfungen für KI-Agenten |
 | [`DevCenter`](https://github.com/dev-bricks/DevCenter) | `dev-bricks` | Zentrales Entwickler-Cockpit und Workflow-Management-Hub |
 | [`CodeBox`](https://github.com/dev-bricks/CodeBox) | `dev-bricks` | Isolierte Sandbox-Ausführung für agentengenerierten Code |
+| [`MethodenAnalyser`](https://github.com/dev-bricks/MethodenAnalyser) | `dev-bricks` | Code-Methoden-Analysator und Komplexitäts-Inspektor |
+| [`PDFtoPDFocr`](https://github.com/doc-bricks/PDFtoPDFocr) | `doc-bricks` | Hochpräzises OCR und lokale Erstellung durchsuchbarer PDFs |
+| [`CleanMarkdown`](https://github.com/doc-bricks/CleanMarkdown) | `doc-bricks` | Reiner Markdown-Formatierer, Linter und Dokumenten-Bereiniger |
+| [`open-bricks`](https://github.com/open-bricks) | `open-bricks` | Dachorganisation für lokale, privatsphäreschonende Open-Source-Werkzeuge |
 
 ## Warum system-gap-master?
 

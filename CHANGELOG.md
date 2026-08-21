@@ -9,6 +9,15 @@
 
 All notable changes to system-gap-master are documented here.
 
+## [1.4.1] - 2026-08-21
+
+- **Interactive Mermaid Sequence Diagrams**: Added high-fidelity bilingual sequence diagrams in `README.md` and `README_de.md` detailing the 4-phase daily sync lifecycle (Preflight Gate Check, Inbound Ingestion with Delete-after-Read, Outbound Slot Mutation, and Safe Conflict-Copy Reconciliation with OS-backed lease).
+- **Quick Navigation & Discoverability**: Introduced Quick Navigation / Schnellnavigation in both English and German documentation, along with modernized Shields.io badges for CI, Python 3.10-3.13, Platform (Windows, Linux, macOS), Privacy (100% Offline | Zero-Egress), Security (Local-First | Fail-Closed), and test suite status.
+- **Ecosystem & Sibling Tools Expansion**: Expanded the sibling tools matrix across `ellmos-ai`, `dev-bricks`, `doc-bricks`, and `open-bricks` (including `policy-registry`, `ellmos-delegation-authority`, `ellmos-controlcenter-mcp`, `ellmos-filecommander-mcp`, `ellmos-codecommander-mcp`, `n8n-manager-mcp`, `clutch`, `MethodenAnalyser`, `PDFtoPDFocr`, `CleanMarkdown`).
+- **Security Policy Hardening**: Updated `SECURITY.md` with official direct reporting channels (`security@ellmos.ai`, `support@lukasgeiger.com`, `lukas@open-bricks.org`), GitHub Security Advisories links, and explicit Local-First, Zero-Egress, and Non-Elevation (User-Mode operation) guarantees.
+- **PEP 621 & CI Matrix Modernization**: Added Python 3.13, OS Independent, Microsoft Windows, POSIX Linux, MacOS, Distributed Computing, and Recovery Tools classifiers as well as Changelog URL in `pyproject.toml`; modernized `.github/workflows/tests.yml` with `actions/checkout@v4`, `actions/setup-python@v5` (pip cache), Python 3.10-3.13 multi-OS matrix, and a `ruff check .` linting gate.
+- **Expanded Contract Test Suite**: Expanded `tests/test_metadata.py` with 10 contract tests covering PEP 621 classifiers, CI matrix integrity, bilingual security policy invariants, badge parity, diagram presence, and ecosystem cross-linking.
+
 ## [1.4.1] - 2026-08-16
 
 - **Discoverability & Ecosystem Matrix**: Added comprehensive sibling tools and cross-ecosystem matrix to `README.md` and `README_de.md` linking `sqlite-transit-sync`, `memoryhooker`, `workflowhooker`, `system-explorer`, `lock-master`, `ticket-master`, `coma`, `safe-start-for-codex`, `DevCenter`, and `CodeBox`.

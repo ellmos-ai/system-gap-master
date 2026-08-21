@@ -4,25 +4,37 @@
 
 ### Sicherheitslücken melden
 
-Bitte keine öffentlichen Issues für Sicherheitslücken eröffnen. Verwenden Sie GitHub Private Vulnerability Reporting, falls es im Repository aktiviert ist. Falls nicht, kontaktieren Sie die Maintainer über GitHub und veröffentlichen Sie keine Details.
+Bitte keine öffentlichen Issues für Sicherheitslücken eröffnen. Verwenden Sie bevorzugt das [GitHub Security Advisory Reporting](https://github.com/ellmos-ai/system-gap-master/security/advisories). Alternativ erreichen Sie das Sicherheitsteam direkt per E-Mail:
+- **E-Mail:** `security@ellmos.ai`
+- **Fallback / Maintainer:** `support@lukasgeiger.com` | `lukas@open-bricks.org`
 
-### Geltungsbereich
+Wir prüfen sicherheitsrelevante Hinweise zeitnah und stellen bei Bedarf koordinierte Patches bereit.
 
-`system-gap-master` definiert ein dateibasiertes Synchronisationsprotokoll für KI-Agenten über ein gemeinsames Verzeichnis ("Yard").
-Es werden ausdrücklich **keine** Anmeldedaten, API-Keys, Token oder vertraulichen Personendaten im Yard abgelegt.
-Sicherheitsrelevante Meldungen zu Pfadprüfungen, Dateizugriffen oder unerwarteter Datenweitergabe liegen im Geltungsbereich.
+### Geltungsbereich & Sicherheitsarchitektur
+
+`system-gap-master` definiert ein dateibasiertes, serverloses Synchronisationsprotokoll für KI-Agenten über ein gemeinsames Übergabeverzeichnis ("Yard").
+- **Local-First & Zero-Egress:** Das Kernprotokoll und die Standard-Werkzeuge (`system_gap_daily_check.py`, `conflict_copy_reconciler.py`, `config_snapshot.py`, `trusted-peer-paths`) arbeiten 100% offline und senden zu keinem Zeitpunkt unbefugte Telemetrie oder Daten ins Netz.
+- **Keine Secrets im Yard:** Es werden ausdrücklich **keine** Anmeldedaten, API-Keys, Token, Passwörter oder vertraulichen Klientendaten im Yard abgelegt (Regel 6).
+- **Non-Elevation:** Alle Skripte und CLIs laufen standardmäßig im unprivilegierten Benutzerkontext (User-Mode). Es werden weder Administrator- noch Root-Rechte benötigt.
+- **Fail-Closed Integrität:** Pfadvalidierungen (Schutz vor Symlink-, Junction- und Directory-Traversal-Attacken) und Berechtigungsprüfungen schlagen bei Zweifelsfällen standardmäßig fehl (*fail-closed*).
 
 ## English
 
 ### Reporting a Vulnerability
 
-Please do not open public issues for security vulnerabilities. Use GitHub Private Vulnerability Reporting if it is enabled for the repository. If it is not enabled, contact the maintainers through GitHub and do not disclose details publicly.
+Please do not open public issues for security vulnerabilities. We strongly encourage reporting via [GitHub Security Advisories](https://github.com/ellmos-ai/system-gap-master/security/advisories). Alternatively, you can contact the security maintainers directly:
+- **Email:** `security@ellmos.ai`
+- **Fallback / Maintainer:** `support@lukasgeiger.com` | `lukas@open-bricks.org`
 
-### Scope
+Security disclosures are handled promptly, with coordinated fixes published following responsible disclosure practices.
 
-`system-gap-master` defines a file-based sync protocol for AI agents over a shared directory ("Yard").
-No credentials, API keys, tokens, or confidential personal data may ever be stored in the yard.
-Security reports concerning path validation, file access boundaries, or unexpected data exposure are within scope.
+### Scope & Security Invariants
+
+`system-gap-master` defines a file-based, serverless sync protocol for AI agents operating over a shared transfer yard directory.
+- **Local-First & Zero-Egress:** The core protocol and default tools (`system_gap_daily_check.py`, `conflict_copy_reconciler.py`, `config_snapshot.py`, `trusted-peer-paths`) operate 100% offline without telemetry or external network egress.
+- **No Secrets in Yard:** No credentials, API keys, tokens, passwords, private keys, or confidential personal data may ever be stored in the yard (Rule 6).
+- **Non-Elevation:** All scripts and CLI utilities operate entirely within unprivileged user space. No administrator or root elevation is required or requested.
+- **Fail-Closed Boundaries:** Path validations (protection against symlink, junction, and directory traversal attacks) and authorization checks fail closed by default.
 
 ## Conflict-copy reconciler boundary
 
