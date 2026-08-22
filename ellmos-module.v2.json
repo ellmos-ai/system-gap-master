@@ -13,7 +13,8 @@
     "sync.conflict-copy-reconciliation",
     "sync.trusted-peer-path-registry",
     "sync.trusted-peer-pull-preparation",
-    "sync.trusted-peer-single-file-pull"
+    "sync.trusted-peer-single-file-pull",
+    "sync.ticket-route-intent-adapter"
   ],
   "requires": [],
   "optional": [
@@ -60,6 +61,11 @@
         "private-overlay"
       ],
       "optional_dependency": "paramiko"
+    },
+    {
+      "id": "ticket-route-intent",
+      "role": "validated-ticket-master-intent-to-existing-transport",
+      "optional_dependency": "ticket-master>=1.11,<1.12"
     },
     {
       "id": "sqlite-transit-sync",

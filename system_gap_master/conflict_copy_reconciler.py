@@ -340,6 +340,16 @@ def _is_link_or_reparse(path: Path) -> bool:
     return stat.S_ISLNK(info.st_mode) or bool(attributes & reparse_flag)
 
 
+def _is_allowed_platform_alias(path: Path, resolved: Path) -> bool:
+    """Allow only macOS's fixed ``/var`` to ``/private/var`` system alias."""
+
+    return (
+        sys.platform == "darwin"
+        and path.as_posix() == "/var"
+        and resolved.as_posix() == "/private/var"
+    )
+
+
 def _assert_no_reparse_components(
     path: Path, *, allow_missing: bool = False
 ) -> None:
@@ -358,6 +368,12 @@ def _assert_no_reparse_components(
         attributes = int(getattr(info, "st_file_attributes", 0))
         reparse_flag = int(getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
         if stat.S_ISLNK(info.st_mode) or attributes & reparse_flag:
+            try:
+                resolved = current.resolve(strict=True)
+            except OSError:
+                resolved = current
+            if _is_allowed_platform_alias(current, resolved):
+                continue
             raise ReconcilerError(f"symlink-or-reparse-path:{lexical}")
 
 

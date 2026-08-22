@@ -1,12 +1,12 @@
 # system-gap-master
 
-## Last-checked: 2026-08-21
+## Last-checked: 2026-08-22
 
 ## Verification
 
-162 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
+176 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
 skipped because the current account lacks the required symlink privilege;
-Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-21.
+Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-22.
 
 ## Canonical repository
 
@@ -45,6 +45,11 @@ separate state silos.
   `db-transit/<namespace>` zone for the Republica showcase fallback and
   validates that a `republica_root` destination stays outside the yard; pure
   path arithmetic, no hard dependency on sqlite-transit-sync.
+- `system_gap_master/ticket_route_adapter.py` — validates ticket-master 1.11
+  route intents and hands the unchanged payload to an injected existing
+  transport; it owns no ticket queue, fan-out, lifecycle or completion state.
+- `docs/ticket-route-intent-adapter.md` and `_de.md` — cross-repository pin,
+  retry/idempotency contract and responsibility boundary.
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.

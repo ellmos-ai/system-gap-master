@@ -18,6 +18,26 @@ from system_gap_master.conflict_copy_reconciler import (
 )
 
 
+class PlatformAliasTests(unittest.TestCase):
+    def test_only_fixed_macos_var_alias_is_platform_allowed(self):
+        with mock.patch.object(reconciler_module.sys, "platform", "darwin"):
+            self.assertTrue(
+                reconciler_module._is_allowed_platform_alias(
+                    Path("/var"), Path("/private/var")
+                )
+            )
+            self.assertFalse(
+                reconciler_module._is_allowed_platform_alias(
+                    Path("/tmp"), Path("/private/tmp")
+                )
+            )
+            self.assertFalse(
+                reconciler_module._is_allowed_platform_alias(
+                    Path("/var"), Path("/attacker-controlled")
+                )
+            )
+
+
 class ReconcilerFixture(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

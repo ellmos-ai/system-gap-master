@@ -35,6 +35,12 @@ class MetadataParityTests(unittest.TestCase):
         self.assertEqual(data.get("schema"), "ellmos.module.v2")
         self.assertEqual(data.get("id"), "system-gap-master")
         self.assertIn("provides", data)
+        self.assertIn("sync.ticket-route-intent-adapter", data["provides"])
+        adapters = {adapter["id"]: adapter for adapter in data["adapters"]}
+        self.assertEqual(
+            adapters["ticket-route-intent"]["optional_dependency"],
+            "ticket-master>=1.11,<1.12",
+        )
 
     def test_security_policy_exists(self):
         security_path = self.root / "SECURITY.md"
@@ -72,12 +78,12 @@ class MetadataParityTests(unittest.TestCase):
 
         for text in (en_text, de_text):
             self.assertIn("actions/workflows/tests.yml/badge.svg", text)
-            self.assertIn("1.4.1", text)
+            self.assertIn("1.5.0", text)
             self.assertIn("3.10", text)
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("162%20passed", text)
+            self.assertIn("176%20passed", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
 
@@ -86,8 +92,8 @@ class MetadataParityTests(unittest.TestCase):
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-08-21", content)
-        self.assertIn("162 tests passed", content)
+        self.assertIn("Last-checked: 2026-08-22", content)
+        self.assertIn("176 tests passed", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):
@@ -116,6 +122,10 @@ class MetadataParityTests(unittest.TestCase):
         self.assertIn("Repository", urls)
         self.assertIn("Changelog", urls)
         self.assertIn("Bug Tracker", urls)
+        self.assertEqual(
+            data["project"]["optional-dependencies"]["ticket-routing"],
+            ["ticket-master>=1.11,<1.12"],
+        )
 
     def test_ecosystem_sibling_tools_matrix(self):
         en_readme = self.root / "README.md"
