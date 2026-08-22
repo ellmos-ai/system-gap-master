@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0] - 2026-08-22
+
+- Added a narrow `ticket-master>=1.11,<1.12` route-intent adapter. The
+  canonical ticket writer remains the only ticket creator and lifecycle
+  authority; system-gap-master validates and forwards one idempotent public
+  payload to an injected existing transport.
+- Kept transport acknowledgements opaque and separate from ticket receipts.
+  The adapter adds no queue, fan-out, retry loop or completion state.
+- Added bilingual boundary documentation and fail-closed contract tests for
+  schema fields, target cardinality, caller idempotency and payload hashing.
+
 ## 1.2.0 - 2026-07-27
 
 - Renamed the public project from `sync-master` to `system-gap-master`.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "system-gap-master"
-version = "1.4.1"
+version = "1.5.0"
 description = "Serverless cross-machine sync protocol and transfer yard for multi-machine AI agent operations"
 readme = "README.md"
 authors = [
@@ -45,6 +45,7 @@ dependencies = [
 
 [project.optional-dependencies]
 trusted-peer-sftp = ["paramiko>=5,<6"]
+ticket-routing = ["ticket-master>=1.11,<1.12"]
 
 [project.scripts]
 conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"

@@ -5,12 +5,12 @@
 [English](README.md) | [Deutsch](README_de.md)
 
 [![CI](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml/badge.svg)](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml)
-[![Version](https://img.shields.io/badge/Version-1.4.1-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/Version-1.5.0-blue.svg)](pyproject.toml)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Plattform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/Tests-162%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-173%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Protocol](https://img.shields.io/badge/Protokoll-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexierung-llms.txt-purple.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/Ökosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
@@ -30,9 +30,20 @@ Teil der geräteübergreifenden Infrastruktur-Familie:
 ---
 
 ### Schnellnavigation
-[Schnellstart](#schnellstart) · [Architektur & Yard-Struktur](#die-yard-struktur) · [Die 10 Regeln](#die-zehn-regeln-kurzfassung) · [Täglicher Sync-Lebenszyklus](#t%C3%A4glicher-sync--reconciliation-lebenszyklus) · [Konfliktkopien-Reconciler](#sichere-abstimmung-von-konfliktkopien) · [Trusted-Peer-Pfade](#trusted-peer-pull-vorbereitung) · [Republica Fallback](#republica-showcase-fallback) · [Sicherheitsrichtlinie](SECURITY.md) · [LLM-Kontext](llms.txt) · [Ökosystem-Matrix](#verwandte-werkzeuge--%C3%B6kosystem)
+[Schnellstart](#schnellstart) · [Architektur & Yard-Struktur](#die-yard-struktur) · [Ticket-Routing](#ticket-routing-grenze) · [Die 10 Regeln](#die-zehn-regeln-kurzfassung) · [Täglicher Sync-Lebenszyklus](#t%C3%A4glicher-sync--reconciliation-lebenszyklus) · [Konfliktkopien-Reconciler](#sichere-abstimmung-von-konfliktkopien) · [Trusted-Peer-Pfade](#trusted-peer-pull-vorbereitung) · [Republica Fallback](#republica-showcase-fallback) · [Sicherheitsrichtlinie](SECURITY.md) · [LLM-Kontext](llms.txt) · [Ökosystem-Matrix](#verwandte-werkzeuge--%C3%B6kosystem)
 
 ---
+
+### Ticket-Routing-Grenze
+
+Die optionale Integration `ticket-routing` verbindet
+`ticket-master>=1.11,<1.12` mit einem vorhandenen system-gap-Transport, ohne
+eine zweite Queue oder einen weiteren Lifecycle-Owner einzuführen.
+Ticket-master erstellt und beendet den Vertrag; system-gap-master validiert
+nur den idempotenten Route-Intent und übergibt diesen Payload an einen
+injizierten Transport-Callback. Eine Transportbestätigung zählt nie als
+Abschluss-Receipt. Details stehen im
+[Ticket-Route-Intent-Adaptervertrag](docs/ticket-route-intent-adapter_de.md).
 
 ### Die Yard-Struktur
 
