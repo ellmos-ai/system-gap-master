@@ -9,6 +9,21 @@
 
 All notable changes to system-gap-master are documented here.
 
+## [1.5.0] - 2026-08-22
+
+- Added the manifest-driven `yard-instance-manager` lifecycle boundary between
+  a local repository clone and a live shared yard: read-only `doctor`,
+  `inventory`, `retention-plan` and `plan`, plus hash-bound `upgrade` and
+  fail-closed `rollback` for declared template paths only.
+- Added `template/YARD_TEMPLATE.json` with explicit repo/instance/tool
+  ownership and `managed` versus `seed-once` file modes. Host slots, messages,
+  archives, private content and `db-transit` payloads remain outside automatic
+  mutation.
+- Added synthetic fresh-instance, idempotency, modified-target, plan-tamper,
+  update, backup and rollback tests plus bilingual lifecycle documentation.
+- Documented `_transit` as a manual writer/reader migration gate to the existing
+  R9 `db-transit/<namespace>` route rather than introducing a second transport.
+
 ## [1.4.1] - 2026-08-21
 
 - **Interactive Mermaid Sequence Diagrams**: Added high-fidelity bilingual sequence diagrams in `README.md` and `README_de.md` detailing the 4-phase daily sync lifecycle (Preflight Gate Check, Inbound Ingestion with Delete-after-Read, Outbound Slot Mutation, and Safe Conflict-Copy Reconciliation with OS-backed lease).

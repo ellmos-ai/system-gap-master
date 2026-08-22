@@ -39,6 +39,16 @@ items arrive, get integrated by their target system, then move to `_archive/`.
     may emit a non-executable preparation receipt. Network transfer remains
     a separate activation. SQLite stays on the R9 snapshot adapter.
 
+## Optional repo-to-instance lifecycle
+
+Keep this yard as a plain sync instance, never as a Git checkout. Generic
+template updates are prepared in a local `system-gap-master` clone and may be
+applied only through a reviewed `yard-instance-manager` plan. The manager may
+touch only paths declared in `template/YARD_TEMPLATE.json`; host slots,
+messages, archives and `db-transit/` payloads remain instance- or tool-owned.
+Locally changed managed files block, `seed-once` files are preserved, and
+every applied operation has a host-local backup and rollback manifest.
+
 ## Artifact types in this yard
 
 | Artifact | Pattern | Notes |

@@ -182,6 +182,33 @@ The preparation contract and threat model are in
 Extend the table in your local `SYNC_PROTOCOL.md` as your yard grows — the
 convention that a convention EXISTS is the load-bearing part.
 
+## Controlled instance lifecycle extension
+
+The repository and a live yard have different owners. The repository is the
+source for generic schemas, templates and validators; the yard owns host
+slots, actor state, messages, archives and tool-managed transit payloads. A
+yard therefore remains a plain instance, not a Git checkout.
+
+`yard-instance-manager` makes that boundary executable through
+`template/YARD_TEMPLATE.json`:
+
+- `doctor`, `inventory`, `retention-plan` and `plan` are read-only;
+- only declared template files and required directories may enter a mutating
+  plan;
+- `managed` files update only from a previously recorded exact hash;
+- `seed-once` files are preserved after first creation;
+- every plan, source and target is rebound before apply;
+- backups and operation manifests stay host-local outside the yard;
+- rollback stops before mutation if any target, backup or state binding
+  changed.
+
+The manager never migrates `_transit` automatically. That legacy path first
+needs a writer/reader audit; structured payloads then use the existing R9
+`db-transit/<namespace>` boundary. It also never archives retention candidates
+automatically: old age is evidence for review, not authority to delete.
+
+Full contract: [`docs/instance-manager.md`](docs/instance-manager.md).
+
 ## Why this works (design notes)
 
 - **Write-ownership beats merge tooling.** The slot rule removes the need for

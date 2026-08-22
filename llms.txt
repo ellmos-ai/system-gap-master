@@ -1,12 +1,12 @@
 # system-gap-master
 
-## Last-checked: 2026-08-21
+## Last-checked: 2026-08-22
 
 ## Verification
 
-162 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
+177 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
 skipped because the current account lacks the required symlink privilege;
-Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-21.
+Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-22.
 
 ## Canonical repository
 
@@ -45,6 +45,11 @@ separate state silos.
   `db-transit/<namespace>` zone for the Republica showcase fallback and
   validates that a `republica_root` destination stays outside the yard; pure
   path arithmetic, no hard dependency on sqlite-transit-sync.
+- `system_gap_master/instance_manager.py` — manifest-driven read-only doctor,
+  top-level inventory and non-mutating retention plan plus hash-bound
+  plan/upgrade/rollback for declared template paths only.
+- `docs/instance-manager.md` — repository-to-yard ownership, migration,
+  idempotency, backup and rollback contract.
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `template/` — copy-ready yard skeleton.

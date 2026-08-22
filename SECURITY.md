@@ -17,6 +17,11 @@ Wir prüfen sicherheitsrelevante Hinweise zeitnah und stellen bei Bedarf koordin
 - **Keine Secrets im Yard:** Es werden ausdrücklich **keine** Anmeldedaten, API-Keys, Token, Passwörter oder vertraulichen Klientendaten im Yard abgelegt (Regel 6).
 - **Non-Elevation:** Alle Skripte und CLIs laufen standardmäßig im unprivilegierten Benutzerkontext (User-Mode). Es werden weder Administrator- noch Root-Rechte benötigt.
 - **Fail-Closed Integrität:** Pfadvalidierungen (Schutz vor Symlink-, Junction- und Directory-Traversal-Attacken) und Berechtigungsprüfungen schlagen bei Zweifelsfällen standardmäßig fehl (*fail-closed*).
+- **Instanz-Lebenszyklus:** `yard-instance-manager` verändert ausschließlich
+  Pfade aus dem Template-Manifest. Plan, Quellen und Ziele werden per Hash
+  erneut gebunden; Aktualisierungen erhalten hostlokale Backups. Hostslots,
+  Nachrichten, Archive, private Instanzdaten und tool-eigene Transitdaten
+  werden niemals allein aufgrund eines Dateinamens übernommen.
 
 ## English
 
@@ -35,6 +40,13 @@ Security disclosures are handled promptly, with coordinated fixes published foll
 - **No Secrets in Yard:** No credentials, API keys, tokens, passwords, private keys, or confidential personal data may ever be stored in the yard (Rule 6).
 - **Non-Elevation:** All scripts and CLI utilities operate entirely within unprivileged user space. No administrator or root elevation is required or requested.
 - **Fail-Closed Boundaries:** Path validations (protection against symlink, junction, and directory traversal attacks) and authorization checks fail closed by default.
+- **Instance lifecycle:** `yard-instance-manager` mutates only paths declared
+  by the template manifest. Plans, sources and targets are hash-rebound,
+  updates receive host-local backups, and host slots, messages, archives,
+  private instance data and tool-owned transit data are never adopted by
+  filename alone. Shared instance state contains no absolute local yard path;
+  one externally coordinated mutating owner is required because file-sync
+  providers are not distributed lock services.
 
 ## Conflict-copy reconciler boundary
 

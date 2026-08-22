@@ -2,11 +2,12 @@
 
 from typing import Any
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 
 __all__ = [
     "__version__",
     "ConflictCopyReconciler",
+    "InstanceManagerError",
     "ReconcilerError",
     "RepublicaTransitError",
     "RepublicaTransitPaths",
@@ -23,6 +24,7 @@ def __getattr__(name: str) -> Any:
             ConflictCopyReconciler,
             ReconcilerError,
         )
+        from .instance_manager import InstanceManagerError
         from .republica_transit import (
             RepublicaTransitError,
             RepublicaTransitPaths,
@@ -38,6 +40,7 @@ def __getattr__(name: str) -> Any:
 
         return {
             "ConflictCopyReconciler": ConflictCopyReconciler,
+            "InstanceManagerError": InstanceManagerError,
             "ReconcilerError": ReconcilerError,
             "RepublicaTransitError": RepublicaTransitError,
             "RepublicaTransitPaths": RepublicaTransitPaths,

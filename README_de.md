@@ -5,12 +5,12 @@
 [English](README.md) | [Deutsch](README_de.md)
 
 [![CI](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml/badge.svg)](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml)
-[![Version](https://img.shields.io/badge/Version-1.4.1-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/Version-1.5.0-blue.svg)](pyproject.toml)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Plattform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/Tests-162%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-177%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Protocol](https://img.shields.io/badge/Protokoll-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexierung-llms.txt-purple.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/Ökosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
@@ -30,7 +30,7 @@ Teil der geräteübergreifenden Infrastruktur-Familie:
 ---
 
 ### Schnellnavigation
-[Schnellstart](#schnellstart) · [Architektur & Yard-Struktur](#die-yard-struktur) · [Die 10 Regeln](#die-zehn-regeln-kurzfassung) · [Täglicher Sync-Lebenszyklus](#t%C3%A4glicher-sync--reconciliation-lebenszyklus) · [Konfliktkopien-Reconciler](#sichere-abstimmung-von-konfliktkopien) · [Trusted-Peer-Pfade](#trusted-peer-pull-vorbereitung) · [Republica Fallback](#republica-showcase-fallback) · [Sicherheitsrichtlinie](SECURITY.md) · [LLM-Kontext](llms.txt) · [Ökosystem-Matrix](#verwandte-werkzeuge--%C3%B6kosystem)
+[Schnellstart](#schnellstart) · [Architektur & Yard-Struktur](#die-yard-struktur) · [Die 10 Regeln](#die-zehn-regeln-kurzfassung) · [Täglicher Sync-Lebenszyklus](#t%C3%A4glicher-sync--reconciliation-lebenszyklus) · [Instanz-Lebenszyklus](#kontrollierter-repo-zu-yard-lebenszyklus) · [Konfliktkopien-Reconciler](#sichere-abstimmung-von-konfliktkopien) · [Trusted-Peer-Pfade](#trusted-peer-pull-vorbereitung) · [Republica Fallback](#republica-showcase-fallback) · [Sicherheitsrichtlinie](SECURITY.md) · [LLM-Kontext](llms.txt) · [Ökosystem-Matrix](#verwandte-werkzeuge--%C3%B6kosystem)
 
 ---
 
@@ -154,24 +154,36 @@ system_gap_master/republica_transit.py
                       resolves the R9 db-transit/<namespace> zone for the
                       Republica showcase fallback (see below); path arithmetic
                       only, no hard dependency on sqlite-transit-sync
+system_gap_master/instance_manager.py
+                      manifestgesteuerter Doctor, Inventar- und Retention-Plan
+                      sowie hashgebundener Plan/Upgrade/Rollback-Ablauf
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
+docs/instance-manager.md  kontrollierter Deployment-Vertrag Klon → Yard
 docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
 
 ## Schnellstart
 
 ```bash
-# 1) Create the yard inside your synced storage and copy the skeleton
-cp -r template/ /path/to/your/synced/storage/SYNC/
+# 1) Lege einen leeren Yard an, erzeuge im lokalen Klon einen prüfbaren Plan
+#    und wende ausschließlich die deklarierten Templatepfade an.
+mkdir /pfad/zum/synchronisierten/SYNC
+yard-instance-manager plan \
+  --yard-root /pfad/zum/synchronisierten/SYNC \
+  --template-root /pfad/zu/system-gap-master/template \
+  --output /host-lokal/review/yard-plan.json
+yard-instance-manager upgrade \
+  --plan /host-lokal/review/yard-plan.json \
+  --state-dir /host-lokal/system-gap-master-state
 
-# 2) Fill in SYNC_PROTOCOL.md (slot table) and create your first slot
-mkdir /path/to/.../SYNC/hosts/<YOUR-HOST>
+# 2) Ergänze die Slot-Tabelle in SYNC_PROTOCOL.md und lege den ersten Hostslot an.
+mkdir /pfad/zum/SYNC/hosts/<DEIN-HOST>
 
-# 3) Point your agents at it (see docs/adapting-your-agents.md)
+# 3) Verknüpfe deine Agenten (siehe docs/adapting-your-agents.md).
 setx SYSTEM_GAP_MASTER_DIR "C:\path\to\SYNC"     # Windows
 export SYSTEM_GAP_MASTER_DIR=/path/to/SYNC       # macOS/Linux
 
-# 4) Daily, per machine (your agent does this via SKILL.md):
+# 4) Täglich pro Rechner (dein Agent folgt SKILL.md):
 python scripts/system_gap_daily_check.py check   # gate: due today?
 # ... run the ritual (read inbound, write outbound) ...
 python scripts/system_gap_daily_check.py mark
@@ -200,6 +212,33 @@ Mit `--check` bleibt der Lauf schreibgeschützt. `snapshots/` und
 `CONFIG-STATE.md` sind abgeleitete Ausgaben; begründe absichtliche
 Unterschiede mit Überschriften wie `### \`agent-one.model\`` in
 `DEVIATIONS.md`.
+
+## Kontrollierter Repo-zu-Yard-Lebenszyklus
+
+Der Yard bleibt eine gemeinsam genutzte Instanz und wird niemals zum
+Git-Checkout. Der optionale `yard-instance-manager` vergleicht ihn mit dem
+versionierten `template/YARD_TEMPLATE.json`, klassifiziert die oberste
+Struktur und erzeugt schreibgeschützte Retention- und Migrationspläne. Ein
+gespeicherter Plan darf ausschließlich deklarierte Templatepfade anlegen oder
+aktualisieren. Hostslots, Nachrichten, Archive, private Instanzinhalte und der
+tool-eigene Bereich `db-transit/` bleiben außerhalb seines Schreibbereichs.
+
+```bash
+yard-instance-manager doctor --yard-root /pfad/zum/SYNC \
+  --template-root /pfad/zu/system-gap-master/template
+yard-instance-manager plan --yard-root /pfad/zum/SYNC \
+  --template-root /pfad/zu/system-gap-master/template \
+  --output /host-lokal/review/yard-plan.json
+yard-instance-manager upgrade --plan /host-lokal/review/yard-plan.json \
+  --state-dir /host-lokal/system-gap-master-state
+```
+
+Plan, Quellen und Ziele werden unmittelbar vor jeder Änderung erneut per Hash
+geprüft. Aktualisierungen erhalten hostlokale Backups, atomare Ersetzung und
+eine Rollback-Operation. Lokal veränderte verwaltete Dateien blockieren den
+Lauf, statt überschrieben zu werden; `seed-once`-Dateien gehören nach ihrer
+Erzeugung der Instanz. Details stehen im
+[Instanz-Lebenszyklus-Vertrag](docs/instance-manager.md).
 
 ## Die zehn Kernregeln (Kurzübersicht)
 

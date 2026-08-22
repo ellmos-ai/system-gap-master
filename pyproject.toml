@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "system-gap-master"
-version = "1.4.1"
+version = "1.5.0"
 description = "Serverless cross-machine sync protocol and transfer yard for multi-machine AI agent operations"
 readme = "README.md"
 authors = [
@@ -51,6 +51,7 @@ conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"
 trusted-peer-paths = "system_gap_master.trusted_peer_paths:main"
 trusted-peer-sftp-executor = "system_gap_master.trusted_peer_sftp_executor:main"
 republica-transit = "system_gap_master.republica_transit:main"
+yard-instance-manager = "system_gap_master.instance_manager:main"
 
 [project.urls]
 Homepage = "https://github.com/ellmos-ai/system-gap-master"

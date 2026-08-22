@@ -55,7 +55,10 @@ asking the user once. `<HOST>` is this machine's name.
      `hosts/<HOST>/trusted-peer-paths/registry.json`; keys, SSH files and
      referenced content never enter the yard.
 5. **Bootstrap freshness (R8)** — if the yard's structure or the machine
-   inventory changed today, update `BOOTSTRAP.md` accordingly.
+   inventory changed today, run `yard-instance-manager doctor` read-only.
+   Generic template changes are built in the local repository clone and enter
+   the yard only through a saved, reviewed plan. Update the instance-owned
+   `BOOTSTRAP.md` accordingly; never turn the yard into a Git checkout.
 6. **Mark the gate** — `python scripts/system_gap_daily_check.py mark` (appends
    today's row for `<HOST>`), and report to the user in 3–6 lines what came
    in, what went out, and anything needing their decision.

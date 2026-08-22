@@ -1,0 +1,44 @@
+{
+  "schema": "system-gap.yard-template.v1",
+  "template_version": "1.5.0",
+  "directories": [
+    {"path": "_archive", "ownership": "instance", "required": true},
+    {"path": "_config-state", "ownership": "instance", "required": true},
+    {"path": "agents", "ownership": "instance", "required": true},
+    {"path": "hosts", "ownership": "instance", "required": true},
+    {"path": "hosts/_slot-template", "ownership": "repo", "required": true},
+    {"path": "hosts/_slot-template/trusted-peer-paths", "ownership": "repo", "required": true},
+    {"path": "messages", "ownership": "instance", "required": true},
+    {"path": "runners", "ownership": "repo", "required": true},
+    {"path": "runners/desktop-agent", "ownership": "repo", "required": true},
+    {"path": "runners/macos", "ownership": "repo", "required": true},
+    {"path": "db-transit", "ownership": "tool", "required": false}
+  ],
+  "files": [
+    {"path": "SYNC_PROTOCOL.md", "mode": "seed-once"},
+    {"path": "BOOTSTRAP.md", "mode": "seed-once"},
+    {"path": "DAILY_SYNC_LOG.md", "mode": "seed-once"},
+    {"path": "CONFLICT_REVIEW_LOG.md", "mode": "seed-once"},
+    {"path": "_archive/README.md", "mode": "managed"},
+    {"path": "_config-state/README.md", "mode": "managed"},
+    {"path": "_config-state/DEVIATIONS.md", "mode": "seed-once"},
+    {"path": "agents/README.md", "mode": "managed"},
+    {"path": "hosts/README.md", "mode": "managed"},
+    {"path": "hosts/_slot-template/trusted-peer-paths/README.md", "mode": "managed"},
+    {"path": "messages/README.md", "mode": "managed"},
+    {"path": "runners/desktop-agent/conflict-copy-reconciler.task.json", "mode": "managed"},
+    {"path": "runners/macos/org.example.system-gap-master.conflict-copy-reconciler.plist", "mode": "managed"},
+    {"path": "runners/macos/run-conflict-copy-reconciler.sh", "mode": "managed"}
+  ],
+  "protected_patterns": [
+    "hosts/**",
+    "messages/**",
+    "_archive/**",
+    "db-transit/**",
+    "*.db",
+    "*.sqlite",
+    "*.sqlite3",
+    "*-wal",
+    "*-shm"
+  ]
+}

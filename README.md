@@ -5,12 +5,12 @@
 [English](README.md) | [Deutsch](README_de.md)
 
 [![CI](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml/badge.svg)](https://github.com/ellmos-ai/system-gap-master/actions/workflows/tests.yml)
-[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](pyproject.toml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/security-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-162%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-177%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)
@@ -36,7 +36,7 @@ Part of the cross-agent infrastructure family:
 ---
 
 ### Quick Navigation
-[Quick Start](#quick-start) · [Architecture & Yard Structure](#the-yard-structure) · [The 10 Rules](#the-ten-rules-short) · [Daily Sync Lifecycle](#daily-sync--reconciliation-lifecycle) · [Conflict Reconciler](#safe-conflict-copy-reconciliation) · [Trusted Peer Paths](#trusted-peer-pull-preparation) · [Republica Fallback](#republica-showcase-fallback) · [Security Policy](SECURITY.md) · [LLM Context](llms.txt) · [Ecosystem Matrix](#sibling-tools--ecosystem)
+[Quick Start](#quick-start) · [Architecture & Yard Structure](#the-yard-structure) · [The 10 Rules](#the-ten-rules-short) · [Daily Sync Lifecycle](#daily-sync--reconciliation-lifecycle) · [Instance Lifecycle](#controlled-repo-to-yard-lifecycle) · [Conflict Reconciler](#safe-conflict-copy-reconciliation) · [Trusted Peer Paths](#trusted-peer-pull-preparation) · [Republica Fallback](#republica-showcase-fallback) · [Security Policy](SECURITY.md) · [LLM Context](llms.txt) · [Ecosystem Matrix](#sibling-tools--ecosystem)
 
 ---
 
@@ -169,17 +169,29 @@ system_gap_master/republica_transit.py
                       resolves the R9 db-transit/<namespace> zone for the
                       Republica showcase fallback (see below); path arithmetic
                       only, no hard dependency on sqlite-transit-sync
+system_gap_master/instance_manager.py
+                      manifest-driven doctor/inventory/retention-plan plus
+                      hash-bound plan/upgrade/rollback for declared templates
 docs/adapting-your-agents.md  wiring for CLAUDE.md/AGENTS.md/GEMINI.md + hooks
+docs/instance-manager.md  controlled local-clone-to-yard deployment contract
 docs/trusted-peer-path-registry.md  read-only pull-preparation contract
 ```
 
 ## Quick start
 
 ```bash
-# 1) Create the yard inside your synced storage and copy the skeleton
-cp -r template/ /path/to/your/synced/storage/SYNC/
+# 1) Create an empty yard, build a reviewable plan from the local clone,
+#    then apply only the declared template paths.
+mkdir /path/to/your/synced/storage/SYNC
+yard-instance-manager plan \
+  --yard-root /path/to/your/synced/storage/SYNC \
+  --template-root /path/to/system-gap-master/template \
+  --output /host-local/review/yard-plan.json
+yard-instance-manager upgrade \
+  --plan /host-local/review/yard-plan.json \
+  --state-dir /host-local/system-gap-master-state
 
-# 2) Fill in SYNC_PROTOCOL.md (slot table) and create your first slot
+# 2) Fill in SYNC_PROTOCOL.md (slot table) and create your first host slot
 mkdir /path/to/.../SYNC/hosts/<YOUR-HOST>
 
 # 3) Point your agents at it (see docs/adapting-your-agents.md)
@@ -213,6 +225,31 @@ python scripts/config_snapshot.py all \
 Use `--check` for a read-only preview. `snapshots/` and `CONFIG-STATE.md` are
 derived output; document intentional differences with headings such as
 `### \`agent-one.model\`` in `DEVIATIONS.md`.
+
+## Controlled repo-to-yard lifecycle
+
+The yard remains a shared instance, never a Git checkout. The optional
+`yard-instance-manager` compares it with the versioned
+`template/YARD_TEMPLATE.json`, classifies the top-level structure and creates
+non-mutating retention and migration plans. A saved plan may create or update
+only declared template paths; host slots, messages, archives, private instance
+content and the tool-owned `db-transit/` zone remain outside its write scope.
+
+```bash
+yard-instance-manager doctor --yard-root /path/to/SYNC \
+  --template-root /path/to/system-gap-master/template
+yard-instance-manager plan --yard-root /path/to/SYNC \
+  --template-root /path/to/system-gap-master/template \
+  --output /host-local/review/yard-plan.json
+yard-instance-manager upgrade --plan /host-local/review/yard-plan.json \
+  --state-dir /host-local/system-gap-master-state
+```
+
+Plans, sources and targets are hash-checked again before mutation. Updates
+receive host-local backups, atomic replacement and a rollback operation.
+Locally changed managed files block instead of being overwritten; `seed-once`
+files remain instance-owned after creation. See
+[the instance lifecycle contract](docs/instance-manager.md).
 
 ## The ten rules (short)
 
