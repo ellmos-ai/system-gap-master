@@ -88,6 +88,12 @@ OPAQUE_METADATA_FIELDS = {
     "registry_sha256",
     "sha256",
 }
+OPAQUE_PATH_FIELDS = {
+    "allowed_remote_paths",
+    "pull_destination_roots",
+    "remote_path",
+    "yard_root",
+}
 
 
 class TrustedPeerPathError(RuntimeError):
@@ -224,8 +230,9 @@ def _assert_secret_free(value: Any, label: str, trail: tuple[str, ...] = ()) -> 
                     f"{label} appears to contain secret or file content at "
                     f"{'.'.join(trail) or '<root>'}"
                 )
+        fields = {part.lower().replace("-", "_") for part in trail}
         field = trail[-1].lower().replace("-", "_") if trail else ""
-        if field not in OPAQUE_METADATA_FIELDS and (
+        if field not in OPAQUE_METADATA_FIELDS and not fields.intersection(OPAQUE_PATH_FIELDS) and (
             OPAQUE_SECRET_RE.fullmatch(value) or HEX_SECRET_RE.fullmatch(value)
         ):
             raise TrustedPeerPathError(
@@ -311,6 +318,16 @@ def _is_link_or_reparse(path: Path) -> bool:
     return path.is_symlink() or bool(attributes & WINDOWS_REPARSE_ATTRIBUTE)
 
 
+def _is_allowed_platform_alias(path: Path, resolved: Path) -> bool:
+    """Allow only macOS's fixed ``/var`` to ``/private/var`` system alias."""
+
+    return (
+        sys.platform == "darwin"
+        and path.as_posix() == "/var"
+        and resolved.as_posix() == "/private/var"
+    )
+
+
 def _lexical_absolute(raw: str | Path, label: str) -> Path:
     text = _expect_string(str(raw), label)
     if text.replace("/", "\\").startswith("\\\\"):
@@ -333,6 +350,12 @@ def _assert_no_reparse_components(path: Path, *, include_leaf: bool = True) -> N
     for part in target.parts[1:]:
         current = current / part
         if os.path.lexists(current) and _is_link_or_reparse(current):
+            try:
+                resolved = current.resolve(strict=True)
+            except OSError:
+                resolved = current
+            if _is_allowed_platform_alias(current, resolved):
+                continue
             raise TrustedPeerPathError(
                 f"path crosses a symlink, junction or reparse point: {current}"
             )

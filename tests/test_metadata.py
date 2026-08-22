@@ -83,7 +83,7 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("173%20passed", text)
+            self.assertIn("176%20passed", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
 
@@ -93,7 +93,7 @@ class MetadataParityTests(unittest.TestCase):
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
         self.assertIn("Last-checked: 2026-08-22", content)
-        self.assertIn("173 tests passed", content)
+        self.assertIn("176 tests passed", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):

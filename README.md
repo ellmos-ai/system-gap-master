@@ -10,7 +10,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/security-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-173%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-176%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/Ecosystem-ELLMOS%20AI-blue)](https://github.com/ellmos-ai)

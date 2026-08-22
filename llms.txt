@@ -4,7 +4,7 @@
 
 ## Verification
 
-173 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
+176 tests passed, 42 subtests passed, and 1 Windows symlink-platform test was
 skipped because the current account lacks the required symlink privilege;
 Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-08-22.
 

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import system_gap_master.trusted_peer_paths as trusted_peer_module
 from system_gap_master.trusted_peer_paths import (
     LOCAL_CONFIG_SCHEMA,
     RECEIPT_SCHEMA,
@@ -32,6 +33,41 @@ def canonical(value):
         separators=(",", ":"),
         allow_nan=False,
     ).encode("utf-8")
+
+
+class PlatformPathGuardTests(unittest.TestCase):
+    def test_only_fixed_macos_var_alias_is_platform_allowed(self):
+        with patch.object(trusted_peer_module.sys, "platform", "darwin"):
+            self.assertTrue(
+                trusted_peer_module._is_allowed_platform_alias(
+                    Path("/var"), Path("/private/var")
+                )
+            )
+            self.assertFalse(
+                trusted_peer_module._is_allowed_platform_alias(
+                    Path("/tmp"), Path("/private/tmp")
+                )
+            )
+
+    def test_path_fields_do_not_trigger_opaque_secret_heuristic(self):
+        long_macos_path = (
+            "/var/folders/df/djsxfhc17x95674wsm_g8s980000gn/T/"
+            "tmpA1b2C3d4E5f6G7h8I9j0"
+        )
+        trusted_peer_module._assert_secret_free(
+            {
+                "yard_root": long_macos_path,
+                "pull_destination_roots": [long_macos_path + "/imports"],
+                "allowed_remote_paths": [long_macos_path + "/remote"],
+                "remote_path": long_macos_path + "/file",
+            },
+            "config",
+        )
+        with self.assertRaisesRegex(TrustedPeerPathError, "opaque secret"):
+            trusted_peer_module._assert_secret_free(
+                {"description": "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0"},
+                "registry",
+            )
 
 
 class TrustedPeerPathFixture(unittest.TestCase):

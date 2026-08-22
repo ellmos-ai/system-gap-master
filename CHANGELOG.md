@@ -10,6 +10,9 @@
   The adapter adds no queue, fan-out, retry loop or completion state.
 - Added bilingual boundary documentation and fail-closed contract tests for
   schema fields, target cardinality, caller idempotency and payload hashing.
+- Restored macOS CI portability without weakening the general reparse guard:
+  only the fixed operating-system alias `/var` to `/private/var` is accepted,
+  and schema-declared path fields no longer trigger the opaque-token heuristic.
 
 ## 1.2.0 - 2026-07-27
 
