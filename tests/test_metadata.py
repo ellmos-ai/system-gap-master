@@ -110,7 +110,11 @@ class MetadataParityTests(unittest.TestCase):
         pyproject_path = self.root / "pyproject.toml"
         self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
         data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        self.assertEqual(data["build-system"]["requires"], ["setuptools>=77.0.3"])
+        self.assertEqual(data["project"]["license"], "MIT")
+        self.assertEqual(data["project"]["license-files"], ["LICENSE"])
         classifiers = data["project"]["classifiers"]
+        self.assertFalse(any(item.startswith("License ::") for item in classifiers))
         self.assertIn("Programming Language :: Python :: 3.13", classifiers)
         self.assertIn("Operating System :: OS Independent", classifiers)
         self.assertIn("Topic :: System :: Distributed Computing", classifiers)
