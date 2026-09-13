@@ -73,6 +73,17 @@
 
 ## MEDIUM PRIORITY
 
+- [ ] `ticket-master` als gepinnte Git-Quelle beziehen statt als blossen Paketnamen.
+  Kontext (2026-09-13, T-20260913-598571635): `pyproject.toml` nennt
+  `ticket-master>=1.11,<1.12` unter `optional-dependencies.ticket-routing`. Ein blosser Name
+  loest gegen PyPI auf; `ticket-master` ist dort heute frei, der Fund also latent. Vier andere
+  eigene Modulnamen sind es nicht mehr (`web-scraper`, `agent-launcher`, `coma`,
+  `open-compute`), einer davon erst seit 2025-10 — die Belegung waechst.
+  Naechster Schritt: auf `ticket-master @ git+https://github.com/ellmos-ai/ticket-master.git@<tag|sha>`
+  umstellen; der Versionsbereich `>=1.11,<1.12` wird dabei zu einem konkreten Tag.
+  Regel: Plan D §10.7; Pruefung: `python "<OneDrive>/_scripts/check_module_pins.py"`.
+
+
 - [x] Add `SECURITY.md` before wider public promotion. Verified present in the
   2026-08-04 MAINTAINER check.
 - [ ] Add `CONTRIBUTING.md` if external contributions become expected.
