@@ -179,7 +179,7 @@ See [the reconciler contract](docs/conflict-copy-reconciler.md), the [configurat
 
 ## Ticket Routing Boundary
 
-The optional `ticket-routing` integration connects `ticket-master>=1.11,<1.12` to an existing system-gap transport without introducing another queue or lifecycle owner. Ticket-master creates and completes the contract; system-gap-master only validates its idempotent route intent and hands that payload to an injected transport callback. A transport acknowledgement never counts as a completion receipt. See the [ticket route-intent adapter contract](docs/ticket-route-intent-adapter.md).
+The optional `ticket-routing` integration connects `ticket-master` (pinned to `v1.11.3`, pulled from its git source rather than by package name) to an existing system-gap transport without introducing another queue or lifecycle owner. Ticket-master creates and completes the contract; system-gap-master only validates its idempotent route intent and hands that payload to an injected transport callback. A transport acknowledgement never counts as a completion receipt. See the [ticket route-intent adapter contract](docs/ticket-route-intent-adapter.md).
 
 ---
 
