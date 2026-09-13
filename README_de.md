@@ -173,7 +173,7 @@ conflict-copy-reconciler canary
 
 ## Ticket-Routing-Grenze
 
-Die optionale Integration `ticket-routing` verbindet `ticket-master>=1.11,<1.12` mit einem vorhandenen system-gap-Transport, ohne eine zweite Queue oder einen weiteren Lifecycle-Owner einzuführen. Ticket-master erstellt und beendet den Vertrag; system-gap-master validiert nur den idempotenten Route-Intent und übergibt diesen Payload an einen injizierten Transport-Callback. Eine Transportbestätigung zählt nie als Abschluss-Receipt. Details stehen im [Ticket-Route-Intent-Adaptervertrag](docs/ticket-route-intent-adapter_de.md).
+Die optionale Integration `ticket-routing` verbindet `ticket-master` (auf `v1.11.3` gepinnt und aus der Git-Quelle bezogen statt ueber den Paketnamen) mit einem vorhandenen system-gap-Transport, ohne eine zweite Queue oder einen weiteren Lifecycle-Owner einzuführen. Ticket-master erstellt und beendet den Vertrag; system-gap-master validiert nur den idempotenten Route-Intent und übergibt diesen Payload an einen injizierten Transport-Callback. Eine Transportbestätigung zählt nie als Abschluss-Receipt. Details stehen im [Ticket-Route-Intent-Adaptervertrag](docs/ticket-route-intent-adapter_de.md).
 
 ---
 

@@ -71,7 +71,7 @@
       "type": "seam",
       "id": "ticket-route-intent",
       "role": "validated-ticket-master-intent-to-existing-transport",
-      "optional_dependency": "ticket-master>=1.11,<1.12"
+      "optional_dependency": "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.11.3"
     },
     {
       "type": "seam",

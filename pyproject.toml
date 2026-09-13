@@ -45,7 +45,12 @@ dependencies = [
 
 [project.optional-dependencies]
 trusted-peer-sftp = ["paramiko>=5,<6"]
-ticket-routing = ["ticket-master>=1.11,<1.12"]
+# ticket-master ist ein eigenes Modul: gepinnte Git-Quelle statt blossem Paketnamen
+# (Plan D 10.7). v1.11.3 ist der letzte Stand INNERHALB der bisherigen Grenze
+# >=1.11,<1.12 -- die Grenze wird hier NICHT gehoben, das ist AU-2026-09-12-C.
+ticket-routing = [
+    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.11.3",
+]
 
 [project.scripts]
 conflict-copy-reconciler = "system_gap_master.conflict_copy_reconciler:main"
