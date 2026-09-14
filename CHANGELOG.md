@@ -4,14 +4,15 @@
 
 ### Changed
 - **`ticket-master` is pulled from a pinned git source instead of a bare package name.**
-  `ticket-routing` declared `ticket-master>=1.11,<1.12`; a bare name resolves against
+  `ticket-routing` now pins the tested `ticket-master` provider at `v1.12.0`; a bare name resolves against
   PyPI, which does not know our namespaces. That is not hypothetical -- BACH declared
   `web-scraper>=0.1.1` the same way and would have pulled a stranger's 2018 package
   under the same import name. Four ellmos module names are already taken on PyPI
   (`web-scraper`, `agent-launcher`, `coma`, `open-compute`), the last one only since
   2025-10. Convention: Plan D 10.7; check: `_scripts/check_module_pins.py`, which runs
-  daily as `/sync` step 1j. The bound is unchanged: `v1.11.3` is the last tag inside
-  `>=1.11,<1.12`, and raising it is AU-2026-09-12-C, which belongs to the user.
+  daily as `/sync` step 1j. The measured adapter boundary is now `>=1.12,<1.13`,
+  with `v1.12.0` as the exact provider pin, based on the 1.12 seam and error-path tests
+  recorded for AU-2026-09-12-C.
   `ellmos-module.v2.json` and both READMEs carry the same requirement, so the
   declaration does not exist in three contradicting spellings.
 

@@ -15,10 +15,10 @@ except ImportError:
 
 # `ticket-master` is an ellmos module, so it is pulled from a pinned git source
 # instead of a bare package name -- a bare name resolves against PyPI, which does not
-# know our namespaces (Plan D 10.7, T-20260913-598571635). v1.11.3 is the last tag
-# inside the previous `>=1.11,<1.12` bound; the bound itself is NOT raised here.
+# know our namespaces (Plan D 10.7, T-20260913-598571635). v1.12.0 is the exact
+# provider pin whose adapter compatibility was measured for AU-2026-09-12-C.
 TICKET_MASTER_REQUIREMENT = (
-    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.11.3"
+    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.12.0"
 )
 
 
@@ -168,12 +168,8 @@ class MetadataParityTests(unittest.TestCase):
             data["project"]["optional-dependencies"]["ticket-routing"],
             [TICKET_MASTER_REQUIREMENT],
         )
-        # The point of this assertion is the BOUND, not the spelling. Before the pin it
-        # read `ticket-master>=1.11,<1.12`; a git tag carries the same promise as long
-        # as it stays on a 1.11 tag. Raising it to 1.12 is AU-2026-09-12-C and belongs
-        # to the user, so it has to keep failing here.
-        self.assertIn("@v1.11.", TICKET_MASTER_REQUIREMENT,
-                      "the 1.11 bound must not be raised without AU-2026-09-12-C")
+        self.assertIn("@v1.12.0", TICKET_MASTER_REQUIREMENT,
+                      "the exact provider pin must match the measured 1.12 seam")
         self.assertIn("git+https://github.com/ellmos-ai/ticket-master",
                       TICKET_MASTER_REQUIREMENT,
                       "own modules are pulled from a pinned source, never by bare name")
