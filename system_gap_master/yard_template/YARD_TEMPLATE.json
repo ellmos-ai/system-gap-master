@@ -20,9 +20,9 @@
     {"path": "DAILY_SYNC_LOG.md", "mode": "seed-once"},
     {"path": "CONFLICT_REVIEW_LOG.md", "mode": "seed-once"},
     {"path": "_archive/README.md", "mode": "managed"},
-    {"path": "_config-state/README.md", "mode": "managed"},
+    {"path": "_config-state/README.md", "mode": "seed-once"},
     {"path": "_config-state/DEVIATIONS.md", "mode": "seed-once"},
-    {"path": "agents/README.md", "mode": "managed"},
+    {"path": "agents/README.md", "mode": "seed-once"},
     {"path": "hosts/README.md", "mode": "managed"},
     {"path": "hosts/_slot-template/trusted-peer-paths/README.md", "mode": "managed"},
     {"path": "messages/README.md", "mode": "managed"},
@@ -43,8 +43,6 @@
   ],
   "managed_path_exceptions": [
     "_archive/README.md",
-    "_config-state/README.md",
-    "agents/README.md",
     "hosts/README.md",
     "hosts/_slot-template/trusted-peer-paths/README.md",
     "messages/README.md"

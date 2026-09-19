@@ -527,6 +527,43 @@ class RepositoryTemplateSmokeTests(unittest.TestCase):
             rollback_operation(applied["operation_id"], yard, state)
             self.assertEqual(list(yard.iterdir()), [])
 
+    def test_real_template_seed_once_readme_files(self):
+        repository_root = Path(__file__).resolve().parent.parent
+        template = repository_root / "system_gap_master" / "yard_template"
+        loaded = load_template(template)
+        file_modes = {entry["path"]: entry["mode"] for entry in loaded.files}
+        self.assertEqual(file_modes["_config-state/README.md"], "seed-once")
+        self.assertEqual(file_modes["agents/README.md"], "seed-once")
+        self.assertNotIn("_config-state/README.md", loaded.managed_path_exceptions)
+        self.assertNotIn("agents/README.md", loaded.managed_path_exceptions)
+
+        with tempfile.TemporaryDirectory() as raw_temp:
+            root = Path(raw_temp)
+            yard = root / "yard"
+            yard.mkdir()
+            cfg_dir = yard / "_config-state"
+            cfg_dir.mkdir()
+            (cfg_dir / "README.md").write_text("# Custom local config doc\n", encoding="utf-8")
+            agents_dir = yard / "agents"
+            agents_dir.mkdir()
+            (agents_dir / "README.md").write_text("# Custom local agents doc\n", encoding="utf-8")
+
+            report = doctor_yard(yard, template)
+            self.assertEqual(report["blockers"], [])
+            plan = build_plan(yard, template)
+            preserved = {
+                action["path"]: action["action"]
+                for action in plan["actions"]
+                if action["path"] in {"_config-state/README.md", "agents/README.md"}
+            }
+            self.assertEqual(
+                preserved,
+                {
+                    "_config-state/README.md": "preserve-instance-file",
+                    "agents/README.md": "preserve-instance-file",
+                },
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
