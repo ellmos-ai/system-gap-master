@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Changed
+- **`YARD_TEMPLATE.json` classifies `_config-state/README.md` and `agents/README.md` as `seed-once`.**
+  Both paths reside in instance-owned directories (`"ownership": "instance"`). Changing their mode from `managed` to `seed-once` (and removing them from `managed_path_exceptions`) allows live sync yards to maintain rich, machine-local documentation without triggering `untracked-or-modified-managed-file` blockers during `doctor` and `plan`, while continuing to seed fresh yards from the template.
 - **`ticket-master` is pulled from a pinned git source instead of a bare package name.**
   `ticket-routing` now pins the tested `ticket-master` provider at `v1.12.0`; a bare name resolves against
   PyPI, which does not know our namespaces. That is not hypothetical -- BACH declared
