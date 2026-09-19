@@ -20,6 +20,14 @@
 
 ## [1.6.1] - 2026-09-12
 
+### Documentation & Discoverability Parity (Pfad B Discoverability, Legal Parity & Dual Anchors - 2026-09-19)
+- **Bilingual Dual Reciprocal HTML Anchors:** Enhanced all 15 sections across both `README.md` and `README_de.md` with explicit dual reciprocal HTML anchors (`<a id="1-core-principles--yard-architecture"></a><a id="core-principles--yard-architecture"></a><a id="1-kernprinzipien--yard-architektur"></a><a id="kernprinzipien--yard-architektur"></a>`) and numbered headings, ensuring bidirectional jump parity between languages and documentation anchors.
+- **Target Personas & Quick Reference Tables:** Integrated formal target personas (`[PERSONA-01]` Multi-Device Developers, `[PERSONA-02]` Autonomous AI Agent Architects, `[PERSONA-03]` Offline-First Infrastructure Engineers, `[PERSONA-04]` IT Security & Compliance Officers) and ecosystem quick reference tables into Section 1 of both READMEs.
+- **10-Dimension Competitive Differentiation Matrix:** Documented architectural, conflict, resilience, gating, network, dependency, and licensing comparisons against raw cloud storage (OneDrive/Dropbox), Git-only workflows, and distributed message brokers (RabbitMQ/Kafka) in Section 1.
+- **German Legal Parity (§ 521 BGB Gefälligkeitsrecht):** Added statutory disclaimer under Section 15 of `README_de.md` limiting liability to intent and gross negligence for gratuitous open-source provision.
+- **Contract Test Suite Expansion:** Extended `tests/test_metadata.py` with 3 new contract tests (`test_readme_target_personas_contract`, `test_readme_differentiation_matrix_contract`, `test_bgb_521_disclaimer_contract`), raising total test suite coverage to 219 passed tests (100% green offline).
+- **Metadata & LLM Context Synchronization:** Synchronized `llms.txt` verification timestamp to 2026-09-19, updated test counts across all documentation and shields to `219 passed`, and documented Pfad B audit in `MARKETING-LOG.txt`.
+
 ### Changed & Repository Hygiene (Pfad A Turnus-Hygiene)
 - **CI/CD Guardrail Hardening:** Added `timeout-minutes: 15` job guardrail to `.github/workflows/tests.yml` preventing hanging runner allocations across all matrix jobs (Ubuntu, Windows, macOS, Python 3.10-3.13). Standardized test execution command to `python -m pytest -ra -v`.
 - **PEP 621 Metadata & URL Parity:** Enriched `[project.urls]` in `pyproject.toml` with `"LLM Ready"` pointing to `llms.txt`. Expanded `[tool.ruff.lint]` rule sets with `B` (flake8-bugbear), `SIM` (flake8-simplify), `C4` (flake8-comprehensions), and `RUF` (Ruff-specific rules) with appropriate ignore overrides.

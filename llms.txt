@@ -1,13 +1,13 @@
 # system-gap-master
 
-## Last-checked: 2026-09-12
+## Last-checked: 2026-09-19
 
 ## Verification
 
-215 tests passed, 42 subtests passed, and 3 platform tests were skipped: the
+219 tests passed, 42 subtests passed, and 3 platform tests were skipped: the
 Windows symlink test lacks the required account privilege, and two POSIX mode
 tests do not apply on Windows;
-Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-09-12.
+Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-09-19.
 
 ## Canonical repository
 

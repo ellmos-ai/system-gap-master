@@ -133,3 +133,22 @@ German (DE):
 - Multi-Host Sync Defense: Expanded `.gitignore` with multi-host conflict patterns (`*-WORKSTATION*`, `*-ASUS-GEI*`, `* (kopie)*`, `* (copy)*`, `*.sync-temp-*`, `*.orig`), multi-agent locks (`LOCK`, `LOCK.permissions.json`), and test/coverage caches.
 - Yard Template Integrity: Bumped template version to 1.6.1 in `system_gap_master/yard_template/YARD_TEMPLATE.json` and verified with wheel smoke test in `tests/test_packaging.py`.
 - Contract Verification: Extended `tests/test_metadata.py` with CI timeout and LLM-Ready URL tests (18 tests in metadata suite, 215 tests total, 100% pass rate).
+
+================================================================================
+9. PFAD B DISCOVERABILITY, LEGAL PARITY & DUAL ANCHOR AUDIT (2026-09-19)
+================================================================================
+- Bilingual Dual Reciprocal HTML Anchors:
+  * Deployed dual reciprocal HTML anchors (<a id="1-core-principles--yard-architecture"></a><a id="core-principles--yard-architecture"></a><a id="1-kernprinzipien--yard-architektur"></a><a id="kernprinzipien--yard-architektur"></a>) across all 15 sections in both README.md and README_de.md.
+  * Added explicit numbering (## 1. ... ## 15.) to headings for clean visual orientation and cross-language deep linking parity.
+- Visual Architecture & Positioning Enrichment:
+  * Integrated Quick Reference specification tables (Ecosystem, Runtime, Philosophy, Conflict Strategy, Messaging, State Sync, Governance, Security SLA) into Section 1 of both READMEs.
+  * Documented 4 formal Target Personas ([PERSONA-01] Multi-Device Developers, [PERSONA-02] Autonomous AI Agent Architects, [PERSONA-03] Offline-First Infrastructure Engineers, [PERSONA-04] IT Security & Compliance Officers).
+  * Structured 10-Dimension Competitive Differentiation Matrix comparing system-gap-master against Raw Cloud Storage, Git Push/Pull, and Distributed Message Brokers.
+- German Legal Parity (§ 521 BGB Gefälligkeitsrecht):
+  * Added statutory disclaimer under Section 15 of README_de.md limiting gratuitous open-source provision liability to intent and gross negligence per German law.
+- Contract Test Suite Expansion (tests/test_metadata.py):
+  * Added 3 new contract tests: test_readme_target_personas_contract, test_readme_differentiation_matrix_contract, and test_bgb_521_disclaimer_contract.
+  * Total test suite expanded to 219 passed tests (42 subtests), 100% green offline.
+- Metadata & Context Synchronization:
+  * Refreshed llms.txt Last-checked date to 2026-09-19 and test counts to 219 passed.
+  * Synchronized Shields.io test badges to 219 passed in both README files.

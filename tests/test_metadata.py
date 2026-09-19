@@ -99,7 +99,7 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("215%20passed", text)
+            self.assertIn("219%20passed", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
             self.assertIn("ruff", text)
@@ -111,8 +111,8 @@ class MetadataParityTests(unittest.TestCase):
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-09-12", content)
-        self.assertIn("215 tests passed", content)
+        self.assertIn("Last-checked: 2026-09-19", content)
+        self.assertIn("219 tests passed", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):
@@ -325,6 +325,30 @@ class MetadataParityTests(unittest.TestCase):
         urls = data.get("project", {}).get("urls", {})
         self.assertIn("LLM Ready", urls)
         self.assertEqual(urls["LLM Ready"], "https://github.com/ellmos-ai/system-gap-master/blob/main/llms.txt")
+
+    def test_readme_target_personas_contract(self):
+        en_readme = (self.root / "README.md").read_text(encoding="utf-8")
+        de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
+        marketing_log = (self.root / "MARKETING-LOG.txt").read_text(encoding="utf-8")
+
+        for persona in ["[PERSONA-01]", "[PERSONA-02]", "[PERSONA-03]", "[PERSONA-04]"]:
+            self.assertIn(persona, en_readme, f"{persona} missing in README.md")
+            self.assertIn(persona, de_readme, f"{persona} missing in README_de.md")
+            self.assertIn(persona, marketing_log, f"{persona} missing in MARKETING-LOG.txt")
+
+    def test_readme_differentiation_matrix_contract(self):
+        en_readme = (self.root / "README.md").read_text(encoding="utf-8")
+        de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
+
+        self.assertIn("Competitive Differentiation Matrix", en_readme)
+        self.assertIn("Raw Cloud Storage", en_readme)
+        self.assertIn("10-Dimensionen-Vergleichsmatrix", de_readme)
+        self.assertIn("Reiner Cloud-Speicher", de_readme)
+
+    def test_bgb_521_disclaimer_contract(self):
+        de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
+        self.assertIn("§ 521 BGB", de_readme)
+        self.assertIn("Gefälligkeitsrecht", de_readme)
 
 
 if __name__ == "__main__":

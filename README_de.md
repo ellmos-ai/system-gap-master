@@ -11,7 +11,7 @@
 [![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/Sicherheits--SLA-48h%20%7C%205d%20Triage-blue.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/Tests-215%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-219%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Code style: Ruff](https://img.shields.io/badge/Code--Stil-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Third-Party Audited](https://img.shields.io/badge/Drittanbieter--Lizenzen-auditiert%20%7C%20100%25%20permissiv-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Marketing Log](https://img.shields.io/badge/Marketing--Log-aktiv-orange.svg)](MARKETING-LOG.txt)
@@ -35,27 +35,51 @@ Teil der geräteübergreifenden Infrastruktur-Familie:
 
 ## Schnellnavigation
 
-1. [Kernprinzipien & Yard-Architektur](#kernprinzipien--yard-architektur)
-2. [Die 10 Kernregeln](#die-10-kernregeln)
-3. [Täglicher Sync- & Reconciliation-Lebenszyklus](#taeglicher-sync--reconciliation-lebenszyklus)
-4. [Kontrollierter Repo-zu-Yard-Lebenszyklus](#kontrollierter-repo-zu-yard-lebenszyklus)
-5. [Sichere Konfliktkopien-Abstimmung](#sichere-konfliktkopien-abstimmung)
-6. [Ticket-Routing-Grenze](#ticket-routing-grenze)
-7. [Trusted-Peer-Pfade & SFTP-Ausführung](#trusted-peer-pfade--sftp-ausfuehrung)
-8. [Republica-Schaufenster-Fallback](#republica-schaufenster-fallback)
-9. [Installation & Schnellstart](#installation--schnellstart)
-10. [Governance- & Laufzeit-Invarianten](#governance--laufzeit-invarianten)
-11. [Verwandte Werkzeuge & Ökosystem](#verwandte-werkzeuge--oekosystem)
-12. [Drittanbieter-Lizenzen & Transparenz](#drittanbieter-lizenzen--transparenz)
-13. [Discovery & LLM-Kontext](#discovery--llm-kontext)
-14. [Tests & Verifikation](#tests--verifikation)
-15. [Sicherheitsrichtlinie & Lizenz](#sicherheitsrichtlinie--lizenz)
+1. [Kernprinzipien & Yard-Architektur](#1-kernprinzipien--yard-architektur)
+2. [Die 10 Kernregeln](#2-die-10-kernregeln)
+3. [Täglicher Sync- & Reconciliation-Lebenszyklus](#3-taeglicher-sync--reconciliation-lebenszyklus)
+4. [Kontrollierter Repo-zu-Yard-Lebenszyklus](#4-kontrollierter-repo-zu-yard-lebenszyklus)
+5. [Sichere Konfliktkopien-Abstimmung](#5-sichere-konfliktkopien-abstimmung)
+6. [Ticket-Routing-Grenze](#6-ticket-routing-grenze)
+7. [Trusted-Peer-Pfade & SFTP-Ausführung](#7-trusted-peer-pfade--sftp-ausfuehrung)
+8. [Republica-Schaufenster-Fallback](#8-republica-schaufenster-fallback)
+9. [Installation & Schnellstart](#9-installation--schnellstart)
+10. [Governance- & Laufzeit-Invarianten](#10-governance--laufzeit-invarianten)
+11. [Verwandte Werkzeuge & Ökosystem](#11-verwandte-werkzeuge--oekosystem)
+12. [Drittanbieter-Lizenzen & Transparenz](#12-drittanbieter-lizenzen--transparenz)
+13. [Discovery & LLM-Kontext](#13-discovery--llm-kontext)
+14. [Tests & Verifikation](#14-tests--verifikation)
+15. [Sicherheitsrichtlinie & Lizenz](#15-sicherheitsrichtlinie--lizenz)
 
 ---
 
-## Kernprinzipien & Yard-Architektur
+<a id="1-core-principles--yard-architecture"></a>
+<a id="core-principles--yard-architecture"></a>
+<a id="1-kernprinzipien--yard-architektur"></a>
+<a id="kernprinzipien--yard-architektur"></a>
+## 1. Kernprinzipien & Yard-Architektur
 
 `system-gap-master` koordiniert Multi-Device-Entwicklungsumgebungen und Workflows für KI-Agenten (Claude, Codex, Antigravity/Gemini) über einfache, menschenlesbare Markdown- und JSON-Dateien. Es wird weder ein Hintergrund-Daemon noch ein zentraler Server oder Cloud-Code benötigt.
+
+### Schnellübersicht
+
+| Eigenschaft | Spezifikation |
+|:---|:---|
+| **Ökosystem & Dachorganisation** | [`ellmos-ai`](https://github.com/ellmos-ai) / [`open-bricks`](https://github.com/open-bricks) |
+| **Primäre Sprache & Laufzeit** | Python 3.10–3.13 (Keine externen Laufzeitabhängigkeiten; `tomli` Fallback für <3.11) |
+| **Sync-Philosophie** | Serverloser Transfer Yard + Slot-Isolation je Gerät (`hosts/<host>/`) |
+| **Konfliktstrategie** | Durch Design verhindert (Slot-Regel) + Sicherer Reconciler für Provider-Konfliktkopien |
+| **Nachrichtenkanal** | Vergängliche, atomare Delete-after-Read Postfächer (`messages/to-<host>.md`) |
+| **Statussynchronisation** | Snapshots & Adapter-Nutzdaten (`db-transit/`); keine Synchronisation aktiver SQLite/WAL |
+| **Governance & Lizenz** | [MIT-Lizenz](LICENSE) (Zero Copyleft, Unprivilegierte `RunAsInvoker`-Ausführung) |
+| **Sicherheits-SLA** | 48h Reaktionszeit / 5-Tage Triage-Zusage ([`SECURITY.md`](SECURITY.md)) |
+
+### Zielgruppen & Personas
+
+- **[PERSONA-01] Multi-Device-Entwickler & Verteilte KI-Ingenieure**: Entwickler, die parallel auf Laptop, Desktop-Workstation und Heimserver arbeiten und nahtlose Kontinuität ohne Git-Branch-Wirrwarr oder Cloud-Sync-Dateikonflikte benötigen.
+- **[PERSONA-02] Autonome KI-Agenten-Architekten & Flotten-Koordinatoren**: Systemarchitekten, die heterogene Agenten-Schwärme (Claude Code, OpenAI Codex, Google Antigravity/Gemini) geräteübergreifend koordinieren, ohne Daemons zu betreiben oder Inbound-Ports zu öffnen.
+- **[PERSONA-03] Offline-First-Infrastruktur- & DevOps-Ingenieure**: Zuverlässigkeits- und Plattform-Ingenieure, die 100% Offline-Fähigkeit, reproduzierbares Bootstrap via Runbooks und strikte unprivilegierte Ausführung (`RunAsInvoker`) fordern.
+- **[PERSONA-04] IT-Sicherheits-, Datenschutz- & Compliance-Verantwortliche**: Security-Teams, die null Telemetrie-Egress, absolutes Secret-Verbot in Sync-Bereichen, kryptografisch verifizierten Peer-Transfer und auditierte permissive Open-Source-Lizenzen verlangen.
 
 ### Die Yard-Struktur
 
@@ -75,9 +99,26 @@ flowchart TD
     end
 ```
 
+### 10-Dimensionen-Vergleichsmatrix
+
+| Dimension | system-gap-master | Reiner Cloud-Speicher (OneDrive/Dropbox) | Nur Git Push/Pull | Verteilte Message-Broker (RabbitMQ/Kafka) |
+|:---|:---|:---|:---|:---|
+| **Architektur** | Serverloser Transfer Yard + Slot-Regel | Black-Box Dateisynchronisation | Zentrales oder Peer Git-Remote | Zentraler Message-Broker-Dienst |
+| **Merge-Konflikte** | Durch Design verhindert (Slot-Isolation) | Häufige doppelte Konfliktdateien | Git-Merge-Konflikte bei Concurrent Push | Entfällt (Nachrichten, keine Dateien) |
+| **Offline-Resilienz** | 100% Offline-First, synchronisiert bei Verbindung | Pausiert; Konflikte bei Reconnect | Lokale Commits möglich, Push blockiert | Ohne Netzwerkverbindung blockiert |
+| **Agenten-Gating** | Gated Daily Sync Ritual (idempotent) | Keines (blinde Dauersynchronisation) | Keines (manuelles Git Pull/Push) | Consumer-Polling-Schleifen |
+| **Sicherer Reconciler** | Automatischer 3-Wege- & Append-Reconciler | Manuelle Dateibereinigung durch Nutzer | Manuelle Git-Konfliktmarker | Verworfene Nachrichten oder DLQ |
+| **Netzwerk-Ingress** | Keine eingehenden Ports erforderlich | Nur ausgehendes HTTPS | Nur ausgehendes SSH/HTTPS | Eingehende Ports zwingend nötig |
+| **Abhängigkeiten** | Keine externen Laufzeitabhängigkeiten | Schwerer proprietärer Sync-Client | Git-CLI / libgit2 | Broker-Daemon + Client-Treiber |
+| **Lizenzierung & Egress**| 100% Permissive MIT / Zero-Egress | Proprietäre Telemetrie | Open-source | Gemischt / Enterprise-Lizenzen |
+
 ---
 
-## Die 10 Kernregeln
+<a id="2-the-10-invariant-rules"></a>
+<a id="the-10-invariant-rules"></a>
+<a id="2-die-10-kernregeln"></a>
+<a id="die-10-kernregeln"></a>
+## 2. Die 10 Kernregeln
 
 1. **Slot-Regel** — Schreibe nur in den eigenen Slot; fremde Slots werden nie editiert.
 2. **Tägliches Ritual mit Gate** — Einmal pro Tag und Host, in zwei bis fünf Minuten.
@@ -94,7 +135,11 @@ Die vollständige Begründung steht in [PROTOCOL.md](PROTOCOL.md).
 
 ---
 
-## Täglicher Sync- & Reconciliation-Lebenszyklus
+<a id="3-daily-sync--reconciliation-lifecycle"></a>
+<a id="daily-sync--reconciliation-lifecycle"></a>
+<a id="3-taeglicher-sync--reconciliation-lebenszyklus"></a>
+<a id="taeglicher-sync--reconciliation-lebenszyklus"></a>
+## 3. Täglicher Sync- & Reconciliation-Lebenszyklus
 
 ```mermaid
 sequenceDiagram
@@ -131,7 +176,11 @@ sequenceDiagram
 
 ---
 
-## Kontrollierter Repo-zu-Yard-Lebenszyklus
+<a id="4-controlled-repo-to-yard-lifecycle"></a>
+<a id="controlled-repo-to-yard-lifecycle"></a>
+<a id="4-kontrollierter-repo-zu-yard-lebenszyklus"></a>
+<a id="kontrollierter-repo-zu-yard-lebenszyklus"></a>
+## 4. Kontrollierter Repo-zu-Yard-Lebenszyklus
 
 Der Yard bleibt eine gemeinsam genutzte Instanz und ist niemals ein Git-Checkout. Der optionale `yard-instance-manager` vergleicht den Yard mit dem versionierten `system_gap_master/yard_template/YARD_TEMPLATE.json`, klassifiziert die Struktur und erstellt nicht-mutierende Migrationspläne. Ein gespeicherter Plan darf ausschließlich deklarierte Templatepfade aktualisieren; Host-Slots, Nachrichten, Archive, private Instanzinhalte und die `db-transit/`-Zone bleiben unberührt.
 
@@ -147,7 +196,11 @@ Pläne, Quellen und Ziele werden vor jeder Mutation erneut kryptographisch per H
 
 ---
 
-## Sichere Konfliktkopien-Abstimmung
+<a id="5-safe-conflict-copy-reconciliation"></a>
+<a id="safe-conflict-copy-reconciliation"></a>
+<a id="5-sichere-konfliktkopien-abstimmung"></a>
+<a id="sichere-konfliktkopien-abstimmung"></a>
+## 5. Sichere Konfliktkopien-Abstimmung
 
 Regel 7 bedeutet nicht mehr, anhand eines wahrscheinlich richtigen Dateinamens blind zu mergen. Der optionale `conflict-copy-reconciler` verlangt eine explizite Root-Allowlist und eine durch Manifest, Pointer, Registry oder Writer-Policy belegte Kanonik. Pro Pfadscope mutiert genau ein Owner; ein atomarer lokaler Lease verhindert konkurrierende Desktop-Apps.
 
@@ -171,13 +224,21 @@ conflict-copy-reconciler canary
 
 ---
 
-## Ticket-Routing-Grenze
+<a id="6-ticket-routing-boundary"></a>
+<a id="ticket-routing-boundary"></a>
+<a id="6-ticket-routing-grenze"></a>
+<a id="ticket-routing-grenze"></a>
+## 6. Ticket-Routing-Grenze
 
 Die optionale Integration `ticket-routing` verbindet `ticket-master` (auf die geprüfte Git-Quelle `v1.12.0` gepinnt statt über den Paketnamen bezogen) mit einem vorhandenen system-gap-Transport, ohne eine zweite Queue oder einen weiteren Lifecycle-Owner einzuführen. Die Kompatibilitätsgrenze des Adapters lautet `>=1.12,<1.13`; ticket-master erstellt und beendet den Vertrag, während system-gap-master nur den idempotenten Route-Intent validiert und diesen Payload an einen injizierten Transport-Callback übergibt. Eine Transportbestätigung zählt nie als Abschluss-Receipt. Details stehen im [Ticket-Route-Intent-Adaptervertrag](docs/ticket-route-intent-adapter_de.md).
 
 ---
 
-## Trusted-Peer-Pfade & SFTP-Ausführung
+<a id="7-trusted-peer-paths--sftp-execution"></a>
+<a id="trusted-peer-paths--sftp-execution"></a>
+<a id="7-trusted-peer-pfade--sftp-ausfuehrung"></a>
+<a id="trusted-peer-pfade--sftp-ausfuehrung"></a>
+## 7. Trusted-Peer-Pfade & SFTP-Ausführung
 
 Die optionale CLI `trusted-peer-paths` liest die abgeleitete `hosts/<HOST>/trusted-peer-paths/registry.json`, prüft Owner-Slot, Schema/Version, Host-/Peer-Rechte, Frische/Expiry, gepinnte Signaturreferenz, Payload-Digest, Known-Host-Pins und die exakte Remote-Pfad-Allowlist. Danach erzeugt sie einen deterministischen, nicht ausführbaren Vorbereitungsbeleg.
 
@@ -203,7 +264,11 @@ trusted-peer-sftp-executor execute \
 
 ---
 
-## Republica-Schaufenster-Fallback
+<a id="8-republica-showcase-fallback"></a>
+<a id="republica-showcase-fallback"></a>
+<a id="8-republica-schaufenster-fallback"></a>
+<a id="republica-schaufenster-fallback"></a>
+## 8. Republica-Schaufenster-Fallback
 
 Der Transferbereich transportiert Dokumente; er transportiert bewusst KEINE aktiven Datenbankdateien (Regel 9: Hot-SQLite-/WAL-Dateien + Dateisynchronisation = Korruptionsgefahr). Für Anwendungszustände wird der Yard mit einem snapshot-basierten Transit-Werkzeug in einer tool-eigenen Zone `db-transit/<namespace>/` kombiniert: [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync) (Local-First SQLite-Sync über verifizierte Snapshots, SHA-256-Manifeste und Merge-Policies).
 
@@ -229,7 +294,11 @@ republica-transit check-root --yard-root /path/to/your/yard --republica-root ~/.
 
 ---
 
-## Installation & Schnellstart
+<a id="9-installation--quick-start"></a>
+<a id="installation--quick-start"></a>
+<a id="9-installation--schnellstart"></a>
+<a id="installation--schnellstart"></a>
+## 9. Installation & Schnellstart
 
 ```
 PROTOCOL.md          Vollständiges Protokoll (10 Regeln) + Designbegründungen
@@ -301,7 +370,11 @@ python scripts/config_snapshot.py all \
 
 ---
 
-## Governance- & Laufzeit-Invarianten
+<a id="10-governance--runtime-invariants"></a>
+<a id="governance--runtime-invariants"></a>
+<a id="10-governance--laufzeit-invarianten"></a>
+<a id="governance--laufzeit-invarianten"></a>
+## 10. Governance- & Laufzeit-Invarianten
 
 `system-gap-master` folgt zehn strikten Architektur- und Betriebsinvarianten:
 
@@ -320,7 +393,11 @@ python scripts/config_snapshot.py all \
 
 ---
 
-## Verwandte Werkzeuge & Ökosystem
+<a id="11-sibling-tools--ecosystem"></a>
+<a id="sibling-tools--ecosystem"></a>
+<a id="11-verwandte-werkzeuge--oekosystem"></a>
+<a id="verwandte-werkzeuge--oekosystem"></a>
+## 11. Verwandte Werkzeuge & Ökosystem
 
 `system-gap-master` arbeitet eng mit spezialisierten Werkzeugen der Ökosysteme `ellmos-ai`, `dev-bricks`, `doc-bricks` und `open-bricks` zusammen:
 
@@ -369,7 +446,11 @@ Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops
 
 ---
 
-## Drittanbieter-Lizenzen & Transparenz
+<a id="12-third-party-licenses--transparency"></a>
+<a id="third-party-licenses--transparency"></a>
+<a id="12-drittanbieter-lizenzen--transparenz"></a>
+<a id="drittanbieter-lizenzen--transparenz"></a>
+## 12. Drittanbieter-Lizenzen & Transparenz
 
 `system-gap-master` verpflichtet sich zu 100 % permissiver Open-Source-Lizenzierung, unprivilegiertem Benutzermodus (`RunAsInvoker`) und vollständiger Transparenz aller Abhängigkeiten:
 
@@ -379,7 +460,11 @@ Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops
 
 ---
 
-## Discovery & LLM-Kontext
+<a id="13-discovery--llm-context"></a>
+<a id="discovery--llm-context"></a>
+<a id="13-discovery--llm-kontext"></a>
+<a id="discovery--llm-kontext"></a>
+## 13. Discovery & LLM-Kontext
 
 Für lokale KI-Agenten, RAG-Systeme und automatisierte Werkzeuge stehen maschinenlesbare Dokumentationen bereit:
 
@@ -390,7 +475,11 @@ Für lokale KI-Agenten, RAG-Systeme und automatisierte Werkzeuge stehen maschine
 
 ---
 
-## Tests & Verifikation
+<a id="14-testing--verification"></a>
+<a id="testing--verification"></a>
+<a id="14-tests--verifikation"></a>
+<a id="tests--verifikation"></a>
+## 14. Tests & Verifikation
 
 Die Testsuite stellt sicher, dass Slot-Regeln, Vorlagen-Upgrades, Konfliktbereinigungen und SFTP-Ausführungen deterministisch und plattformübergreifend funktionieren:
 
@@ -405,12 +494,20 @@ ruff check .
 python -m compileall -q .
 ```
 
-Alle 215 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwerkverbindung.
+Alle 219 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwerkverbindung.
 
 ---
 
-## Sicherheitsrichtlinie & Lizenz
+<a id="15-security-policy--license"></a>
+<a id="security-policy--license"></a>
+<a id="15-sicherheitsrichtlinie--lizenz"></a>
+<a id="sicherheitsrichtlinie--lizenz"></a>
+## 15. Sicherheitsrichtlinie & Lizenz
 
 - **Sicherheitsrichtlinie:** Siehe [`SECURITY.md`](SECURITY.md) für Meldeverfahren bei Schwachstellen, duale SLAs (48-Stunden-Reaktion, 5-Tage-Triage) und unterstützte Versionszweige.
 - **Keine Secrets im Transferbereich:** Zugangsdaten, Passwörter und Tokens gehören niemals in den gemeinsamen Yard (Regel 6).
 - **Lizenz:** Veröffentlicht unter der permissiven [MIT-Lizenz](LICENSE) für Code, Vorlagen und Dokumentation.
+
+### Gesetzlicher Hinweis (§ 521 BGB Gefälligkeitsrecht)
+
+Die Bereitstellung dieser Open-Source-Software und Dokumentation erfolgt unentgeltlich. Gemäß § 521 BGB ist die Haftung des Anbieters bei unentgeltlicher Überlassung auf Vorsatz und grobe Fahrlässigkeit beschränkt.
