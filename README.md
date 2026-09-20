@@ -1,4 +1,5 @@
-![system-gap-master](docs/assets/banner.svg)
+![system-gap-master](assets/banner.png)
+<!-- alternate banner: assets/banner-b.png (swap on occasion) -->
 
 # system-gap-master
 
