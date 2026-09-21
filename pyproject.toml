@@ -11,7 +11,7 @@ authors = [
     { name = "Lukas Geiger", email = "lukas@open-bricks.org" }
 ]
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]
 requires-python = ">=3.10"
 keywords = [
     "multi-agent",
@@ -71,12 +71,14 @@ Security = "https://github.com/ellmos-ai/system-gap-master/blob/main/SECURITY.md
 "Parent Organization" = "https://github.com/ellmos-ai"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"
 "LLM Ready" = "https://github.com/ellmos-ai/system-gap-master/blob/main/llms.txt"
+Notice = "https://github.com/ellmos-ai/system-gap-master/blob/main/NOTICE"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -v"
 testpaths = ["tests"]
 pythonpath = ["."]
+norecursedirs = [".git", ".tox", ".nox", "dist", "build", "*.egg", "_build", ".hypothesis", ".venv", "venv"]
 
 [tool.setuptools.packages.find]
 include = ["system_gap_master*"]

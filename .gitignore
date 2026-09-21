@@ -12,12 +12,24 @@ LOCK.condition.*
 *.conflict
 *-CONFLIT-*
 *-conflict-*
+*conflicted copy*
 *-WORKSTATION*
+*-WORKSTATION-LG*
+*-ASUS*
 *-ASUS-GEI*
+*-LAPTOP*
+*-Mac Studio*
+*-MacBook*
 * (kopie)*
 * (copy)*
+* (Kopie)*
+* (Copy)*
 *.sync-temp-*
 *.orig
+*.rej
+.automation-lock
+uv.lock
+!package-lock.json
 trusted-peer-paths.local.json
 trusted-peer-paths.entries.local.json
 
@@ -38,6 +50,9 @@ htmlcov/
 .wheel-smoke/
 .tox/
 .mypy_cache/
+.hypothesis/
+.turbo/
+.nyc_output/
 
 # Temporary and backup files
 *.tmp

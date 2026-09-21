@@ -152,3 +152,26 @@ German (DE):
 - Metadata & Context Synchronization:
   * Refreshed llms.txt Last-checked date to 2026-09-19 and test counts to 219 passed.
   * Synchronized Shields.io test badges to 219 passed in both README files.
+
+================================================================================
+10. PFAD A REPOSITORY HYGIENE & TECHNICAL AUDIT (2026-09-21)
+================================================================================
+- CI/CD Matrix & Lifecycle Workflows:
+  * Added `.github/workflows/stale.yml` (actions/stale@v9, daily cron 01:30 UTC, timeout-minutes: 10, cancel-in-progress, least-privilege permissions).
+  * Added `.github/workflows/welcome.yml` (actions/first-interaction@v3, timeout-minutes: 5, cancel-in-progress, least-privilege permissions).
+  * Hardened `.github/workflows/tests.yml` with explicit least-privilege permissions (`contents: read`).
+- Canonical Open-Source Root Attribution:
+  * Created `NOTICE` establishing copyright attribution for Lukas Geiger, ellmos-ai family, and open-bricks umbrella under MIT License.
+- PEP 621 Standard & Pytest Hygiene:
+  * Expanded `license-files` in `pyproject.toml` to `["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`.
+  * Enriched `[project.urls]` with `"Notice"` pointing to canonical repository NOTICE.
+  * Added `norecursedirs` to `[tool.pytest.ini_options]` ignoring version control, virtualenvs, and test caches.
+  * Strictly preserved release version `1.6.1` according to version-freeze discipline T-20260920-167562623.
+- Cloud-Sync, Multi-Host & Lock Defense (.gitignore):
+  * Hardened against multi-host conflict copies (`*conflicted copy*`, `*-WORKSTATION-LG*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac Studio*`, `*-MacBook*`, `*.rej`).
+  * Shielded against lock collisions and caches (`.automation-lock`, `uv.lock`, `!package-lock.json`, `.hypothesis/`, `.turbo/`, `.nyc_output/`).
+- SBOM & Third-Party Licenses Audit:
+  * Re-audited `THIRD_PARTY_LICENSES.md` verifying 100% permissive runtime dependencies, unprivileged `RunAsInvoker` guarantee, zero-copyleft isolation, and explicit link to canonical `NOTICE`.
+- Contract Verification & QA:
+  * Extended `tests/test_metadata.py` with 6 new contract tests (27 metadata tests, 225 tests total, 100% pass rate offline).
+  * Refreshed `llms.txt`, `README.md`, `README_de.md`, and `CHANGELOG.md` with 225 passed tests and NOTICE attribution badge.

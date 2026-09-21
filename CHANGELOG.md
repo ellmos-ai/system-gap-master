@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Repository & Technical Hygiene (Pfad A Turnus-Hygiene - 2026-09-21)
+- **CI/CD Lifecycle & Workflow Hardening:**
+  - Added `.github/workflows/stale.yml` (`actions/stale@v9`, daily cron `30 1 * * *`, `timeout-minutes: 10`, `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
+  - Added `.github/workflows/welcome.yml` (`actions/first-interaction@v3`, `timeout-minutes: 5`, `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
+  - Hardened `.github/workflows/tests.yml` with explicit least-privilege permissions (`contents: read`).
+- **Multi-Host Cloud-Sync-, Lock- & Cache-Schutz:**
+  - Hardened `.gitignore` against multi-host collision patterns (`*conflicted copy*`, `*-WORKSTATION-LG*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac Studio*`, `*-MacBook*`, `*.rej`), canonical locks (`uv.lock`, `!package-lock.json`, `.automation-lock`), and cache directories (`.hypothesis/`, `.turbo/`, `.nyc_output/`).
+- **Open-Source Root Attribution (`NOTICE`):**
+  - Created canonical `NOTICE` file in repository root establishing copyright attribution for Lukas Geiger, `ellmos-ai`, and `open-bricks` umbrella.
+- **PEP 621 Standardisierung in `pyproject.toml`:**
+  - Expanded `license-files` to `["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`.
+  - Added `Notice` URL under `[project.urls]`.
+  - Added `norecursedirs` under `[tool.pytest.ini_options]`.
+  - Strictly preserved version `1.6.1` according to release discipline `T-20260920-167562623`.
+- **Level 1 SBOM Drittanbieter-Lizenzaudit:**
+  - Re-audited `THIRD_PARTY_LICENSES.md` (Stand 2026-09-21) verifying 100% permissive runtime dependencies, unprivileged `RunAsInvoker` non-elevation guarantee, zero-copyleft isolation, and explicit link to canonical `NOTICE`.
+- **Dokumentations- & Kontext-Parität:**
+  - Synchronized `README.md` and `README_de.md` with links to `NOTICE`, statutory disclaimer (§ 521 BGB), and updated verification badges (`225 passed | 42 subtests`).
+  - Updated `llms.txt` verification timestamp to 2026-09-21 and added `NOTICE` to primary files inventory.
+  - Added Pfad A hygiene entry to `MARKETING-LOG.txt`.
+- **Vertragstest-Erweiterung & QA-Suite:**
+  - Extended `tests/test_metadata.py` with 6 new contract tests (`test_notice_file_exists`, `test_stale_workflow_integrity`, `test_welcome_workflow_integrity`, `test_ci_least_privilege_permissions`, `test_pyproject_pep621_license_files_and_notice`, `test_gitignore_multihost_and_lock_guards`), raising the test suite to 225 passing tests (100% green offline).
+
 ### Changed
 - **`YARD_TEMPLATE.json` classifies `_config-state/README.md` and `agents/README.md` as `seed-once`.**
   Both paths reside in instance-owned directories (`"ownership": "instance"`). Changing their mode from `managed` to `seed-once` (and removing them from `managed_path_exceptions`) allows live sync yards to maintain rich, machine-local documentation without triggering `untracked-or-modified-managed-file` blockers during `doctor` and `plan`, while continuing to seed fresh yards from the template.

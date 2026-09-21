@@ -12,9 +12,10 @@
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/security-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/security--sla-48h%20%7C%205d%20triage-blue.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-219%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-225%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Third-Party Audited](https://img.shields.io/badge/third--party--licenses-audited%20%7C%20100%25%20permissive-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Marketing Log](https://img.shields.io/badge/marketing--log-active-orange.svg)](MARKETING-LOG.txt)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
@@ -532,7 +533,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-All 219 test cases and 42 subtests execute fully offline with zero external network connectivity.
+All 225 test cases and 42 subtests execute fully offline with zero external network connectivity.
 
 ---
 
@@ -544,4 +545,7 @@ All 219 test cases and 42 subtests execute fully offline with zero external netw
 
 - **Security Policy:** See [`SECURITY.md`](SECURITY.md) for vulnerability disclosure procedures, dual SLAs (48-hour response, 5-day triage commitment), and supported version branches.
 - **Zero-Secrets Invariant:** Never place credentials, API tokens, private keys, or confidential case data in the sync yard (Rule 6).
+- **Attribution & Notice:** See [`NOTICE`](NOTICE) for canonical copyright and attribution notices.
+- **Third-Party Transparency:** Full dependency audit and non-elevation guarantees in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+- **Statutory Disclaimer (§ 521 BGB):** This open-source software and documentation are provided free of charge. In accordance with Section 521 of the German Civil Code (BGB), the provider's liability for gratuitous provision is limited to intent and gross negligence.
 - **License:** Distributed under the permissive [MIT License](LICENSE) covering code, templates, and documentation.

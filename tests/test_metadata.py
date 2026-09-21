@@ -99,7 +99,8 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("219%20passed", text)
+            self.assertIn("225%20passed", text)
+            self.assertIn("Attribution-NOTICE-blue.svg", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
             self.assertIn("ruff", text)
@@ -111,8 +112,8 @@ class MetadataParityTests(unittest.TestCase):
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-09-19", content)
-        self.assertIn("219 tests passed", content)
+        self.assertIn("Last-checked: 2026-09-21", content)
+        self.assertIn("225 tests passed", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):
@@ -349,6 +350,73 @@ class MetadataParityTests(unittest.TestCase):
         de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
         self.assertIn("§ 521 BGB", de_readme)
         self.assertIn("Gefälligkeitsrecht", de_readme)
+
+    def test_notice_file_exists(self):
+        notice_path = self.root / "NOTICE"
+        self.assertTrue(notice_path.exists(), "NOTICE file must exist in repository root")
+        content = notice_path.read_text(encoding="utf-8")
+        self.assertIn("system-gap-master", content)
+        self.assertIn("Lukas Geiger", content)
+        self.assertIn("ellmos-ai", content)
+        self.assertIn("open-bricks", content)
+        self.assertIn("MIT License", content)
+        self.assertIn("THIRD_PARTY_LICENSES.md", content)
+
+    def test_stale_workflow_integrity(self):
+        stale_path = self.root / ".github" / "workflows" / "stale.yml"
+        self.assertTrue(stale_path.exists(), ".github/workflows/stale.yml must exist")
+        content = stale_path.read_text(encoding="utf-8")
+        self.assertIn("cron: '30 1 * * *'", content)
+        self.assertIn("actions/stale@v9", content)
+        self.assertIn("timeout-minutes: 10", content)
+        self.assertIn("cancel-in-progress: true", content)
+        self.assertIn("issues: write", content)
+        self.assertIn("pull-requests: write", content)
+
+    def test_welcome_workflow_integrity(self):
+        welcome_path = self.root / ".github" / "workflows" / "welcome.yml"
+        self.assertTrue(welcome_path.exists(), ".github/workflows/welcome.yml must exist")
+        content = welcome_path.read_text(encoding="utf-8")
+        self.assertIn("actions/first-interaction@v3", content)
+        self.assertIn("timeout-minutes: 5", content)
+        self.assertIn("cancel-in-progress: true", content)
+        self.assertIn("issues: write", content)
+        self.assertIn("pull-requests: write", content)
+
+    def test_ci_least_privilege_permissions(self):
+        ci_path = self.root / ".github" / "workflows" / "tests.yml"
+        self.assertTrue(ci_path.exists(), ".github/workflows/tests.yml must exist")
+        content = ci_path.read_text(encoding="utf-8")
+        self.assertIn("permissions:", content)
+        self.assertIn("contents: read", content)
+
+    def test_pyproject_pep621_license_files_and_notice(self):
+        pyproject_path = self.root / "pyproject.toml"
+        self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        license_files = data["project"]["license-files"]
+        self.assertIn("LICENSE", license_files)
+        self.assertIn("NOTICE", license_files)
+        self.assertIn("THIRD_PARTY_LICENSES.md", license_files)
+        urls = data["project"]["urls"]
+        self.assertIn("Notice", urls)
+        self.assertEqual(urls["Notice"], "https://github.com/ellmos-ai/system-gap-master/blob/main/NOTICE")
+        pytest_opts = data.get("tool", {}).get("pytest", {}).get("ini_options", {})
+        self.assertIn("norecursedirs", pytest_opts)
+
+    def test_gitignore_multihost_and_lock_guards(self):
+        gi_path = self.root / ".gitignore"
+        self.assertTrue(gi_path.exists(), ".gitignore must exist")
+        content = gi_path.read_text(encoding="utf-8")
+        self.assertIn("*conflicted copy*", content)
+        self.assertIn("*-WORKSTATION-LG*", content)
+        self.assertIn("*-LAPTOP*", content)
+        self.assertIn("*-Mac Studio*", content)
+        self.assertIn(".hypothesis/", content)
+        self.assertIn(".turbo/", content)
+        self.assertIn(".automation-lock", content)
+        self.assertIn("uv.lock", content)
+        self.assertIn("!package-lock.json", content)
 
 
 if __name__ == "__main__":

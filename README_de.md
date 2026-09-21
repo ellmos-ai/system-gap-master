@@ -12,9 +12,10 @@
 [![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/Sicherheits--SLA-48h%20%7C%205d%20Triage-blue.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/Tests-219%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-225%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Code style: Ruff](https://img.shields.io/badge/Code--Stil-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Third-Party Audited](https://img.shields.io/badge/Drittanbieter--Lizenzen-auditiert%20%7C%20100%25%20permissiv-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Marketing Log](https://img.shields.io/badge/Marketing--Log-aktiv-orange.svg)](MARKETING-LOG.txt)
 [![Protocol](https://img.shields.io/badge/Protokoll-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexierung-llms.txt-purple.svg)](llms.txt)
@@ -495,7 +496,7 @@ ruff check .
 python -m compileall -q .
 ```
 
-Alle 219 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwerkverbindung.
+Alle 225 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwerkverbindung.
 
 ---
 
@@ -507,6 +508,8 @@ Alle 219 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwer
 
 - **Sicherheitsrichtlinie:** Siehe [`SECURITY.md`](SECURITY.md) für Meldeverfahren bei Schwachstellen, duale SLAs (48-Stunden-Reaktion, 5-Tage-Triage) und unterstützte Versionszweige.
 - **Keine Secrets im Transferbereich:** Zugangsdaten, Passwörter und Tokens gehören niemals in den gemeinsamen Yard (Regel 6).
+- **Urheberrechtsnachweis & Attribution:** Siehe [`NOTICE`](NOTICE) für kanonische Urheberrechtsangaben und die Zuordnung zum open-bricks Dachprojekt.
+- **Drittanbieter-Transparenz:** Vollständiges Lizenz-Audit und Non-Elevation-Garantien in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
 - **Lizenz:** Veröffentlicht unter der permissiven [MIT-Lizenz](LICENSE) für Code, Vorlagen und Dokumentation.
 
 ### Gesetzlicher Hinweis (§ 521 BGB Gefälligkeitsrecht)
