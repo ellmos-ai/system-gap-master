@@ -99,7 +99,7 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("225%20passed", text)
+            self.assertIn("230%20passed", text)
             self.assertIn("Attribution-NOTICE-blue.svg", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
@@ -107,13 +107,17 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("THIRD_PARTY_LICENSES.md", text)
             self.assertIn("MARKETING-LOG.txt", text)
 
+        self.assertIn("Verified-2026--09--28", en_text)
+        self.assertIn("Gepr%C3%BCft-2026--09--28", de_text)
+
     def test_llms_txt_presence(self):
         llms_path = self.root / "llms.txt"
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-09-21", content)
-        self.assertIn("225 tests passed", content)
+        self.assertIn("Last-checked: 2026-09-28", content)
+        self.assertIn("230 tests passed", content)
+        self.assertIn("THIRD_PARTY_LICENSES.txt", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):
@@ -398,9 +402,15 @@ class MetadataParityTests(unittest.TestCase):
         self.assertIn("LICENSE", license_files)
         self.assertIn("NOTICE", license_files)
         self.assertIn("THIRD_PARTY_LICENSES.md", license_files)
+        self.assertIn("THIRD_PARTY_LICENSES.txt", license_files)
         urls = data["project"]["urls"]
         self.assertIn("Notice", urls)
         self.assertEqual(urls["Notice"], "https://github.com/ellmos-ai/system-gap-master/blob/main/NOTICE")
+        self.assertIn("Third-Party Licenses (Text)", urls)
+        self.assertEqual(
+            urls["Third-Party Licenses (Text)"],
+            "https://github.com/ellmos-ai/system-gap-master/blob/main/THIRD_PARTY_LICENSES.txt",
+        )
         pytest_opts = data.get("tool", {}).get("pytest", {}).get("ini_options", {})
         self.assertIn("norecursedirs", pytest_opts)
 
@@ -417,6 +427,99 @@ class MetadataParityTests(unittest.TestCase):
         self.assertIn(".automation-lock", content)
         self.assertIn("uv.lock", content)
         self.assertIn("!package-lock.json", content)
+        self.assertIn(".pytest_temp/", content)
+        self.assertIn(".pytest_tmp*/", content)
+
+    def test_third_party_licenses_plain_text(self):
+        txt_path = self.root / "THIRD_PARTY_LICENSES.txt"
+        self.assertTrue(txt_path.exists(), "THIRD_PARTY_LICENSES.txt must exist")
+        text = txt_path.read_text(encoding="utf-8")
+        self.assertIn("system-gap-master", text)
+        self.assertIn("SPDX:", text)
+        self.assertIn("tomli", text)
+        self.assertIn("paramiko", text)
+        self.assertIn("ticket-master", text)
+        self.assertIn("pytest", text)
+        self.assertIn("ruff", text)
+        self.assertIn("setuptools", text)
+        self.assertIn("MIT", text)
+        self.assertIn("Apache-2.0", text)
+        self.assertIn("LGPL-2.1-or-later", text)
+
+    def test_pep621_saturated_keywords(self):
+        pyproject_path = self.root / "pyproject.toml"
+        self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        keywords = data.get("project", {}).get("keywords", [])
+        self.assertEqual(len(keywords), 20, f"Expected 20 keywords, got {len(keywords)}")
+        expected_keywords = {
+            "agent-frameworks",
+            "ai-agents",
+            "antigravity",
+            "claude-code",
+            "cli",
+            "codex",
+            "conflict-resolution",
+            "coordination",
+            "devops",
+            "local-first",
+            "multi-agent",
+            "multi-machine",
+            "offline-first",
+            "open-bricks",
+            "peer-to-peer",
+            "python",
+            "serverless",
+            "sync",
+            "zero-dependencies",
+            "zero-egress",
+        }
+        self.assertEqual(set(keywords), expected_keywords)
+
+    def test_dual_reciprocal_html_anchors_parity(self):
+        en_readme = (self.root / "README.md").read_text(encoding="utf-8")
+        de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
+
+        for sec_num in range(1, 16):
+            sec_id = f"sec-{sec_num:02d}"
+            anchor_tag = f'<a id="{sec_id}"></a>'
+            self.assertIn(anchor_tag, en_readme, f"{anchor_tag} missing in README.md")
+            self.assertIn(anchor_tag, de_readme, f"{anchor_tag} missing in README_de.md")
+
+    def test_level_1_sbom_invariant_matrix_parity(self):
+        tpl_path = self.root / "THIRD_PARTY_LICENSES.md"
+        self.assertTrue(tpl_path.exists(), "THIRD_PARTY_LICENSES.md must exist")
+        text = tpl_path.read_text(encoding="utf-8")
+        self.assertIn("Level 1 SBOM Invariant Cross-Reference Matrix", text)
+        self.assertIn("THIRD_PARTY_LICENSES.txt", text)
+
+        invariants = [
+            "INV-LOCAL-01",
+            "INV-SEC-02",
+            "INV-SLOT-03",
+            "INV-MSG-04",
+            "INV-FAIL-05",
+            "INV-MERGE-06",
+            "INV-GATE-07",
+            "INV-PEER-08",
+            "INV-LIC-09",
+            "INV-SLA-10",
+        ]
+        for inv in invariants:
+            has_verified_entry = any(
+                inv in line and "VERIFIED" in line for line in text.splitlines()
+            )
+            self.assertTrue(
+                has_verified_entry,
+                f"Invariant {inv} not verified in Level 1 SBOM table",
+            )
+
+    def test_marketing_log_recency(self):
+        ml_path = self.root / "MARKETING-LOG.txt"
+        self.assertTrue(ml_path.exists(), "MARKETING-LOG.txt must exist")
+        text = ml_path.read_text(encoding="utf-8")
+        self.assertIn("11. PFAD B DISCOVERABILITY, LEVEL 1 SBOM & VISUAL ARCHITECTURE AUDIT (2026-09-28)", text)
+        self.assertIn("Verified: 2026-09-28", text)
 
 
 if __name__ == "__main__":

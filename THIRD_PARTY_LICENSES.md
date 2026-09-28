@@ -1,9 +1,10 @@
 # Third-Party Licenses & Transparency Notice
 
 > **Project:** `ellmos-ai/system-gap-master`
-> **Audited:** 2026-09-21
+> **Audited:** 2026-09-28
 > **Repository License:** [MIT License](LICENSE)
 > **Canonical Notice:** [NOTICE](NOTICE)
+> **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
 > **Architecture & Privacy:** 100% Local-First, Zero-Egress, Unprivileged User-Mode (`RunAsInvoker`), Fail-Closed
 
 ---
@@ -14,17 +15,24 @@
 
 All direct, optional, and development dependencies utilized across `system-gap-master` are distributed under strictly **permissive and free open-source licenses** (MIT, Apache-2.0, PSFL, LGPL-2.1). There are **zero AGPL or restrictive copyleft constraints**, ensuring maximum portability for multi-machine setups, personal transfer yards, enterprise infrastructure, and automated multi-agent deployments.
 
-Furthermore, `system-gap-master` guarantees:
-1. **100% Local-First & Zero Egress (INV-LOCAL-01):** Operates entirely on local filesystems and local storage mounts (OneDrive, Dropbox, Syncthing, NAS, or local paths). Zero network telemetry, zero phone-home calls, and zero hidden analytical tracking.
-2. **Unprivileged User-Mode (`RunAsInvoker` / INV-SEC-02):** Executes safely in unprivileged user space without requiring root or administrator elevation.
-3. **Strict Machine-Owned Slot Isolation (INV-SLOT-03):** Each host writes exclusively to its own designated slot (`hosts/<hostname>/`); peer slots are strictly read-only, preventing multi-machine collision by design.
-4. **Delete-After-Read Direct Messaging (INV-MSG-04):** Inter-machine messages (`messages/to-<host>.md`) are processed and atomically removed to enforce at-most-once processing semantics.
-5. **Fail-Closed Locking & Lease Enforcement (INV-FAIL-05):** Multi-agent and reconciler operations require valid exclusive kernel-backed leases (`reconciler.lock`); operations abort safely upon lock collision or lease expiry.
-6. **Deterministic 3-Way & Append-Only Reconciliation (INV-MERGE-06):** Provider conflict copies are reconciled via deterministic base-merge or timestamped append; destructive overwrites are strictly prohibited.
-7. **Gated Preflight & Idempotent Daily Ritual (INV-GATE-07):** The daily sync gate (`scripts/system_gap_daily_check.py`) enforces once-per-day execution with audit trail in `DAILY_SYNC_LOG.md`.
-8. **Cryptographically Bound SFTP & Detached Verification (INV-PEER-08):** Trusted-peer preparation enforces sha256 checksums and detached Ed25519/GPG signatures; unsigned or tampered payloads are rejected fail-closed.
-9. **100% Permissive Audited Dependency Stack (INV-LIC-09):** Clean MIT/PSFL stack audited in this document, zero copyleft or AGPL contamination.
-10. **Dual Security Response & Triage SLA (INV-SLA-10):** Commitments to 48-hour response and 5-day triage via canonical security channels (`security@open-bricks.org`, `security@ellmos.ai`).
+---
+
+## Level 1 SBOM Invariant Cross-Reference Matrix
+
+`system-gap-master` adheres to ten foundational governance and runtime invariants verified continuously across all builds:
+
+| Invariant | Category | Description | Verification Method / Evidence | Status |
+|:---|:---|:---|:---|:---:|
+| `INV-LOCAL-01` | Local-First & Zero Egress | Operates entirely on local filesystems and storage mounts (OneDrive, Dropbox, Syncthing, NAS, or local paths); zero telemetry, zero analytics. | `tests/test_trusted_peer_paths.py`, `tests/test_metadata.py` | **VERIFIED** |
+| `INV-SEC-02` | Unprivileged User-Mode (`RunAsInvoker`) | Executes safely in unprivileged user space without requiring root or administrator elevation. | `SECURITY.md`, `pyproject.toml`, `system_gap_master/conflict_copy_reconciler.py` | **VERIFIED** |
+| `INV-SLOT-03` | Strict Machine-Owned Slot Isolation | Each host writes exclusively to its own designated slot (`hosts/<hostname>/`); peer slots are strictly read-only, preventing multi-machine collision. | `tests/test_instance_manager.py`, `tests/test_config_snapshot.py` | **VERIFIED** |
+| `INV-MSG-04` | Delete-After-Read Direct Messaging | Inter-machine messages (`messages/to-<host>.md`) are processed and atomically removed to enforce at-most-once processing semantics. | `system_gap_master/yard_template/messages/`, `tests/test_republica_transit.py` | **VERIFIED** |
+| `INV-FAIL-05` | Fail-Closed Locking & Lease Enforcement | Multi-agent and reconciler operations require valid exclusive kernel-backed leases (`reconciler.lock`); operations abort safely upon collision. | `system_gap_master/conflict_copy_reconciler.py`, `tests/test_conflict_copy_reconciler.py` | **VERIFIED** |
+| `INV-MERGE-06` | Deterministic 3-Way & Append-Only Reconciliation | Provider conflict copies are reconciled via deterministic base-merge or timestamped append; destructive overwrites are strictly prohibited. | `tests/test_conflict_copy_reconciler.py` | **VERIFIED** |
+| `INV-GATE-07` | Gated Preflight & Idempotent Daily Ritual | The daily sync gate (`scripts/system_gap_daily_check.py`) enforces once-per-day execution with audit trail in `DAILY_SYNC_LOG.md`. | `tests/test_system_gap_daily_check.py`, `scripts/system_gap_daily_check.py` | **VERIFIED** |
+| `INV-PEER-08` | Cryptographically Bound SFTP & Detached Verification | Trusted-peer preparation enforces sha256 checksums and detached Ed25519/GPG signatures; unsigned or tampered payloads are rejected fail-closed. | `tests/test_trusted_peer_sftp_executor.py`, `tests/test_trusted_peer_paths.py` | **VERIFIED** |
+| `INV-LIC-09` | 100% Permissive Audited Dependency Stack | Clean MIT/PSFL stack audited in this document, zero copyleft or AGPL contamination. | `tests/test_metadata.py`, `THIRD_PARTY_LICENSES.txt` | **VERIFIED** |
+| `INV-SLA-10` | Dual Security Response & Triage SLA | Commitments to 48-hour response and 5-day triage via canonical security channels (`security@open-bricks.org`, `security@ellmos.ai`). | `SECURITY.md`, `tests/test_metadata.py` | **VERIFIED** |
 
 ---
 

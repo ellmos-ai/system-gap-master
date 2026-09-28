@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+### Documentation & Discoverability Parity (Pfad B Discoverability, Level 1 SBOM & Visual Navigation - 2026-09-28)
+- **Visual 15-Section Navigation & Anchor Parity:**
+  - Enhanced all 15 sections across both `README.md` and `README_de.md` with concise dual reciprocal HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-15"></a>`) alongside descriptive slug anchors, ensuring standardized bidirectional anchor jumps and visual orientation.
+- **Companion Plain-Text License Inventory (`THIRD_PARTY_LICENSES.txt`):**
+  - Created canonical plain-text companion audit covering all runtime and development tooling dependencies (`tomli`, `paramiko`, `ticket-master`, `pytest`, `ruff`, `setuptools`) with full SPDX identifiers, license texts, and upstream repository links.
+- **Level 1 SBOM Invariant Cross-Reference Matrix:**
+  - Upgraded `THIRD_PARTY_LICENSES.md` with a structured Level 1 SBOM Invariant Cross-Reference Matrix formally verifying all 10 governance invariants (`INV-LOCAL-01` to `INV-SLA-10`) with `VERIFIED` status, zero-copyleft isolation, unprivileged `RunAsInvoker` guarantee, and cross-reference to `THIRD_PARTY_LICENSES.txt`.
+- **PEP 621 Saturated Keywords & Metadata (`pyproject.toml`):**
+  - Expanded keywords to 20 saturated terms aligned with repository GitHub topics.
+  - Expanded `license-files` whitelist to include `THIRD_PARTY_LICENSES.txt` alongside `LICENSE`, `NOTICE`, and `THIRD_PARTY_LICENSES.md`.
+  - Added project URLs for `Homepage` and `Third-Party Licenses (Text)`.
+  - Configured pytest `--basetemp=.pytest_temp` and `norecursedirs` for clean cache isolation.
+  - Strictly preserved release version `1.6.1` in accordance with version-freeze policy `T-20260920-167562623`.
+- **Multi-Host & Test Cache Defense (`.gitignore`):**
+  - Added `.pytest_temp/` and `.pytest_tmp*/` to `.gitignore` to prevent ephemeral test run caches from contaminating git working trees.
+- **Verification Badges & LLM Context Synchronization:**
+  - Refreshed bilingual verification badges in `README.md` and `README_de.md` to `Verified: 2026-09-28` / `Geprüft: 2026-09-28`.
+  - Synchronized `llms.txt` verification timestamp to 2026-09-28 and added `THIRD_PARTY_LICENSES.txt` and Level 1 SBOM details.
+  - Appended Pfad B audit record Stand 2026-09-28 to `MARKETING-LOG.txt`.
+- **Contract Test Suite Expansion (`tests/test_metadata.py`):**
+  - Added contract tests for plain-text licenses (`test_third_party_licenses_plain_text`), saturated PEP 621 keywords (`test_pep621_saturated_keywords`), 15-section dual reciprocal anchors (`test_dual_reciprocal_html_anchors_parity`), Level 1 SBOM matrix table parity (`test_level_1_sbom_invariant_matrix_parity`), and marketing log recency (`test_marketing_log_recency`).
+
 ### Repository & Technical Hygiene (Pfad A Turnus-Hygiene - 2026-09-21)
 - **CI/CD Lifecycle & Workflow Hardening:**
   - Added `.github/workflows/stale.yml` (`actions/stale@v9`, daily cron `30 1 * * *`, `timeout-minutes: 10`, `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).

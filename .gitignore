@@ -43,6 +43,8 @@ dist/
 
 # Test, linter & coverage caches
 .pytest_cache/
+.pytest_temp/
+.pytest_tmp*/
 .ruff_cache/
 .coverage
 .coverage.*

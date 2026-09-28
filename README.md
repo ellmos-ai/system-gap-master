@@ -12,10 +12,11 @@
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/security-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/security--sla-48h%20%7C%205d%20triage-blue.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/tests-225%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-230%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Third-Party Audited](https://img.shields.io/badge/third--party--licenses-audited%20%7C%20100%25%20permissive-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
+[![Verified: 2026-09-28](https://img.shields.io/badge/Verified-2026--09--28-blue.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Marketing Log](https://img.shields.io/badge/marketing--log-active-orange.svg)](MARKETING-LOG.txt)
 [![Protocol](https://img.shields.io/badge/Protocol-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexing-llms.txt-purple.svg)](llms.txt)
@@ -55,6 +56,7 @@ Part of the cross-agent infrastructure family:
 
 ---
 
+<a id="sec-01"></a>
 <a id="1-core-principles--yard-architecture"></a>
 <a id="core-principles--yard-architecture"></a>
 <a id="1-kernprinzipien--yard-architektur"></a>
@@ -116,6 +118,7 @@ flowchart TD
 
 ---
 
+<a id="sec-02"></a>
 <a id="2-the-10-invariant-rules"></a>
 <a id="the-10-invariant-rules"></a>
 <a id="2-die-10-kernregeln"></a>
@@ -137,6 +140,7 @@ Full reasoning: [PROTOCOL.md](PROTOCOL.md).
 
 ---
 
+<a id="sec-03"></a>
 <a id="3-daily-sync--reconciliation-lifecycle"></a>
 <a id="daily-sync--reconciliation-lifecycle"></a>
 <a id="3-taeglicher-sync--reconciliation-lebenszyklus"></a>
@@ -178,6 +182,7 @@ sequenceDiagram
 
 ---
 
+<a id="sec-04"></a>
 <a id="4-controlled-repo-to-yard-lifecycle"></a>
 <a id="controlled-repo-to-yard-lifecycle"></a>
 <a id="4-kontrollierter-repo-zu-yard-lebenszyklus"></a>
@@ -199,6 +204,7 @@ Locally changed managed files block instead of being overwritten; `seed-once` fi
 
 ---
 
+<a id="sec-05"></a>
 <a id="5-safe-conflict-copy-reconciliation"></a>
 <a id="safe-conflict-copy-reconciliation"></a>
 <a id="5-sichere-konfliktkopien-abstimmung"></a>
@@ -232,6 +238,7 @@ See [the reconciler contract](docs/conflict-copy-reconciler.md), the [configurat
 
 ---
 
+<a id="sec-06"></a>
 <a id="6-ticket-routing-boundary"></a>
 <a id="ticket-routing-boundary"></a>
 <a id="6-ticket-routing-grenze"></a>
@@ -242,6 +249,7 @@ The optional `ticket-routing` integration connects `ticket-master` (pinned to th
 
 ---
 
+<a id="sec-07"></a>
 <a id="7-trusted-peer-paths--sftp-execution"></a>
 <a id="trusted-peer-paths--sftp-execution"></a>
 <a id="7-trusted-peer-pfade--sftp-ausfuehrung"></a>
@@ -276,6 +284,7 @@ Setup, signature namespaces and failure boundaries are documented in [`docs/trus
 
 ---
 
+<a id="sec-08"></a>
 <a id="8-republica-showcase-fallback"></a>
 <a id="republica-showcase-fallback"></a>
 <a id="8-republica-schaufenster-fallback"></a>
@@ -322,6 +331,7 @@ republica-transit check-root --yard-root /path/to/your/yard --republica-root ~/.
 
 ---
 
+<a id="sec-09"></a>
 <a id="9-installation--quick-start"></a>
 <a id="installation--quick-start"></a>
 <a id="9-installation--schnellstart"></a>
@@ -403,6 +413,7 @@ Use `--check` for a read-only preview. `snapshots/` and `CONFIG-STATE.md` are de
 
 ---
 
+<a id="sec-10"></a>
 <a id="10-governance--runtime-invariants"></a>
 <a id="governance--runtime-invariants"></a>
 <a id="10-governance--laufzeit-invarianten"></a>
@@ -426,6 +437,7 @@ Use `--check` for a read-only preview. `snapshots/` and `CONFIG-STATE.md` are de
 
 ---
 
+<a id="sec-11"></a>
 <a id="11-sibling-tools--ecosystem"></a>
 <a id="sibling-tools--ecosystem"></a>
 <a id="11-verwandte-werkzeuge--oekosystem"></a>
@@ -485,6 +497,7 @@ The authoritative bundle manifest defines membership, versions, profiles and pri
 
 ---
 
+<a id="sec-12"></a>
 <a id="12-third-party-licenses--transparency"></a>
 <a id="third-party-licenses--transparency"></a>
 <a id="12-drittanbieter-lizenzen--transparenz"></a>
@@ -499,6 +512,7 @@ The authoritative bundle manifest defines membership, versions, profiles and pri
 
 ---
 
+<a id="sec-13"></a>
 <a id="13-discovery--llm-context"></a>
 <a id="discovery--llm-context"></a>
 <a id="13-discovery--llm-kontext"></a>
@@ -514,6 +528,7 @@ The authoritative bundle manifest defines membership, versions, profiles and pri
 
 ---
 
+<a id="sec-14"></a>
 <a id="14-testing--verification"></a>
 <a id="testing--verification"></a>
 <a id="14-tests--verifikation"></a>
@@ -537,6 +552,7 @@ All 225 test cases and 42 subtests execute fully offline with zero external netw
 
 ---
 
+<a id="sec-15"></a>
 <a id="15-security-policy--license"></a>
 <a id="security-policy--license"></a>
 <a id="15-sicherheitsrichtlinie--lizenz"></a>

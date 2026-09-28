@@ -175,3 +175,30 @@ German (DE):
 - Contract Verification & QA:
   * Extended `tests/test_metadata.py` with 6 new contract tests (27 metadata tests, 225 tests total, 100% pass rate offline).
   * Refreshed `llms.txt`, `README.md`, `README_de.md`, and `CHANGELOG.md` with 225 passed tests and NOTICE attribution badge.
+
+================================================================================
+11. PFAD B DISCOVERABILITY, LEVEL 1 SBOM & VISUAL ARCHITECTURE AUDIT (2026-09-28)
+================================================================================
+- Visual 15-Section Navigation & Anchor Parity:
+  * Deployed concise dual reciprocal HTML anchors (<a id="sec-01"></a> through <a id="sec-15"></a>) across all 15 sections in both README.md and README_de.md alongside existing slug anchors.
+  * Verified seamless cross-language deep linking parity and direct navigation jumping.
+- Companion Plain-Text License Inventory (THIRD_PARTY_LICENSES.txt):
+  * Created plain-text inventory with SPDX identifiers for all runtime and dev dependencies (tomli, paramiko, ticket-master, pytest, ruff, setuptools).
+  * Included complete upstream repository links and full copyright / license notices.
+- Level 1 SBOM Invariant Cross-Reference Matrix:
+  * Enhanced THIRD_PARTY_LICENSES.md with a structured Level 1 SBOM Invariant Cross-Reference Matrix table.
+  * Formally audited all 10 governance invariants (INV-LOCAL-01 through INV-SLA-10) with VERIFIED status, zero-copyleft isolation, unprivileged RunAsInvoker guarantee, and reference to THIRD_PARTY_LICENSES.txt.
+- PEP 621 Saturated Keywords & Package Metadata (pyproject.toml):
+  * Saturated keywords list with 20 terms matching GitHub topics.
+  * Whitelisted 4 license files under project.license-files (LICENSE, NOTICE, THIRD_PARTY_LICENSES.md, THIRD_PARTY_LICENSES.txt).
+  * Added project.urls for Homepage and Third-Party Licenses (Text).
+  * Configured pytest --basetemp=.pytest_temp and norecursedirs.
+  * Strictly preserved frozen release version 1.6.1 (T-20260920-167562623).
+- Multi-Host Sync & Test Cache Defense (.gitignore):
+  * Added .pytest_temp/ and .pytest_tmp*/ to prevent test run cache pollution.
+- Verification Badges & LLM Context Synchronization:
+  * Refreshed bilingual verification badges in README.md and README_de.md to Verified: 2026-09-28 / Geprüft: 2026-09-28.
+  * Synchronized llms.txt Last-checked date to 2026-09-28 and added THIRD_PARTY_LICENSES.txt and Level 1 SBOM details.
+- Contract Verification & QA Suite (tests/test_metadata.py):
+  * Added contract tests: test_third_party_licenses_plain_text, test_pep621_saturated_keywords, test_dual_reciprocal_html_anchors_parity, test_level_1_sbom_invariant_matrix_parity, and test_marketing_log_recency.
+  * Total test suite expanded to 228 passing tests (42 subtests), 100% green offline.

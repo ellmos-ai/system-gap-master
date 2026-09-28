@@ -12,10 +12,11 @@
 [![Privacy](https://img.shields.io/badge/Privatsph%C3%A4re-100%25%20Offline%20%7C%20Zero--Egress-brightgreen.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/Sicherheit-Local--First%20%7C%20Fail--Closed-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/Sicherheits--SLA-48h%20%7C%205d%20Triage-blue.svg)](SECURITY.md)
-[![Tests](https://img.shields.io/badge/Tests-225%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-230%20passed%20%7C%2042%20subtests-brightgreen.svg)](tests/)
 [![Code style: Ruff](https://img.shields.io/badge/Code--Stil-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Third-Party Audited](https://img.shields.io/badge/Drittanbieter--Lizenzen-auditiert%20%7C%20100%25%20permissiv-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
 [![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
+[![Geprüft: 2026-09-28](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--28-blue.svg)](https://github.com/ellmos-ai/system-gap-master)
 [![Marketing Log](https://img.shields.io/badge/Marketing--Log-aktiv-orange.svg)](MARKETING-LOG.txt)
 [![Protocol](https://img.shields.io/badge/Protokoll-Serverless%20Multi--Agent%20Sync-green.svg)](PROTOCOL.md)
 [![LLM Indexing](https://img.shields.io/badge/LLM%20Indexierung-llms.txt-purple.svg)](llms.txt)
@@ -55,6 +56,7 @@ Teil der geräteübergreifenden Infrastruktur-Familie:
 
 ---
 
+<a id="sec-01"></a>
 <a id="1-core-principles--yard-architecture"></a>
 <a id="core-principles--yard-architecture"></a>
 <a id="1-kernprinzipien--yard-architektur"></a>
@@ -116,6 +118,7 @@ flowchart TD
 
 ---
 
+<a id="sec-02"></a>
 <a id="2-the-10-invariant-rules"></a>
 <a id="the-10-invariant-rules"></a>
 <a id="2-die-10-kernregeln"></a>
@@ -137,6 +140,7 @@ Die vollständige Begründung steht in [PROTOCOL.md](PROTOCOL.md).
 
 ---
 
+<a id="sec-03"></a>
 <a id="3-daily-sync--reconciliation-lifecycle"></a>
 <a id="daily-sync--reconciliation-lifecycle"></a>
 <a id="3-taeglicher-sync--reconciliation-lebenszyklus"></a>
@@ -178,6 +182,7 @@ sequenceDiagram
 
 ---
 
+<a id="sec-04"></a>
 <a id="4-controlled-repo-to-yard-lifecycle"></a>
 <a id="controlled-repo-to-yard-lifecycle"></a>
 <a id="4-kontrollierter-repo-zu-yard-lebenszyklus"></a>
@@ -198,6 +203,7 @@ Pläne, Quellen und Ziele werden vor jeder Mutation erneut kryptographisch per H
 
 ---
 
+<a id="sec-05"></a>
 <a id="5-safe-conflict-copy-reconciliation"></a>
 <a id="safe-conflict-copy-reconciliation"></a>
 <a id="5-sichere-konfliktkopien-abstimmung"></a>
@@ -226,6 +232,7 @@ conflict-copy-reconciler canary
 
 ---
 
+<a id="sec-06"></a>
 <a id="6-ticket-routing-boundary"></a>
 <a id="ticket-routing-boundary"></a>
 <a id="6-ticket-routing-grenze"></a>
@@ -236,6 +243,7 @@ Die optionale Integration `ticket-routing` verbindet `ticket-master` (auf die ge
 
 ---
 
+<a id="sec-07"></a>
 <a id="7-trusted-peer-paths--sftp-execution"></a>
 <a id="trusted-peer-paths--sftp-execution"></a>
 <a id="7-trusted-peer-pfade--sftp-ausfuehrung"></a>
@@ -266,6 +274,7 @@ trusted-peer-sftp-executor execute \
 
 ---
 
+<a id="sec-08"></a>
 <a id="8-republica-showcase-fallback"></a>
 <a id="republica-showcase-fallback"></a>
 <a id="8-republica-schaufenster-fallback"></a>
@@ -296,6 +305,7 @@ republica-transit check-root --yard-root /path/to/your/yard --republica-root ~/.
 
 ---
 
+<a id="sec-09"></a>
 <a id="9-installation--quick-start"></a>
 <a id="installation--quick-start"></a>
 <a id="9-installation--schnellstart"></a>
@@ -372,6 +382,7 @@ python scripts/config_snapshot.py all \
 
 ---
 
+<a id="sec-10"></a>
 <a id="10-governance--runtime-invariants"></a>
 <a id="governance--runtime-invariants"></a>
 <a id="10-governance--laufzeit-invarianten"></a>
@@ -395,6 +406,7 @@ python scripts/config_snapshot.py all \
 
 ---
 
+<a id="sec-11"></a>
 <a id="11-sibling-tools--ecosystem"></a>
 <a id="sibling-tools--ecosystem"></a>
 <a id="11-verwandte-werkzeuge--oekosystem"></a>
@@ -448,6 +460,7 @@ Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops
 
 ---
 
+<a id="sec-12"></a>
 <a id="12-third-party-licenses--transparency"></a>
 <a id="third-party-licenses--transparency"></a>
 <a id="12-drittanbieter-lizenzen--transparenz"></a>
@@ -462,6 +475,7 @@ Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops
 
 ---
 
+<a id="sec-13"></a>
 <a id="13-discovery--llm-context"></a>
 <a id="discovery--llm-context"></a>
 <a id="13-discovery--llm-kontext"></a>
@@ -477,6 +491,7 @@ Für lokale KI-Agenten, RAG-Systeme und automatisierte Werkzeuge stehen maschine
 
 ---
 
+<a id="sec-14"></a>
 <a id="14-testing--verification"></a>
 <a id="testing--verification"></a>
 <a id="14-tests--verifikation"></a>
@@ -500,6 +515,7 @@ Alle 225 Tests und 42 Subtests laufen vollständig offline ohne jegliche Netzwer
 
 ---
 
+<a id="sec-15"></a>
 <a id="15-security-policy--license"></a>
 <a id="security-policy--license"></a>
 <a id="15-sicherheitsrichtlinie--lizenz"></a>
