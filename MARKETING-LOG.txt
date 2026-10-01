@@ -202,3 +202,31 @@ German (DE):
 - Contract Verification & QA Suite (tests/test_metadata.py):
   * Added contract tests: test_third_party_licenses_plain_text, test_pep621_saturated_keywords, test_dual_reciprocal_html_anchors_parity, test_level_1_sbom_invariant_matrix_parity, and test_marketing_log_recency.
   * Total test suite expanded to 228 passing tests (42 subtests), 100% green offline.
+
+================================================================================
+12. PFAD A REPOSITORY HYGIENE, CI LIFECYCLE WORKFLOWS & MULTI-HOST LOCK DEFENSE (2026-10-01)
+================================================================================
+- CI/CD Lifecycle Automation & Workflow Provisioning:
+  * Deployed `.github/workflows/auto-assign.yml` (actions/github-script@v7, 5m timeout, cancel-in-progress concurrency, least-privilege permissions).
+  * Deployed `.github/workflows/label-sync.yml` (EndBug/label-sync@v2, 5m timeout, cancel-in-progress concurrency, least-privilege permissions).
+  * Established canonical `.github/labels.yml` with 11 standard governance labels according to GOVERNANCE.md §4.2.
+- Contributing Guidelines & Developer Experience (CONTRIBUTING.md):
+  * Provisioned bilingual CONTRIBUTING.md (English/Deutsch) with reciprocal anchors (#english, #deutsch).
+  * Formalized developer adherence to all 10 governance invariants (INV-LOCAL-01 through INV-SLA-10).
+  * Re-asserted Plan D canonical repository rules (C:\_Local_DEV\repos\system-gap-master), quality gates (compileall, ruff, pytest), and security SLA (48h response / 5d triage).
+- Multi-Host Cloud-Sync, Scoped Lock & Cache Defense (.gitignore):
+  * Hardened against multi-host machine variations (*-IDEAPAD*, *-IDEAPAD-GEI*, *_WORKSTATION*, *_WORKSTATION-LG*, *-WORKSTATION.*, *-WORKSTATION-LG.*).
+  * Added patterns for agent scoped locks (LOCK.dev.*, LOCK.antigravity.*, LOCK.bugsearch.*), task plans (TASKPLAN_*.md), and OS/editor clutter (Desktop.ini, desktop.ini, ehthumbs.db, *.swo).
+- PEP 621 Standard & Pytest Cache Hygiene (pyproject.toml):
+  * Enriched [project.urls] with Contributing, Plain-Text License, and Level 1 SBOM.
+  * Added .pytest_tmp*, .turbo, .nyc_output to pytest norecursedirs.
+  * Preserved release version 1.6.1 strictly frozen per T-20260920-167562623.
+- Level 1 SBOM Re-Audit & Transparency Verification:
+  * Re-audited THIRD_PARTY_LICENSES.md and THIRD_PARTY_LICENSES.txt Stand 2026-10-01 verifying 100% permissive runtime dependencies, unprivileged RunAsInvoker guarantee, and zero copyleft.
+  * Linked CONTRIBUTING.md reciprocally in license transparency documents.
+- Context & Verification Parity:
+  * Synchronized README.md, README_de.md, and llms.txt to 236 passed tests (42 subtests), Verified: 2026-10-01.
+  * Added Shields.io badges for Contributing and Level 1 SBOM: Plain Text.
+- Contract Verification & QA Suite (tests/test_metadata.py):
+  * Extended test suite with 6 new contract tests covering auto-assign, label-sync, labels.yml, CONTRIBUTING.md, extended PEP 621 URLs, and extended .gitignore multi-host defenses.
+  * Total suite expanded to 236 passing tests (42 subtests, 3 platform skips), 100% green offline.

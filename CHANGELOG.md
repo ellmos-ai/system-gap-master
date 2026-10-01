@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Repository Hygiene, CI Lifecycle Workflows & Multi-Host Lock Defense (Pfad A Turnus-Hygiene - 2026-10-01)
+- **CI/CD Lifecycle Automation & Workflow Hardening:**
+  - Added `.github/workflows/auto-assign.yml` (`actions/github-script@v7`, `timeout-minutes: 5`, `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
+  - Added `.github/workflows/label-sync.yml` (`EndBug/label-sync@v2`, `timeout-minutes: 5`, `cancel-in-progress: true`, least-privilege permissions `issues: write`).
+  - Added canonical `.github/labels.yml` with 11 standard governance labels according to `GOVERNANCE.md §4.2`.
+- **Contributing Guidelines & Developer Experience (`CONTRIBUTING.md`):**
+  - Provisioned bilingual `CONTRIBUTING.md` (English/Deutsch) detailing core governance invariants (`INV-LOCAL-01` to `INV-SLA-10`), Plan D local repository development rules, pre-commit quality gates (`compileall`, `ruff`, `pytest`), security disclosure protocols, and release version freeze discipline.
+- **Multi-Host Cloud-Sync-, Lock- & Cache-Defense (`.gitignore`):**
+  - Extended multi-host machine isolation rules (`*-IDEAPAD*`, `*-IDEAPAD-GEI*`, `*_WORKSTATION*`, `*_WORKSTATION-LG*`, `*-WORKSTATION.*`, `*-WORKSTATION-LG.*`).
+  - Hardened against agent-specific scoped locks (`LOCK.dev.*`, `LOCK.antigravity.*`, `LOCK.bugsearch.*`), temporary plans (`TASKPLAN_*.md`), and OS/editor debris (`Desktop.ini`, `desktop.ini`, `ehthumbs.db`, `*.swo`).
+- **PEP 621 Standardisierung in `pyproject.toml`:**
+  - Expanded `[project.urls]` with `Contributing`, `Plain-Text License`, and `Level 1 SBOM`.
+  - Hardened `[tool.pytest.ini_options]` `norecursedirs` with `.pytest_tmp*`, `.turbo`, `.nyc_output`.
+  - Strictly preserved frozen release version `1.6.1` according to `T-20260920-167562623`.
+- **Level 1 SBOM & Transparency Maintenance:**
+  - Re-audited `THIRD_PARTY_LICENSES.md` and companion `THIRD_PARTY_LICENSES.txt` (Stand 2026-10-01) confirming all 10 governance invariants (`INV-LOCAL-01` to `INV-SLA-10`), unprivileged user-mode `RunAsInvoker` guarantee, zero-copyleft runtime isolation, and reciprocal cross-links with `NOTICE`.
+- **Dokumentations-, Badge- & RAG-Kontext-Synchronisation:**
+  - Synchronized bilingual verification badges in `README.md` and `README_de.md` to `Verified: 2026-10-01` / `Geprüft: 2026-10-01` with `236 passed | 42 subtests`.
+  - Added badges for `Contributing` and `Level 1 SBOM: Plain Text`.
+  - Updated `llms.txt` verification timestamp to 2026-10-01 and added `CONTRIBUTING.md`.
+- **Automated Contract Test Suite Expansion (`tests/test_metadata.py`):**
+  - Added 6 new contract tests for auto-assign workflow, label-sync workflow, standard labels configuration, contributing guidelines, extended PEP 621 URLs, and extended `.gitignore` multi-host defenses (236 passed, 42 subtests, 100% green offline).
+
 ### Documentation & Discoverability Parity (Pfad B Discoverability, Level 1 SBOM & Visual Navigation - 2026-09-28)
 - **Visual 15-Section Navigation & Anchor Parity:**
   - Enhanced all 15 sections across both `README.md` and `README_de.md` with concise dual reciprocal HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-15"></a>`) alongside descriptive slug anchors, ensuring standardized bidirectional anchor jumps and visual orientation.

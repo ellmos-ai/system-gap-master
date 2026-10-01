@@ -15,8 +15,14 @@ LOCK.condition.*
 *conflicted copy*
 *-WORKSTATION*
 *-WORKSTATION-LG*
+*_WORKSTATION*
+*_WORKSTATION-LG*
+*-WORKSTATION.*
+*-WORKSTATION-LG.*
 *-ASUS*
 *-ASUS-GEI*
+*-IDEAPAD*
+*-IDEAPAD-GEI*
 *-LAPTOP*
 *-Mac Studio*
 *-MacBook*
@@ -28,6 +34,10 @@ LOCK.condition.*
 *.orig
 *.rej
 .automation-lock
+LOCK.dev.*
+LOCK.antigravity.*
+LOCK.bugsearch.*
+TASKPLAN_*.md
 uv.lock
 !package-lock.json
 trusted-peer-paths.local.json
@@ -78,6 +88,10 @@ _config-state/providers.local.json
 
 # OS/editor
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+*.swo
 .DS_Store
 .idea/
 .vscode/

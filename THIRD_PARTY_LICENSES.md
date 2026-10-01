@@ -1,10 +1,11 @@
 # Third-Party Licenses & Transparency Notice
 
 > **Project:** `ellmos-ai/system-gap-master`
-> **Audited:** 2026-09-28
+> **Audited:** 2026-10-01
 > **Repository License:** [MIT License](LICENSE)
 > **Canonical Notice:** [NOTICE](NOTICE)
 > **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)
+> **Contributing Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md)
 > **Architecture & Privacy:** 100% Local-First, Zero-Egress, Unprivileged User-Mode (`RunAsInvoker`), Fail-Closed
 
 ---

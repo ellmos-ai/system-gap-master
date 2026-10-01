@@ -1,13 +1,13 @@
 # system-gap-master
 
-## Last-checked: 2026-09-28
+## Last-checked: 2026-10-01
 
 ## Verification
 
-230 tests passed, 42 subtests passed, and 3 platform tests were skipped: the
+236 tests passed, 42 subtests passed, and 3 platform tests were skipped: the
 Windows symlink test lacks the required account privilege, and two POSIX mode
 tests do not apply on Windows;
-Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-09-28.
+Ruff, pytest, unittest, and `compileall` passed cleanly on 2026-10-01.
 
 ## Canonical repository
 
@@ -25,6 +25,7 @@ separate state silos.
 
 - `README.md` — overview, 15-point quick navigation, architecture, and security notes.
 - `README_de.md` — vollständige deutsche Dokumentation, 15-Punkte-Navigation & Schnellstart.
+- `CONTRIBUTING.md` — bilingual development guidelines, Plan D architecture, quality gates, and invariant compliance.
 - `NOTICE` — canonical open-source copyright attribution and open-bricks umbrella declaration.
 - `PROTOCOL.md` — full protocol and design rationale.
 - `SKILL.md` — daily sync ritual for agents.

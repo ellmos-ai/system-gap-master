@@ -1,5 +1,9 @@
 THIRD-PARTY SOFTWARE LICENSES
 =============================
+Project: ellmos-ai/system-gap-master
+Audited: 2026-10-01
+License: MIT
+Companion: THIRD_PARTY_LICENSES.md
 
 This document lists the third-party dependencies, libraries, and development tools
 utilized by system-gap-master along with their respective license and SPDX identifiers.

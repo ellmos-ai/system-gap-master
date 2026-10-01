@@ -99,7 +99,7 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("3.13", text)
             self.assertIn("Zero--Egress", text)
             self.assertIn("Fail--Closed", text)
-            self.assertIn("230%20passed", text)
+            self.assertIn("236%20passed", text)
             self.assertIn("Attribution-NOTICE-blue.svg", text)
             self.assertIn("open--bricks", text)
             self.assertIn("MIT", text)
@@ -107,17 +107,18 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("THIRD_PARTY_LICENSES.md", text)
             self.assertIn("MARKETING-LOG.txt", text)
 
-        self.assertIn("Verified-2026--09--28", en_text)
-        self.assertIn("Gepr%C3%BCft-2026--09--28", de_text)
+        self.assertIn("Verified-2026--10--01", en_text)
+        self.assertIn("Gepr%C3%BCft-2026--10--01", de_text)
 
     def test_llms_txt_presence(self):
         llms_path = self.root / "llms.txt"
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-09-28", content)
-        self.assertIn("230 tests passed", content)
+        self.assertIn("Last-checked: 2026-10-01", content)
+        self.assertIn("236 tests passed", content)
         self.assertIn("THIRD_PARTY_LICENSES.txt", content)
+        self.assertIn("CONTRIBUTING.md", content)
         self.assertIn("https://github.com/ellmos-ai/system-gap-master", content)
 
     def test_ci_workflow_integrity(self):
@@ -518,8 +519,102 @@ class MetadataParityTests(unittest.TestCase):
         ml_path = self.root / "MARKETING-LOG.txt"
         self.assertTrue(ml_path.exists(), "MARKETING-LOG.txt must exist")
         text = ml_path.read_text(encoding="utf-8")
-        self.assertIn("11. PFAD B DISCOVERABILITY, LEVEL 1 SBOM & VISUAL ARCHITECTURE AUDIT (2026-09-28)", text)
-        self.assertIn("Verified: 2026-09-28", text)
+        self.assertIn("12. PFAD A REPOSITORY HYGIENE, CI LIFECYCLE WORKFLOWS & MULTI-HOST LOCK DEFENSE (2026-10-01)", text)
+        self.assertIn("Verified: 2026-10-01", text)
+
+    def test_auto_assign_workflow_integrity(self):
+        wf_path = self.root / ".github" / "workflows" / "auto-assign.yml"
+        self.assertTrue(wf_path.exists(), ".github/workflows/auto-assign.yml must exist")
+        content = wf_path.read_text(encoding="utf-8")
+        self.assertIn("actions/github-script@v7", content)
+        self.assertIn("timeout-minutes: 5", content)
+        self.assertIn("cancel-in-progress: true", content)
+        self.assertIn("pull-requests: write", content)
+        self.assertIn("issues: write", content)
+
+    def test_label_sync_workflow_integrity(self):
+        wf_path = self.root / ".github" / "workflows" / "label-sync.yml"
+        self.assertTrue(wf_path.exists(), ".github/workflows/label-sync.yml must exist")
+        content = wf_path.read_text(encoding="utf-8")
+        self.assertIn("EndBug/label-sync@v2", content)
+        self.assertIn("timeout-minutes: 5", content)
+        self.assertIn("cancel-in-progress: true", content)
+        self.assertIn("config-file: .github/labels.yml", content)
+        self.assertIn("issues: write", content)
+
+    def test_labels_yml_integrity(self):
+        lbl_path = self.root / ".github" / "labels.yml"
+        self.assertTrue(lbl_path.exists(), ".github/labels.yml must exist")
+        content = lbl_path.read_text(encoding="utf-8")
+        required_labels = [
+            "bug",
+            "enhancement",
+            "good first issue",
+            "help wanted",
+            "documentation",
+            "duplicate",
+            "wontfix",
+            "priority: high",
+            "priority: low",
+            "needs-triage",
+            "stale",
+        ]
+        for lbl in required_labels:
+            self.assertIn(lbl, content, f"Label {lbl} must be declared in .github/labels.yml")
+
+    def test_contributing_guidelines_presence(self):
+        contrib_path = self.root / "CONTRIBUTING.md"
+        self.assertTrue(contrib_path.exists(), "CONTRIBUTING.md must exist")
+        content = contrib_path.read_text(encoding="utf-8")
+        self.assertIn("English", content)
+        self.assertIn("Deutsch", content)
+        self.assertIn("INV-LOCAL-01", content)
+        self.assertIn("INV-SEC-02", content)
+        self.assertIn("INV-SLA-10", content)
+        self.assertIn("Plan D Architecture", content)
+        self.assertIn("RunAsInvoker", content)
+        self.assertIn("SECURITY.md", content)
+        self.assertIn("1.6.1", content)
+
+    def test_pep621_extended_urls(self):
+        pyproject_path = self.root / "pyproject.toml"
+        self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        urls = data.get("project", {}).get("urls", {})
+        self.assertIn("Contributing", urls)
+        self.assertEqual(
+            urls["Contributing"],
+            "https://github.com/ellmos-ai/system-gap-master/blob/main/CONTRIBUTING.md",
+        )
+        self.assertIn("Plain-Text License", urls)
+        self.assertEqual(
+            urls["Plain-Text License"],
+            "https://github.com/ellmos-ai/system-gap-master/blob/main/THIRD_PARTY_LICENSES.txt",
+        )
+        self.assertIn("Level 1 SBOM", urls)
+        self.assertEqual(
+            urls["Level 1 SBOM"],
+            "https://github.com/ellmos-ai/system-gap-master/blob/main/THIRD_PARTY_LICENSES.md",
+        )
+
+    def test_gitignore_extended_guards(self):
+        gi_path = self.root / ".gitignore"
+        self.assertTrue(gi_path.exists(), ".gitignore must exist")
+        content = gi_path.read_text(encoding="utf-8")
+        self.assertIn("*-IDEAPAD*", content)
+        self.assertIn("*-IDEAPAD-GEI*", content)
+        self.assertIn("*_WORKSTATION*", content)
+        self.assertIn("*_WORKSTATION-LG*", content)
+        self.assertIn("*-WORKSTATION.*", content)
+        self.assertIn("*-WORKSTATION-LG.*", content)
+        self.assertIn("LOCK.dev.*", content)
+        self.assertIn("LOCK.antigravity.*", content)
+        self.assertIn("LOCK.bugsearch.*", content)
+        self.assertIn("TASKPLAN_*.md", content)
+        self.assertIn("Desktop.ini", content)
+        self.assertIn("desktop.ini", content)
+        self.assertIn("ehthumbs.db", content)
+        self.assertIn("*.swo", content)
 
 
 if __name__ == "__main__":
