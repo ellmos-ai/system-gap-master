@@ -1306,6 +1306,12 @@ def _parser() -> argparse.ArgumentParser:
         if name == "plan":
             command.add_argument("--output")
 
+    handoff = subparsers.add_parser("installer-handoff", help="Read-only hash-bound partner metadata export")
+    add_roots(handoff)
+    for field in ("profile-path", "profile-sha256", "observation-path", "observation-sha256",
+                  "target-host", "inventory-host"):
+        handoff.add_argument("--" + field, required=True)
+
     retention = subparsers.add_parser("retention-plan")
     retention.add_argument("--yard-root", required=True)
     retention.add_argument("--host-file-days", type=int, default=90)
@@ -1336,6 +1342,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = doctor_yard(args.yard_root, args.template_root)
         elif args.command == "inventory":
             result = inventory_yard(args.yard_root, args.template_root)
+        elif args.command == "installer-handoff":
+            from .installer_handoff import export_installer_handoff
+            result = export_installer_handoff(
+                args.yard_root, args.template_root, profile_path=args.profile_path,
+                profile_sha256=args.profile_sha256, observation_path=args.observation_path,
+                observation_sha256=args.observation_sha256, target_host=args.target_host,
+                inventory_host=args.inventory_host,
+            )
         elif args.command == "retention-plan":
             for label in ("host_file_days", "message_days", "archive_days"):
                 if getattr(args, label) < 0:
