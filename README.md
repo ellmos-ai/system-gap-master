@@ -487,7 +487,10 @@ system-gap-master's niche: **multi-machine + multi-agent + serverless + plain fi
 
 system-gap-master is deliberately both: a standalone dev tool you can drop into any project, and a core module of the ellmos stack family.
 
-Core module of [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack) (role `file-sync`); family/catalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks); org overview: [ellmos-ai](https://github.com/ellmos-ai). Companion module for live SQLite state (role `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync).
+[agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack): its manifest lists this repository as module `sync-master`
+(source: `dev-bricks/sync-master`, which redirects here; label: `file-sync`).
+Setup instructions are maintained here. Family/catalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks); org overview: [ellmos-ai](https://github.com/ellmos-ai).
+Companion module for live SQLite state (role `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync).
 
 ### Bundles and partners
 

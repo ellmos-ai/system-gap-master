@@ -102,6 +102,12 @@ separate state silos.
   R9 zone lives inside a given yard; encryption, publish/list/import and the
   sealed-envelope courier remain sqlite-transit-sync's responsibility.
 
+## Related projects
+
+- [agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack): its manifest lists this repository as module `sync-master`
+  (source `dev-bricks/sync-master` redirects here; declared label `file-sync`).
+  Setup instructions remain in this repository.
+
 ## Search phrases
 
 ```text
