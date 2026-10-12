@@ -454,7 +454,10 @@ python scripts/config_snapshot.py all \
 
 system-gap-master ist beides: ein eigenständig nutzbares Entwicklungswerkzeug für beliebige Projekte und ein Kernmodul der ellmos-Stack-Familie.
 
-Kernmodul von [ellmos-ai/agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack) (Rolle `file-sync`); Familie/Katalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks); Organisationsübersicht: [ellmos-ai](https://github.com/ellmos-ai). Begleitmodul für Live-SQLite-Zustände (Rolle `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync).
+[agent-ops-stack](https://github.com/ellmos-ai/agent-ops-stack): Das Manifest führt dieses Repository als Modul `sync-master`
+(Quelle: `dev-bricks/sync-master`, die hierher weiterleitet; Label: `file-sync`).
+Die Einrichtung beschreiben die Anweisungen dieses Projekts. Familie/Katalog: [ellmos-ai/stacks](https://github.com/ellmos-ai/stacks); Organisationsübersicht: [ellmos-ai](https://github.com/ellmos-ai).
+Begleitmodul für Live-SQLite-Zustände (Rolle `sync.database`): [sqlite-transit-sync](https://github.com/dev-bricks/sqlite-transit-sync).
 
 ### Bundles und Partner
 
