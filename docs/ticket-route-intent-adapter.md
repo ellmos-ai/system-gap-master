@@ -47,3 +47,22 @@ result = create_ticket_handoff(
 Inject a compatible API object through `api=` for an embedded installation or
 test. Without injection, the adapter imports only the three packaged public
 functions `create_routed_ticket`, `load_contract` and `build_route_intent`.
+
+## Separate Messages-Line subject
+
+`ellmos.ticket.message-route-intent.v1` is a non-executable message subject.
+It carries MessageID, canonical ReceiptID, origin, recipient, target and a
+digest of the full Message-Ticket, but no content or synthetic T-ticket. The
+existing ticket `route-intent.v1` API is unchanged.
+
+`submit_message_handoff` requires sender and target message sources and fresh
+configuration loaders. Both sources must resolve the complete payload and
+match its identifiers, target and digest before the existing transport
+callback runs. Both policies must explicitly select the message contract.
+An offline callback creates no observation. A transported callback must
+identify an exact metadata artifact under the approved root; only then is a
+`transported` observation written through the canonical Messages-Line API.
+An identical replay remains one observation, while conflicting reuse of a
+transport ID fails closed. A file or callback response is never proof of
+remote display, delivery or acknowledgement. No authenticated historical Ack
+import, remote store registration or production transport is claimed here.
