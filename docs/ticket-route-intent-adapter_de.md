@@ -26,6 +26,32 @@ Ticketdateien. Aufrufer müssen einen stabilen `idempotency_key` für die
 Erstellung mitgeben. Ein erneuter Aufruf wird dadurch vom kanonischen
 Ticket-Schreiber demselben Ticket zugeordnet, statt ein weiteres anzulegen.
 
+## Gesonderter Message-Handoff
+
+`ellmos.ticket.message-route-intent.v1` ist ein eigener, nicht ausführbarer
+Nachrichten-Subject. Er enthält MessageID, kanonische ReceiptID, Ursprung,
+Empfänger, Ziel und Digest des vollständigen Message-Tickets, aber keinen
+Nachrichtentext und keine T-Ticket-ID. Das bestehende `route-intent.v1` und
+sein Arbeits-Ticket-Lebenszyklus bleiben unverändert.
+
+`submit_message_handoff()` verlangt ausdrücklich getrennte Sender- und
+Empfängerquellen sowie Loader für deren **aktuelle** Konfiguration. Beide
+Quellen müssen die Nachricht einschließlich Text aus dem autorisierten
+Messages-Line-Store auflösen; IDs, Ziel und Digest werden vor dem vorhandenen
+Transport-Callback geprüft. Ein bloßer Verweis ohne erreichbaren Payload ist
+kein Handoff. Beide Konfigurationen müssen den Message-Vertrag gewählt haben.
+
+Der Callback kann ein metadatenarmes Artefakt unter einem ausdrücklich
+freigegebenen Root ablegen. Nur wenn Dateipfad, exakte Bytes, SHA-256,
+Transport-ID und Ereigniszeit dazu passen, wird über den kanonischen
+Messages-Line-Core eine `transported`-Beobachtung erfasst. `offline` erzeugt
+keine Beobachtung. Wiederholung derselben Evidenz ist idempotent;
+widersprüchliche Wiederverwendung der Transport-ID wird abgewiesen.
+Transportartefakt und Callback-Rückgabe belegen **keinen** Empfang, keine
+Anzeige und keinen Ack. Ein verifizierter externer Ack-/Historienimport ist
+hier nicht vorhanden; Produktivtransport, Remote-Store-Registrierung und
+Empfängeridentität benötigen eigene Abnahme.
+
 Das vollständige Python-Beispiel steht in der
 [englischen Adapter-Dokumentation](ticket-route-intent-adapter.md). Für eine
 eingebettete Installation oder Tests kann über `api=` ein kompatibles
