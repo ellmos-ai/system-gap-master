@@ -169,6 +169,8 @@ What it checks before it exports:
   40-hex source commit.
 - The yard side is the same non-mutating inventory as `inventory`; only
   metadata and counts are included, never file content.
+- The export contains absolute local paths (`yard_root` and the `path` of both
+  pinned sources). Treat it as private; do not publish it as is.
 
 What it deliberately does not do: it performs no runtime probe, adoption,
 approval or grant, does not verify the remote yard, and does not turn an
