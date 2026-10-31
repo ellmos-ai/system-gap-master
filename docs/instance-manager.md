@@ -136,6 +136,45 @@ updated files and POSIX modes are restored; directories are removed only when
 the operation created them and they remain empty. An `applying` journal from a
 crashed upgrade can be passed to the same rollback command.
 
+## Partner handoff (read-only)
+
+An external installer or partner system can ask for a hash-bound summary of a
+yard without gaining any rights over it:
+
+```bash
+yard-instance-manager installer-handoff \
+  --yard-root /path/to/shared/SYNC \
+  --profile-path /review/system-profile.json --profile-sha256 <64-hex> \
+  --observation-path /review/deployment-observation.json --observation-sha256 <64-hex> \
+  --target-host <stable-host-id> --inventory-host <stable-host-id>
+```
+
+The command prints one JSON document with the schema
+`system-gap.installer-export.v1`. It contains a `handoff`
+(`ellmos.system-gap.handoff.v1`) and the `sync_evidence`
+(`ellmos.installer.sync-evidence.v1`), each carrying a `content_hash`.
+
+What it checks before it exports:
+
+- Both input files are pinned by a full SHA-256, are JSON objects and are at
+  most 64 KiB. A byte or pin mismatch aborts.
+- The system profile must use the native `ellmos.system.v1` schema, and the
+  deployment observation a supported observation schema. Unknown schemas need
+  an explicit adapter and are refused.
+- The observation host must equal `--target-host`; both host ids may contain
+  only `A-Za-z0-9._-`.
+- The observation must carry a timezone, may not be from the future (5 minute
+  tolerance) and may not be older than 24 hours, and must name an immutable
+  40-hex source commit.
+- The yard side is the same non-mutating inventory as `inventory`; only
+  metadata and counts are included, never file content.
+
+What it deliberately does not do: it performs no runtime probe, adoption,
+approval or grant, does not verify the remote yard, and does not turn an
+external observation into an audit result. The `limits` array of the handoff
+repeats this, and `mutation_performed`, `approval_created` and
+`grant_created` are always `false`. The exporter never writes into the yard.
+
 ## Boundaries
 
 - The manager never runs `git` inside the yard.
