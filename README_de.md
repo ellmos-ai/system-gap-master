@@ -328,6 +328,7 @@ system_gap_master/yard_template/  Paketierte Yard-Vorlage:
   agents/  messages/  hosts/  _archive/   (jeweils mit Regel-README)
 scripts/system_gap_daily_check.py   Tages-Gate (check|mark), ohne externe Abhängigkeiten
 scripts/config_snapshot.py           Allowlist-basierte Konfigurations-Snapshots und Diff-Bericht
+scripts/rulefile_mirror.py           registerbasierte, einseitige Snapshots lokaler Agenten-Regeldateien mit Drift-Bericht (docs/rulefile-mirror.md, englisch)
 system_gap_master/conflict_copy_reconciler.py
                       Sichere Scan-, Plan-, Reconcile-, Verify- und Rollback-Engine
 system_gap_master/trusted_peer_paths.py

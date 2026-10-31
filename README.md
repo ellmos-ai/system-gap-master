@@ -354,6 +354,7 @@ system_gap_master/yard_template/  packaged, copy-ready yard skeleton:
   agents/  messages/  hosts/  _archive/   (each with its rules README)
 scripts/system_gap_daily_check.py   the gate (check|mark), zero dependencies
 scripts/config_snapshot.py           allowlisted, home-normalised config-state snapshots and diff report
+scripts/rulefile_mirror.py           registry-driven, one-way snapshots of local agent rule files with drift report (docs/rulefile-mirror.md)
 system_gap_master/conflict_copy_reconciler.py
                       safe scan/plan/reconcile/verify/rollback engine
 system_gap_master/trusted_peer_paths.py
