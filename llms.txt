@@ -60,7 +60,9 @@ separate state silos.
   top-level inventory and non-mutating retention plan plus hash-bound
   plan/upgrade/rollback for declared template paths only.
 - `docs/instance-manager.md` — repository-to-yard ownership, migration,
-  idempotency, backup and rollback contract.
+  idempotency, backup and rollback contract, plus the read-only
+  `installer-handoff` partner export (`system_gap_master/installer_handoff.py`,
+  hash-pinned inputs, metadata only, never creates approvals or grants).
 - `schemas/trusted-peer-*.schema.json` — machine-readable registry,
   host-local policy and no-transfer receipt contracts.
 - `system_gap_master/yard_template/` — packaged, copy-ready yard skeleton.

@@ -201,7 +201,7 @@ yard-instance-manager upgrade --plan /host-local/review/yard-plan.json \
   --state-dir /host-local/system-gap-master-state
 ```
 
-Pläne, Quellen und Ziele werden vor jeder Mutation erneut kryptographisch per Hash geprüft. Aktualisierungen erhalten hostlokale Backups, ein Write-ahead-Journal, atomare Ersetzung und eine fortsetzbare Rollback-Operation. Ein wiederholter Apply eines unveränderten Plans ist ein echter No-op. Das paketierte Template ist der Standard; `--template-root` dient ausdrücklich geprüften Entwicklungstemplates. Lokal veränderte verwaltete Dateien blockieren den Lauf, statt überschrieben zu werden; `seed-once`-Dateien gehören nach ihrer Erzeugung der Instanz. Details stehen im [Instanz-Lebenszyklus-Vertrag](docs/instance-manager.md).
+Pläne, Quellen und Ziele werden vor jeder Mutation erneut kryptographisch per Hash geprüft. Aktualisierungen erhalten hostlokale Backups, ein Write-ahead-Journal, atomare Ersetzung und eine fortsetzbare Rollback-Operation. Ein wiederholter Apply eines unveränderten Plans ist ein echter No-op. Das paketierte Template ist der Standard; `--template-root` dient ausdrücklich geprüften Entwicklungstemplates. Lokal veränderte verwaltete Dateien blockieren den Lauf, statt überschrieben zu werden; `seed-once`-Dateien gehören nach ihrer Erzeugung der Instanz. Details stehen im [Instanz-Lebenszyklus-Vertrag](docs/instance-manager.md). Ein Partner- oder Installer-System kann mit `yard-instance-manager installer-handoff` eine schreibgeschützte, hashgebundene Yard-Zusammenfassung anfordern; sie enthält nur Metadaten und erteilt oder genehmigt nichts (siehe [Partner-Handoff](docs/instance-manager.md#partner-handoff-read-only), Abschnitt in englischer Sprache).
 
 ---
 
