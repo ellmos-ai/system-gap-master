@@ -46,6 +46,36 @@
   launch, and the explicit rule that Taildrop delivery alone is not remote
   execution. Keep key material and deployment-specific receiver policies out
   of the repository. *Noted 2026-07-28 [C].*
+- [ ] **Report the private overlay of a long-running yard.** In a mature private
+  yard, `instance_manager inventory` classifies only the declared template
+  paths (about a dozen) and leaves everything else as `unmanaged` (measured on
+  one long-running yard: 181 of 192 top-level items, among them the yard's own
+  maintenance scripts). Those paths have no manifest, so nobody can tell which
+  are private-only, which diverged from a core file and which are candidates to
+  upstream. Decide whether the core gets a read-only report (for example an
+  `overlay-report` subcommand comparing a yard against the pinned core version
+  and classifying paths as `private-only`, `core-diverged` or
+  `upstream-candidate`) or whether this stays a documented convention with an
+  example manifest. Whatever is chosen must stay read-only, keep host and user
+  names out of the output and pin the core version it was measured against.
+  Motivation: improvements that live only in a private yard never reach other
+  users. *Noted 2026-10-31 [C].*
+- [ ] **Make `doctor` and `inventory` fail with a clear finding on cloud-only
+  placeholder files.** With a cloud-sync client stopped, a not-yet-downloaded
+  placeholder (Windows `FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS`, `0x400000`)
+  makes `doctor` abort with the generic `{"error": "[Errno 22] Invalid
+  argument"}` and no path. Detect the attribute and report a
+  `cloud-placeholder-not-hydrated` finding with the affected path, without
+  triggering a download and without mutating anything. Add a Windows-scoped
+  test and a short note to the troubleshooting section of the README. Cloud
+  sync folders are the primary deployment target, so this is the first error a
+  new user is likely to hit. *Noted 2026-10-31 [C].*
+- [ ] **Document the manual migration of a legacy `_transit/` zone.** `doctor`
+  reports `legacy-transit-review-required` with the target
+  `db-transit/<namespace>` and `automatic_migration: false`. Add a short guide:
+  how to choose the namespace, what to check before moving (open snapshots,
+  hash-bound receipts), how to verify afterwards and how to roll back. No
+  automatic migration. *Noted 2026-10-31 [C].*
 - [ ] Document one concrete setup example per agent family once the public repo wiring is stable.
 - [ ] Decide whether the daily gate should optionally write JSON output for hook integrations.
 - [x] **Finish the rename to `system-gap-master`.** User decision received
