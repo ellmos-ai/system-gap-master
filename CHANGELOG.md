@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Rule-file mirror** (`scripts/rulefile_mirror.py`, `docs/rulefile-mirror.md`, `examples/rulefile-registry.example.json`): registry-driven, one-way snapshots of local agent rule files into the yard's `agents/` directory with a drift check (`check`, `mirror`, `report`, `all`), secret-format refusal, source size limit, no-overwrite backups, contained mirror paths and a generated `RULEFILES.md`. Exit codes: 0 ok, 1 error, 2 drift, 3 refused.
 
 ## [1.6.1] - 2026-10-31
 

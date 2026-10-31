@@ -35,6 +35,9 @@ separate state silos.
 - `scripts/system_gap_daily_check.py` — zero-dependency daily gate script.
 - `scripts/config_snapshot.py` — provider-neutral, allowlisted configuration
   snapshots and a comparable deviation report; generated state is derived.
+- `scripts/rulefile_mirror.py` and `docs/rulefile-mirror.md` — registry-driven,
+  one-way snapshots of local agent rule files into `agents/`, with drift check,
+  secret-format refusal, no-overwrite backups and a generated `RULEFILES.md`.
 - `system_gap_master/conflict_copy_reconciler.py` — policy-driven safe
   conflict-copy scan/plan/apply/verify/rollback API and CLI.
 - `docs/conflict-copy-reconciler.md` — merge classes, safety gates, owner
