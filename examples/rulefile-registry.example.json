@@ -1,0 +1,34 @@
+{
+  "schema": "system-gap.rulefiles.v1",
+  "slot": "laptop-1",
+  "host": "example-host",
+  "central_rule": "Exactly one central rule file per system. Every other rule file is owned by one actor and points at the central one.",
+  "files": [
+    {
+      "id": "AGENTS_CENTRAL",
+      "actor": "agent-one",
+      "role": "central",
+      "source": "~/AGENTS.md",
+      "mirror": "agents/AGENTS_laptop-1_snapshot.md",
+      "has_message_board": true,
+      "note": "The one central rule file of this machine."
+    },
+    {
+      "id": "AGENT_TWO_LOADER",
+      "actor": "agent-two",
+      "role": "loader",
+      "source": "~/.agent-two/RULES.md",
+      "mirror": "agents/AGENT_TWO_laptop-1_snapshot.md",
+      "mode": "annotated",
+      "note": "Hand-written head, mirrored body. Put the marker line '<!-- MIRROR-BODY BELOW -->' where the body starts."
+    },
+    {
+      "id": "AGENT_THREE",
+      "actor": "agent-three",
+      "role": "actor-rules",
+      "source": "~/.agent-three/RULES.md",
+      "has_message_board": false,
+      "note": "No 'mirror' key: measured, but no snapshot wanted."
+    }
+  ]
+}
