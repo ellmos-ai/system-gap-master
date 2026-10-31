@@ -202,7 +202,7 @@ yard-instance-manager upgrade --plan /host-local/review/yard-plan.json \
 ```
 
 Plans, sources and targets are hash-checked again before mutation. Updates receive host-local backups, a write-ahead operation journal, atomic replacement and a resumable rollback operation. A repeated apply of an unchanged plan is a true no-op. The packaged template is the default; `--template-root` exists for explicitly reviewed development templates.
-Locally changed managed files block instead of being overwritten; `seed-once` files remain instance-owned after creation. See [the instance lifecycle contract](docs/instance-manager.md).
+Locally changed managed files block instead of being overwritten; `seed-once` files remain instance-owned after creation. See [the instance lifecycle contract](docs/instance-manager.md). A partner or installer system can request a read-only, hash-bound yard summary with `yard-instance-manager installer-handoff`; it exports metadata only and never grants or approves anything (see [Partner handoff](docs/instance-manager.md#partner-handoff-read-only)).
 
 ---
 
