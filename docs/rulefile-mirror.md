@@ -37,11 +37,22 @@ python scripts/rulefile_mirror.py all          # mirror + report
 python scripts/rulefile_mirror.py check --fail-on-drift   # exit 2 for hooks/CI
 ```
 
-Exit codes: `0` ok, `1` registry problem or no/ambiguous central file, `2`
-drift with `--fail-on-drift`.
+Exit codes: `0` ok, `1` usage or registry error, or no/ambiguous central file,
+`2` drift with `--fail-on-drift`, `3` a snapshot was refused (secret suspicion,
+missing head marker). Missing arguments exit `1`, so `2` always means drift.
 
 States: `current`, `drift`, `mirror-missing`, `source-missing`,
-`no-mirror-wanted`, `no-source`.
+`source-invalid` (larger than 512 KiB or binary), `no-mirror-wanted`,
+`no-source`.
+
+## Trust boundary
+
+The registry decides which local files are read and copied into a yard that is
+synced to every machine. Whoever can write `agents/registry/` can make this
+script copy any readable text file (up to 512 KiB) of the local user into the
+yard; the secret scan is the only filter behind that. Treat write access to
+`agents/` like write access to the rule files themselves, and review a registry
+change before running `mirror`.
 
 ## Safety properties
 
@@ -49,19 +60,32 @@ States: `current`, `drift`, `mirror-missing`, `source-missing`,
   with a live message board; copying a foreign snapshot back would delete open
   messages. Merge foreign snapshots by hand.
 - **Contained.** A `mirror` path must be relative and stay under `agents/`;
-  `..`, absolute paths and other directories are refused. A slot name may only
-  contain `A-Za-z0-9._-`.
-- **No secrets in the yard.** A source containing a real secret *format*
-  (provider API keys, GitHub/npm/Slack tokens, AWS keys, private-key headers)
-  is not mirrored; only line numbers and the kind are printed, never the value.
+  `..`, absolute paths and other directories are refused, as are the reserved
+  names `registry/`, `_previous/`, `RULEFILES.md` and `README.md`. Two entries
+  may not share one mirror path. If `agents/` is itself a link or junction the
+  run is refused. A slot or entry id may only contain `A-Za-z0-9._-`.
+- **Bounded input.** Sources larger than 512 KiB or containing NUL bytes are
+  reported as `source-invalid` and never copied. An unknown `mode` is an error,
+  not a silent fallback to `copy`.
+- **No secrets in the yard (best effort).** A source containing a real secret
+  *format* (provider API keys, GitHub classic and fine-grained tokens,
+  npm/Hugging Face/Slack/Google/AWS keys, JWTs, bearer tokens, private-key
+  headers) is not mirrored; only line numbers and the kind are printed, never
+  the value. Bare words such as `password` are deliberately not matched, so the
+  scan can miss secrets: look at a rule file before it goes into a shared yard.
 - **No silent loss.** If an overwrite would remove lines that exist only in the
-  snapshot, the old snapshot is saved to `agents/_previous/` (one per file and
-  day) and the count is reported.
-- **Atomic.** Files are encoded first, written to a sibling temp file and moved
-  into place with `os.replace`.
+  snapshot, the old snapshot is saved to `agents/_previous/` with date and time
+  (a counter is added on collision, so no backup is overwritten) and the count
+  is reported.
+- **Atomic.** Files are encoded first, written to a sibling temp file, flushed
+  and moved into place with `os.replace`.
 - **Hand-written heads.** With `"mode": "annotated"` a snapshot keeps its head
   and only the body below the line `<!-- MIRROR-BODY BELOW -->` is replaced. No
-  marker means no write.
+  marker means no write and exit `3`.
+- **Dry run writes nothing.** `--dry-run` creates neither snapshots, backups,
+  state files nor the report.
+- **Tolerant report.** `report` ignores unreadable or malformed state files
+  (and lists them) and neutralises pipes and backticks from foreign state.
 
 ## Boundaries
 
