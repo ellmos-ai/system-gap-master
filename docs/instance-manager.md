@@ -158,9 +158,10 @@ What it checks before it exports:
 
 - Both input files are pinned by a full SHA-256, are JSON objects and are at
   most 64 KiB. A byte or pin mismatch aborts.
-- The system profile must use the native `ellmos.system.v1` schema, and the
-  deployment observation a supported observation schema. Unknown schemas need
-  an explicit adapter and are refused.
+- The system profile must use the native `ellmos.system.v1` schema with the id
+  `bach-agent-system`, and the deployment observation the schema
+  `codex.bach.deployment-observation.v1`. Any other profile or observation
+  schema needs an explicit adapter and is refused.
 - The observation host must equal `--target-host`; both host ids may contain
   only `A-Za-z0-9._-`.
 - The observation must carry a timezone, may not be from the future (5 minute

@@ -6,18 +6,15 @@ _Nothing yet._
 
 ## [1.6.1] - 2026-10-31
 
-First tagged release of the 1.6.1 line. The version number was set on 2026-09-12 but never tagged; this release covers everything on `main` since the `v1.6.0` tag, including the section `1.6.1-prep` below.
+The version number 1.6.1 was set on 2026-09-12 but never tagged. The `v1.6.1` tag is created on `main` after this section is merged and covers everything on `main` since the `v1.6.0` tag, including the section `1.6.1-prep` below.
 
 ### Added
 - **Read-only partner handoff** (`yard-instance-manager installer-handoff`, `system_gap_master/installer_handoff.py`, #13): hash-pinned inputs, metadata-only yard summary, never creates approvals or grants. Documented in `docs/instance-manager.md`, both READMEs and `llms.txt`.
 - **Bounded message-route-intent v1 handoff** added to the existing ticket-route adapter (`system_gap_master/ticket_route_adapter.py`, `docs/ticket-route-intent-adapter.md`; #15).
 
-### Fixed
-- `_config-state/README.md` and `agents/README.md` are classified as `seed-once` (#12).
-- Ticket-routing dependency is pulled from a pinned git source instead of a bare package name (#11); the ticket-routing seam is verified against ticket-master 1.12.
-
 ### Notes
 - The yard instance manager, the packaged yard template and the ticket-route adapter were already part of the `v1.6.0` tag (2026-09-03); this release adds to them.
+- The fixes #11 and #12 are listed under `1.6.1-prep` below. Entries from #10 onwards that are listed under `1.6.0 - 2026-09-11` were merged after the `v1.6.0` tag (2026-09-03); the section dates were not changed.
 - `1.6.1` carries two small features under a patch number because the version number was frozen while development continued. Earlier changelog sections of this line follow unchanged.
 
 ### Repository Hygiene, CI Lifecycle Workflows & Multi-Host Lock Defense (Pfad A Turnus-Hygiene - 2026-10-01)
