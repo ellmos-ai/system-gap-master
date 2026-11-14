@@ -107,15 +107,15 @@ class MetadataParityTests(unittest.TestCase):
             self.assertIn("THIRD_PARTY_LICENSES.md", text)
             self.assertIn("MARKETING-LOG.txt", text)
 
-        self.assertIn("Verified-2026--10--01", en_text)
-        self.assertIn("Gepr%C3%BCft-2026--10--01", de_text)
+        self.assertIn("Verified-2026--10--02", en_text)
+        self.assertIn("Gepr%C3%BCft-2026--10--02", de_text)
 
     def test_llms_txt_presence(self):
         llms_path = self.root / "llms.txt"
         self.assertTrue(llms_path.exists(), "llms.txt must exist")
         content = llms_path.read_text(encoding="utf-8")
         self.assertIn("system-gap-master", content)
-        self.assertIn("Last-checked: 2026-10-01", content)
+        self.assertIn("Last-checked: 2026-10-02", content)
         self.assertIn("236 tests passed", content)
         self.assertIn("THIRD_PARTY_LICENSES.txt", content)
         self.assertIn("CONTRIBUTING.md", content)
@@ -226,7 +226,7 @@ class MetadataParityTests(unittest.TestCase):
         self.assertIn("flowchart TD", de_text)
         self.assertIn("sequenceDiagram", de_text)
 
-    def test_readme_15_point_navigation_parity(self):
+    def test_readme_18_point_navigation_parity(self):
         en_readme = self.root / "README.md"
         de_readme = self.root / "README_de.md"
         en_text = en_readme.read_text(encoding="utf-8")
@@ -235,8 +235,8 @@ class MetadataParityTests(unittest.TestCase):
         en_nav_items = re.findall(r"^(\d+)\.\s+\[([^\]]+)\]\(#([^\)]+)\)", en_text, re.MULTILINE)
         de_nav_items = re.findall(r"^(\d+)\.\s+\[([^\]]+)\]\(#([^\)]+)\)", de_text, re.MULTILINE)
 
-        self.assertEqual(len(en_nav_items), 15, f"Expected 15 items in README.md navigation, got {len(en_nav_items)}")
-        self.assertEqual(len(de_nav_items), 15, f"Expected 15 items in README_de.md navigation, got {len(de_nav_items)}")
+        self.assertEqual(len(en_nav_items), 18, f"Expected 18 items in README.md navigation, got {len(en_nav_items)}")
+        self.assertEqual(len(de_nav_items), 18, f"Expected 18 items in README_de.md navigation, got {len(de_nav_items)}")
 
         for i, (num, title, _anchor) in enumerate(en_nav_items, start=1):
             self.assertEqual(int(num), i)
@@ -481,7 +481,7 @@ class MetadataParityTests(unittest.TestCase):
         en_readme = (self.root / "README.md").read_text(encoding="utf-8")
         de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
 
-        for sec_num in range(1, 16):
+        for sec_num in range(1, 19):
             sec_id = f"sec-{sec_num:02d}"
             anchor_tag = f'<a id="{sec_id}"></a>'
             self.assertIn(anchor_tag, en_readme, f"{anchor_tag} missing in README.md")
@@ -519,8 +519,8 @@ class MetadataParityTests(unittest.TestCase):
         ml_path = self.root / "MARKETING-LOG.txt"
         self.assertTrue(ml_path.exists(), "MARKETING-LOG.txt must exist")
         text = ml_path.read_text(encoding="utf-8")
-        self.assertIn("12. PFAD A REPOSITORY HYGIENE, CI LIFECYCLE WORKFLOWS & MULTI-HOST LOCK DEFENSE (2026-10-01)", text)
-        self.assertIn("Verified: 2026-10-01", text)
+        self.assertIn("13. PFAD B DISCOVERABILITY, VISUAL ARCHITECTURE & 18-SECTION DUAL ANCHOR PARITY (2026-10-02)", text)
+        self.assertIn("Verified: 2026-10-02", text)
 
     def test_auto_assign_workflow_integrity(self):
         wf_path = self.root / ".github" / "workflows" / "auto-assign.yml"
@@ -615,6 +615,54 @@ class MetadataParityTests(unittest.TestCase):
         self.assertIn("desktop.ini", content)
         self.assertIn("ehthumbs.db", content)
         self.assertIn("*.swo", content)
+
+    def test_ascii_four_view_topology_parity(self):
+        en_readme = (self.root / "README.md").read_text(encoding="utf-8")
+        de_readme = (self.root / "README_de.md").read_text(encoding="utf-8")
+
+        for view_num in range(1, 5):
+            en_view_header = f"[VIEW {view_num}:"
+            de_view_header = f"[SICHT {view_num}:"
+            self.assertIn(en_view_header, en_readme, f"{en_view_header} missing in README.md ASCII topology")
+            self.assertIn(de_view_header, de_readme, f"{de_view_header} missing in README_de.md ASCII topology")
+
+    def test_level_1_sbom_re_audit_stand_20261002(self):
+        txt_path = self.root / "THIRD_PARTY_LICENSES.txt"
+        md_path = self.root / "THIRD_PARTY_LICENSES.md"
+        self.assertTrue(txt_path.exists(), "THIRD_PARTY_LICENSES.txt must exist")
+        self.assertTrue(md_path.exists(), "THIRD_PARTY_LICENSES.md must exist")
+
+        txt_content = txt_path.read_text(encoding="utf-8")
+        md_content = md_path.read_text(encoding="utf-8")
+        self.assertIn("Audited: 2026-10-02", txt_content)
+        self.assertIn("Audited:** 2026-10-02", md_content)
+
+    def test_changelog_pfad_b_currency_20261002(self):
+        changelog_path = self.root / "CHANGELOG.md"
+        self.assertTrue(changelog_path.exists(), "CHANGELOG.md must exist")
+        content = changelog_path.read_text(encoding="utf-8")
+        self.assertIn("## [Unreleased]", content)
+        self.assertIn("2026-10-02", content)
+        self.assertIn("Pfad B", content)
+
+    def test_pep621_sbom_text_url(self):
+        pyproject_path = self.root / "pyproject.toml"
+        self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        urls = data.get("project", {}).get("urls", {})
+        self.assertIn("Level 1 SBOM (Text)", urls)
+        self.assertEqual(
+            urls["Level 1 SBOM (Text)"],
+            "https://github.com/ellmos-ai/system-gap-master/blob/main/THIRD_PARTY_LICENSES.txt",
+        )
+
+    def test_package_version_strictly_frozen_1_6_1(self):
+        pyproject_path = self.root / "pyproject.toml"
+        self.assertTrue(pyproject_path.exists(), "pyproject.toml must exist")
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        pyproject_version = data.get("project", {}).get("version")
+        self.assertEqual(pyproject_version, "1.6.1", "Version must be strictly frozen at 1.6.1 (T-20260920-167562623)")
+        self.assertEqual(system_gap_master.__version__, "1.6.1", "Package __version__ must be 1.6.1")
 
 
 if __name__ == "__main__":

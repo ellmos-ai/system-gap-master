@@ -230,3 +230,28 @@ German (DE):
 - Contract Verification & QA Suite (tests/test_metadata.py):
   * Extended test suite with 6 new contract tests covering auto-assign, label-sync, labels.yml, CONTRIBUTING.md, extended PEP 621 URLs, and extended .gitignore multi-host defenses.
   * Total suite expanded to 236 passing tests (42 subtests, 3 platform skips), 100% green offline.
+
+================================================================================
+13. PFAD B DISCOVERABILITY, VISUAL ARCHITECTURE & 18-SECTION DUAL ANCHOR PARITY (2026-10-02)
+================================================================================
+- Visual 18-Section Navigation & Reciprocal Anchor Parity:
+  * Expanded navigation architecture across README.md and README_de.md into 18 standardized sections.
+  * Deployed reciprocal dual HTML anchors (<a id="sec-01"></a> through <a id="sec-18"></a>) alongside semantic slug anchors.
+  * Verified 100% reciprocal navigation jumping parity between English and German editions.
+- ASCII Four-View Architectural Topology Projection (Section 06):
+  * Integrated complete ASCII Four-View Architectural Topology projection in Section 06 of README.md (VIEW 1..VIEW 4) and README_de.md (SICHT 1..SICHT 4).
+  * Formalized caller runtimes & CLI entrypoints (View 1), sovereign sync engine & orchestrator (View 2), runtime persistence & slot ledgers (View 3), and air-gap defense perimeter with RunAsInvoker & zero-egress boundaries (View 4).
+- Target Personas & High-Intent SEO Discoverability (Section 02):
+  * Dedicated Section 02 targeting [PERSONA-01] through [PERSONA-04] and high-intent bilingual search queries.
+- Level 1 SBOM & Plain-Text Transparency Re-Audit:
+  * Re-audited THIRD_PARTY_LICENSES.md and companion THIRD_PARTY_LICENSES.txt Stand 2026-10-02.
+  * Confirmed all 10 governance invariants (INV-LOCAL-01 through INV-SLA-10) with VERIFIED status.
+  * Re-certified unprivileged RunAsInvoker non-elevation (INV-SEC-02) and 100% permissive runtime dependencies.
+- PEP 621 Standard & Release Version Freeze:
+  * Added "Level 1 SBOM (Text)" endpoint to project.urls in pyproject.toml.
+  * Maintained 20 saturated keywords and strictly frozen release version 1.6.1 (T-20260920-167562623).
+- Context & Verification Parity:
+  * Synchronized README.md, README_de.md, and llms.txt to Verified: 2026-10-02 / Geprüft: 2026-10-02.
+  * Added contract tests in tests/test_metadata.py covering 18-point navigation parity, ASCII 4-view topology, Level 1 SBOM companion recency Stand 2026-10-02, CHANGELOG Pfad B entry, and version freeze discipline.
+  * All test suites executed 100% green offline.
+

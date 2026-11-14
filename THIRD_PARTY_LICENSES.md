@@ -1,7 +1,7 @@
 # Third-Party Licenses & Transparency Notice
 
 > **Project:** `ellmos-ai/system-gap-master`
-> **Audited:** 2026-10-01
+> **Audited:** 2026-10-02
 > **Repository License:** [MIT License](LICENSE)
 > **Canonical Notice:** [NOTICE](NOTICE)
 > **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)

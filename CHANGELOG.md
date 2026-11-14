@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+### Documentation, Discoverability & Visual Architecture (Pfad B Discoverability, 4-View Topology & 18-Section Parity - 2026-10-02)
+- **Visual 18-Section Navigation & Dual Reciprocal Anchors:**
+  - Expanded bilingual documentation across `README.md` and `README_de.md` into 18 dedicated, synchronized sections.
+  - Implemented reciprocal dual HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-18"></a>`) alongside descriptive slug anchors for deep linking and direct navigation parity between English and German versions.
+- **ASCII Four-View Architectural Topology Projection (Section 06):**
+  - Designed and embedded the full ASCII Four-View Architectural Topology projection in Section 06 across both `README.md` (`VIEW 1` to `VIEW 4`) and `README_de.md` (`SICHT 1` to `SICHT 4`).
+  - Projection formalizes caller runtimes/CLI entrypoints (View 1), sovereign engine & orchestrator (View 2), runtime persistence, yard slots & transit ledgers (View 3), and air-gap defense perimeter with `RunAsInvoker` & zero-egress boundaries (View 4).
+- **Target Personas & SEO Discoverability (Section 02):**
+  - Structured dedicated Section 02 addressing target personas `[PERSONA-01]` through `[PERSONA-04]` and bilingual high-intent SEO queries.
+- **Level 1 SBOM & Plain-Text Transparency Re-Audit:**
+  - Re-audited `THIRD_PARTY_LICENSES.md` and companion `THIRD_PARTY_LICENSES.txt` (Stand 2026-10-02) verifying all 10 governance invariants (`INV-LOCAL-01` to `INV-SLA-10`) with `VERIFIED` status, unprivileged `RunAsInvoker` guarantee, zero-copyleft runtime isolation, and reciprocal cross-links.
+- **PEP 621 Metadata Alignment (`pyproject.toml`):**
+  - Registered `"Level 1 SBOM (Text)"` endpoint in `[project.urls]`.
+  - Preserved strictly frozen release version `1.6.1` per `T-20260920-167562623` (zero version diffs).
+- **Badges, Verification & LLM RAG Context:**
+  - Synchronized Shields.io verification badges across `README.md` and `README_de.md` to `Verified: 2026-10-02` / `Geprüft: 2026-10-02`.
+  - Updated `llms.txt` Last-checked timestamp to `2026-10-02` and reflected 18-point navigation and 4-view topology.
+  - Recorded Section 13 audit entry in `MARKETING-LOG.txt` (Stand 2026-10-02).
+- **Contract Verification Suite Expansion (`tests/test_metadata.py`):**
+  - Upgraded navigation tests to 18-point dual reciprocal anchors (`test_readme_18_point_navigation_parity`, `test_dual_reciprocal_html_anchors_parity`).
+  - Added contract tests for ASCII four-view topology projection parity, Level 1 SBOM companion recency Stand 2026-10-02, CHANGELOG Pfad B entry recency, and PEP 621 URL endpoints.
+
 ### Repository Hygiene, CI Lifecycle Workflows & Multi-Host Lock Defense (Pfad A Turnus-Hygiene - 2026-10-01)
 - **CI/CD Lifecycle Automation & Workflow Hardening:**
   - Added `.github/workflows/auto-assign.yml` (`actions/github-script@v7`, `timeout-minutes: 5`, `cancel-in-progress: true`, least-privilege permissions `issues: write`, `pull-requests: write`).
