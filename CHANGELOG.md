@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **`ticket-routing` extra was not installable.** It pinned `ticket-master@v1.12.0`, but that tag was never cut (`git/refs/tags/v1.12.0` returns 404; `pip download` fails with `pathspec 'v1.12.0' did not match`). The pin now names commit `cc508b0`, the commit that set ticket-master `VERSION` 1.12.0 and exposes `create_routed_ticket`, `load_contract` and `build_route_intent`. Same compatibility boundary `>=1.12,<1.13`. Switch back to a tag pin once ticket-master cuts one after its release gate (T-20261114-821743984).
+
 ### Added
 - **Rule-file mirror** (`scripts/rulefile_mirror.py`, `docs/rulefile-mirror.md`, `examples/rulefile-registry.example.json`): registry-driven, one-way snapshots of local agent rule files into the yard's `agents/` directory with a drift check (`check`, `mirror`, `report`, `all`), secret-format refusal, source size limit, no-overwrite backups, contained mirror paths and a generated `RULEFILES.md`. Exit codes: 0 ok, 1 error, 2 drift, 3 refused.
 

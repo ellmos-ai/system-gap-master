@@ -24,7 +24,7 @@ ticket-master
 License: MIT
 SPDX: MIT
 URL: https://github.com/ellmos-ai/ticket-master
-Notice: Optional task ticket management and route intent adapter contract validation (@v1.12.0)
+Notice: Optional task ticket management and route intent adapter contract validation (@cc508b0, version 1.12.0)
 
 pytest
 License: MIT

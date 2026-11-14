@@ -59,10 +59,12 @@ dependencies = [
 [project.optional-dependencies]
 trusted-peer-sftp = ["paramiko>=5,<6"]
 # ticket-master ist ein eigenes Modul: gepinnte Git-Quelle statt blossem Paketnamen
-# (Plan D 10.7). v1.12.0 ist der gegen den Adapter geprüfte Provider innerhalb
-# der Kompatibilitätsgrenze >=1.12,<1.13 (AU-2026-09-12-C).
+# (Plan D 10.7). Gepinnt ist der Commit, der ticket-master VERSION 1.12.0 setzte:
+# der gegen den Adapter geprüfte Provider innerhalb der Kompatibilitätsgrenze
+# >=1.12,<1.13 (AU-2026-09-12-C). Ein Tag v1.12.0 wurde nie geschnitten; der
+# frühere Tag-Pin war nicht installierbar (T-20261114-821743984).
 ticket-routing = [
-    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.12.0",
+    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@cc508b0a6ac4ff18ad5efdd869c7cc0f50dbf2cc",
 ]
 
 [project.scripts]

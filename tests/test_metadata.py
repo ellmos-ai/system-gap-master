@@ -15,10 +15,12 @@ except ImportError:
 
 # `ticket-master` is an ellmos module, so it is pulled from a pinned git source
 # instead of a bare package name -- a bare name resolves against PyPI, which does not
-# know our namespaces (Plan D 10.7, T-20260913-598571635). v1.12.0 is the exact
-# provider pin whose adapter compatibility was measured for AU-2026-09-12-C.
+# know our namespaces (Plan D 10.7, T-20260913-598571635). The exact provider pin is
+# the commit that set ticket-master VERSION 1.12.0, whose adapter compatibility was
+# measured for AU-2026-09-12-C. A tag pin is only valid once the tag exists: v1.12.0
+# was never cut, so the earlier tag pin could not be installed (T-20261114-821743984).
 TICKET_MASTER_REQUIREMENT = (
-    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@v1.12.0"
+    "ticket-master @ git+https://github.com/ellmos-ai/ticket-master@cc508b0a6ac4ff18ad5efdd869c7cc0f50dbf2cc"
 )
 
 
@@ -174,8 +176,8 @@ class MetadataParityTests(unittest.TestCase):
             data["project"]["optional-dependencies"]["ticket-routing"],
             [TICKET_MASTER_REQUIREMENT],
         )
-        self.assertIn("@v1.12.0", TICKET_MASTER_REQUIREMENT,
-                      "the exact provider pin must match the measured 1.12 seam")
+        self.assertTrue(TICKET_MASTER_REQUIREMENT.endswith("@cc508b0a6ac4ff18ad5efdd869c7cc0f50dbf2cc"),
+                        "the exact provider pin must be the commit of the measured 1.12 seam")
         self.assertIn("git+https://github.com/ellmos-ai/ticket-master",
                       TICKET_MASTER_REQUIREMENT,
                       "own modules are pulled from a pinned source, never by bare name")
